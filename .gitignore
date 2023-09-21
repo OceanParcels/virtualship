@@ -6,6 +6,7 @@ __pycache__/
 # Data files created
 *.geojson
 *.zarr
+*.nc
 
 # C extensions
 *.so
