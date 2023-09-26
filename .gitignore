@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 # Data files created
+/results
 *.geojson
 *.zarr
 *.nc
