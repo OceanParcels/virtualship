@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Figures
+*.jpg
+*.gif
+
 # Data files created
 /results
 *.geojson
