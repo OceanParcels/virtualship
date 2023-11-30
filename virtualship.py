@@ -17,12 +17,11 @@ class VirtualShip:
     def sailship(coords_input):
 
         # Load the CMEMS data (2 days manually downloaded)
-        dataset_folder = "/nethome/0448257/Data"
         filenames = {
-            "U": f"{dataset_folder}/studentdata_UV.nc",
-            "V": f"{dataset_folder}/studentdata_UV.nc",
-            "S": f"{dataset_folder}/studentdata_S.nc",
-            "T": f"{dataset_folder}/studentdata_T.nc"}  
+            "U": "studentdata_UV.nc",
+            "V": "studentdata_UV.nc",
+            "S": "studentdata_S.nc",
+            "T": "studentdata_T.nc"}  
         variables = {'U': 'uo', 'V': 'vo', 'S':'so', 'T':'thetao'}
         dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth':'depth'}
 
@@ -32,17 +31,13 @@ class VirtualShip:
         fieldset.S.interp_method = "linear_invdist_land_tracer"
 
         # add bathymetry data to the fieldset for CTD cast
-        bathymetry_file = f"{dataset_folder}/GLO-MFC_001_024_mask_bathy.nc"
+        bathymetry_file = "GLO-MFC_001_024_mask_bathy.nc"
         bathymetry_variables = ('bathymetry', 'deptho')
         bathymetry_dimensions = {'lon': 'longitude', 'lat': 'latitude'}
         bathymetry_field = Field.from_netcdf(bathymetry_file, bathymetry_variables, bathymetry_dimensions)
         fieldset.add_field(bathymetry_field)
         # read in data already
         fieldset.computeTimeChunk(0,1)
-
-
-        # set initial location #TODO should be input to function or come from leafmap 
-        # coords_input = [[-83.737793, 8.591884], [-86.879883, 4.258768], [-86.879883, -0.747049], [-86.791992, -4.740675], [-86.791992, -9.058702]]
 
 
         # ### Determine ship course as intermediate points between CTD stations
@@ -97,7 +92,6 @@ class VirtualShip:
         # define ADCP sampling function without conversion (because of A grid)
         def SampleVel(particle, fieldset, time):
             particle.U, particle.V = fieldset.UV.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
-            # particle.V = fieldset.V.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
 
         # Create CTD like particles to sample the ocean
         class CTDParticle(JITParticle):
@@ -135,10 +129,6 @@ class VirtualShip:
         def SampleT(particle, fieldset, time):
             particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
 
-        # define function sampling Pressure
-        def SampleP(particle, fieldset, time):
-            particle.pressure = fieldset.P[time, particle.depth, particle.lat, particle.lon]
-
 
         # ### Run simulation
 
@@ -147,7 +137,8 @@ class VirtualShip:
         depthnum = 50
         # Initiate ADCP like particle set
         pset = ParticleSet.from_list(
-            fieldset=fieldset, pclass=ADCPParticle, lon=np.full(depthnum,sample_lons[0]), lat=np.full(depthnum,sample_lats[0]), depth=np.linspace(5, 1005, num=depthnum), time=0
+            fieldset=fieldset, pclass=ADCPParticle, lon=np.full(depthnum,sample_lons[0]), lat=np.full(depthnum,sample_lats[0]), 
+            depth=np.linspace(5, 1005, num=depthnum), time=0
         )
         # create a ParticleFile to store the ADCP output
         adcp_output_file = pset.ParticleFile(name="./results/sailship_adcp.zarr")
@@ -170,7 +161,8 @@ class VirtualShip:
                 ctd += 1
                 
                 # release CTD particle
-                pset_CTD = ParticleSet(fieldset=fieldset, pclass=CTDParticle, lon=sample_lons[i], lat=sample_lats[i], depth=2, time=total_time)
+                pset_CTD = ParticleSet(fieldset=fieldset, pclass=CTDParticle, 
+                                       lon=sample_lons[i], lat=sample_lats[i], depth=2, time=total_time)
 
                 # create a ParticleFile to store the CTD output
                 ctd_output_file = pset_CTD.ParticleFile(name=f"./results/CTD_test_{ctd}.zarr", outputdt=ctd_dt)

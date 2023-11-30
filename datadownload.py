@@ -26,7 +26,7 @@ python -m motuclient --motu https://nrt.cmems-du.eu/motu-web/Motu --service-id G
 
 python -m motuclient --motu https://nrt.cmems-du.eu/motu-web/Motu --service-id GLOBAL_ANALYSISFORECAST_PHY_001_024-TDS --product-id cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i --longitude-min -170 --longitude-max -75 --latitude-min -10 --latitude-max 5 --date-min '2023-11-19 00:00:00' --date-max '2023-11-22 00:00:00' --depth-min 0.49402499198913574 --depth-max 5727.9169921875 --variable uo --variable vo --out-name studentdata_UV_4.nc --user edaniels --pwd Pepertj3$
 python -m motuclient --motu https://nrt.cmems-du.eu/motu-web/Motu --service-id GLOBAL_ANALYSISFORECAST_PHY_001_024-TDS --product-id cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i --longitude-min -170 --longitude-max -75 --latitude-min -10 --latitude-max 5 --date-min '2023-11-01 00:00:00' --date-max '2023-11-11 00:00:00' --depth-min 0.49402499198913574 --depth-max 5727.9169921875 --variable so --out-name studentdata_S.nc --user edaniels --pwd Pepertj3$
-python -m motuclient --motu https://nrt.cmems-du.eu/motu-web/Motu --service-id GLOBAL_ANALYSISFORECAST_PHY_001_024-TDS --product-id cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i --longitude-min -170 --longitude-max -75 --latitude-min -10 --latitude-max 5 --date-min '2023-11-11 00:00:00' --date-max '2023-11-22 00:00:00' --depth-min 0.49402499198913574 --depth-max 5727.9169921875 --variable thetao --out-name studentdata_T_2.nc --user edaniels --pwd Pepertj3$
+python -m motuclient --motu https://nrt.cmems-du.eu/motu-web/Motu --service-id GLOBAL_ANALYSISFORECAST_PHY_001_024-TDS --product-id cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i --longitude-min -170 --longitude-max -75 --latitude-min -10 --latitude-max 5 --date-min '2023-11-01 00:00:00' --date-max '2023-11-11 00:00:00' --depth-min 0.49402499198913574 --depth-max 5727.9169921875 --variable thetao --out-name studentdata_T.nc --user edaniels --pwd Pepertj3$
 
 # New files are available! uo, vo, so, thetao all in one file, hourly resolution?
 # cmems_mod_glo_phy_anfc_0.083deg_PT1H-m
@@ -36,4 +36,5 @@ python -m motuclient --motu https://nrt.cmems-du.eu/motu-web/Motu --service-id G
 
 # Files can be downloaded in sizes up to 2048.0Mb so had to do several downloads
 # Op lorenz staat cdo geinstalleerd, dus kan je de files aan elkaar plakken met
+# also installed cdo to local cmems environment
 cdo mergetime studentdata_UV_1.nc studentdata_UV_2.nc studentdata_UV_3.nc studentdata_UV.nc
