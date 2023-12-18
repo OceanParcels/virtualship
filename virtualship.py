@@ -28,7 +28,7 @@ class VirtualShip:
         dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth':'depth'}
 
         # create the fieldset and set interpolation methods
-        fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, time_periodic=timedelta(days=3))
+        fieldset = FieldSet.from_netcdf(filenames, variables, dimensions)
         fieldset.T.interp_method = "linear_invdist_land_tracer"
         fieldset.S.interp_method = "linear_invdist_land_tracer"
 
@@ -156,7 +156,7 @@ class VirtualShip:
         for i in range(len(sample_lons)-1):
 
             # execute the kernels to sample U and V
-            pset.execute(SampleVel, dt=adcp_dt, runtime=1) 
+            pset.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False) 
             adcp_output_file.write(pset, time=pset[0].time)
 
             # check if we are at a CTD station
@@ -168,7 +168,7 @@ class VirtualShip:
                                        lon=sample_lons[i], lat=sample_lats[i], depth=2, time=total_time)
 
                 # create a ParticleFile to store the CTD output
-                ctd_output_file = pset_CTD.ParticleFile(name=f"./results/CTD_test_{ctd}.zarr", outputdt=ctd_dt)
+                ctd_output_file = pset_CTD.ParticleFile(name=f"./results/CTD_{ctd}.zarr", outputdt=ctd_dt)
 
                 # record the temperature and salinity of the particle
                 pset_CTD.execute([SampleS, SampleT, CTDcast], runtime=timedelta(hours=4), dt=ctd_dt, output_file=ctd_output_file)
@@ -181,17 +181,18 @@ class VirtualShip:
             total_time += adcp_dt
             pset.time_nextloop[:] = total_time
         # write the final locations of the ADCP particles
-        pset.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
+        pset.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=True)
         adcp_output_file.write_latest_locations(pset, time=total_time)
+        print("Cruise has ended")
 
 
     def postprocess(ctd):
 
         # rewrite CTD data to cvs
-        for i in range(0, ctd+2):
+        for i in range(1, ctd):
             
             # Open output and read to x, y, z
-            ds = xr.open_zarr(f"./results/CTD_test_{i+1}.zarr")
+            ds = xr.open_zarr(f"./results/CTD_{i}.zarr")
             x = ds["lon"][:].squeeze()
             y = ds["lat"][:].squeeze()
             z = ds["z"][:].squeeze()
@@ -222,5 +223,5 @@ class VirtualShip:
             header = f"'pressure [hPa]','temperature [degC]', 'salinity [g kg-1]'"
             data = np.column_stack([(z/10), T, S])
             new_line = '\n'
-            np.savetxt(f"./results/CTD_station_{i+1}.csv", data, fmt="%.4f", header=header, delimiter=',', 
+            np.savetxt(f"./results/CTD_station_{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
                     comments=f'{x.attrs} {x[0].values}{new_line}{y.attrs}{y[0].values}{new_line}start time: {time[0].values}{new_line}end time: {time[-1].values}{new_line}')
