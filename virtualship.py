@@ -189,7 +189,7 @@ class VirtualShip:
     def postprocess(ctd):
 
         # rewrite CTD data to cvs
-        for i in range(1, ctd):
+        for i in range(1, ctd+1):
             
             # Open output and read to x, y, z
             ds = xr.open_zarr(f"./results/CTD_{i}.zarr")
