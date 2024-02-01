@@ -7,7 +7,7 @@ import numpy as np
 from scipy.ndimage import uniform_filter1d
 
 # rewrite CTD data to cvs
-ctd = 6
+ctd = 9
 for i in range(1, ctd+1):
     
     # Open output and read to x, y, z
