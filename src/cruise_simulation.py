@@ -12,7 +12,7 @@ from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 coords_input = [[-81.25, -11.83], [-77.8, -10,71]]
 
 # Load the CMEMS data (3 weeks for IPO)
-dataset_folder = "/Users/0448257/Data"
+dataset_folder = "/nethome/0448257/Data"
 filenames = {
     "U": f"{dataset_folder}/PeruCoast.nc",
     "V": f"{dataset_folder}/PeruCoast.nc"}

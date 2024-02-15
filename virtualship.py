@@ -1,9 +1,11 @@
 import json
 import os
 import numpy as np
+import xarray as xr
 import pyproj
 from datetime import timedelta
 from shapely.geometry import Point, Polygon
+from scipy.ndimage import uniform_filter1d
 from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 
 
@@ -21,8 +23,6 @@ class VirtualShipConfiguration:
         west = self.region_of_interest["West"]
         poly = Polygon([(west, north), (west, south), (east, south), (east, north)])
         # validate input, raise ValueErrors if invalid
-        if self.input_data_folder == "":
-            raise ValueError("Invalid input data folder")
         if self.region_of_interest["North"] > 90 or self.region_of_interest["South"] < -90 or self.region_of_interest["East"] > 180 or self.region_of_interest["West"] < -180:
             raise ValueError("Invalid coordinates in region of interest")
         if len(self.route_coordinates) < 2:
@@ -60,7 +60,7 @@ class VirtualShipConfiguration:
             raise ValueError("Underway data needs to be true or false")
         if not isinstance(self.ADCP_data, bool):
             raise ValueError("ADCP data needs to be true or false")
-        if self.ADCP_settings['bin_size_m'] < 0:
+        if self.ADCP_settings['bin_size_m'] < 0 or self.ADCP_settings['bin_size_m'] > 24:
             raise ValueError("Invalid bin size for ADCP")
         if self.ADCP_settings['max_depth'] < 0:
             raise ValueError("Invalid depth for ADCP")
@@ -91,32 +91,31 @@ def shiproute(config):
         endlong = config.route_coordinates[i+1][0]
         endlat = config.route_coordinates[i+1][1]
 
-        # calculate line string along path with segments every 5 min = 5.14*60*5 = 1545 m for ADCP measurements
+        # calculate line string along path with segments every 5 min = 1545 m for ADCP measurements
         geod = pyproj.Geod(ellps='WGS84')
         azimuth1, azimuth2, distance = geod.inv(startlong, startlat, endlong, endlat)
         if distance > 1545:
             r = geod.inv_intermediate(startlong, startlat, endlong, endlat, del_s=1545, initial_idx=0, return_back_azimuth=False)
-        lons = np.append(lons, r.lons) # stored as a list of arrays
-        lats = np.append(lats, r.lats)
+            lons = np.append(lons, r.lons) # stored as a list of arrays
+            lats = np.append(lats, r.lats)
 
-        # initial_idx will add begin point to each list (but not end point to avoid dubbling) so add final endpoint manually
-        lons = np.append(np.hstack(lons), endlong)
-        lats = np.append(np.hstack(lats), endlat)
+    # initial_idx will add begin point to each list (but not end point to avoid dubbling) so add final endpoint manually
+    lons = np.append(np.hstack(lons), endlong)
+    lats = np.append(np.hstack(lats), endlat)
 
-        # check if input sample locations are within data availability area, only save if so
-        # Create a polygon from the region of interest to check coordinates 
-        north = config.region_of_interest["North"]
-        east = config.region_of_interest["East"]
-        south = config.region_of_interest["South"]
-        west = config.region_of_interest["West"]
-        poly = Polygon([(west, north), (west, south), (east, south), (east, north)])
-        sample_lons = []
-        sample_lats = []
-        for i in range(len(lons)):
-            if poly.contains(Point(lons[i], lats[i])):
-                sample_lons.append(lons[i])
-                sample_lats.append(lats[i])
-        return sample_lons, sample_lats
+    # check if input sample locations are within data availability area, only save if so
+    north = config.region_of_interest["North"]
+    east = config.region_of_interest["East"]
+    south = config.region_of_interest["South"]
+    west = config.region_of_interest["West"]
+    poly = Polygon([(west, north), (west, south), (east, south), (east, north)])
+    sample_lons = []
+    sample_lats = []
+    for i in range(len(lons)):
+        if poly.contains(Point(lons[i], lats[i])):
+            sample_lons.append(lons[i])
+            sample_lats.append(lats[i])
+    return sample_lons, sample_lats
 
 
 def sailship(config):
@@ -200,9 +199,9 @@ def sailship(config):
     def SampleT(particle, fieldset, time):
         particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
 
-    # define function sampling Pressure
-    def SampleP(particle, fieldset, time):
-        particle.pressure = fieldset.P[time, particle.depth, particle.lat, particle.lon]
+    # # define function sampling Pressure
+    # def SampleP(particle, fieldset, time):
+    #     particle.pressure = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
     # Create ADCP like particleset and output file
@@ -216,7 +215,7 @@ def sailship(config):
 
     # Create underway particle 
     pset_UnderwayData = ParticleSet.from_list(
-        fieldset=fieldset, pclass=UnderwayDataParticle, lon=sample_lons[0], lat=sample_lats[0], depth=5, time=0
+        fieldset=fieldset, pclass=UnderwayDataParticle, lon=sample_lons[0], lat=sample_lats[0], depth=2, time=0
     )
     UnderwayData_output_file = pset_UnderwayData.ParticleFile(name="./results/sailship_UnderwayData.zarr")
 
@@ -239,14 +238,14 @@ def sailship(config):
         UnderwayData_output_file.write(pset_UnderwayData, time=pset_ADCP[0].time)
 
         # check if we are at a CTD station
-        if (sample_lons[i] - config.CTD_locations[ctd][0]) < 0.001 and (sample_lats[i] - config.CTD_locations[ctd][1]) < 0.001:
+        if (sample_lons[i] - config.CTD_locations[ctd][0]) < 0.01 and (sample_lats[i] - config.CTD_locations[ctd][1]) < 0.01:
             ctd += 1
             
             # release CTD particle
             pset_CTD = ParticleSet(fieldset=fieldset, pclass=CTDParticle, lon=sample_lons[i], lat=sample_lats[i], depth=2, time=total_time)
 
             # create a ParticleFile to store the CTD output
-            ctd_output_file = pset_CTD.ParticleFile(name=f"./results/CTD_test_{ctd}.zarr", outputdt=ctd_dt)
+            ctd_output_file = pset_CTD.ParticleFile(name=f"./results/CTD_{ctd}.zarr", outputdt=ctd_dt)
 
             # record the temperature and salinity of the particle
             pset_CTD.execute([SampleS, SampleT, CTDcast], runtime=timedelta(hours=4), dt=ctd_dt, output_file=ctd_output_file)
@@ -278,48 +277,48 @@ def sailship(config):
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
 
-    def postprocess(ctd):
+def postprocess(ctd):
 
-        # rewrite CTD data to cvs
-        for i in range(1, ctd+1):
-            
-            # Open output and read to x, y, z
-            ds = xr.open_zarr(f"./results/CTD_{i}.zarr")
-            x = ds["lon"][:].squeeze()
-            y = ds["lat"][:].squeeze()
-            z = ds["z"][:].squeeze()
-            time = ds["time"][:].squeeze()
-            T = ds["temperature"][:].squeeze()
-            S = ds["salinity"][:].squeeze()
-            ds.close()
+    # rewrite CTD data to cvs
+    for i in range(1, ctd+1):
+        
+        # Open output and read to x, y, z
+        ds = xr.open_zarr(f"./results/CTD_{i}.zarr")
+        x = ds["lon"][:].squeeze()
+        y = ds["lat"][:].squeeze()
+        z = ds["z"][:].squeeze()
+        time = ds["time"][:].squeeze()
+        T = ds["temperature"][:].squeeze()
+        S = ds["salinity"][:].squeeze()
+        ds.close()
 
-            # add some noise
-            random_walk = np.random.random()/10
-            z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
-            t_norm = np.linspace(0, 1, num=len(time))
-            # dS = abs(np.append(0, np.diff(S))) # scale noise with gradient
-            # for j in range(5, 0, -1):
-            #     dS[dS<1*10**-j] = 0.5-j/10
-            # add smoothed random noise scaled with depth (and OPTIONAL with gradient for S) 
-            # and random (reversed) diversion from initial through time scaled with depth 
-            S = S + uniform_filter1d(
-                np.random.random(S.shape)/5*(1-z_norm) + 
-                random_walk*(np.max(S).values - np.min(S).values)*(1-z_norm)*t_norm/10, 
-                max(int(len(time)/40), 1))
-            T = T + uniform_filter1d(
-                np.random.random(T.shape)*5*(1-z_norm) - 
-                random_walk/2*(np.max(T).values - np.min(T).values)*(1-z_norm)*t_norm/10, 
-                max(int(len(time)/20), 1))
+        # add some noise
+        random_walk = np.random.random()/10
+        z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
+        t_norm = np.linspace(0, 1, num=len(time))
+        # dS = abs(np.append(0, np.diff(S))) # scale noise with gradient
+        # for j in range(5, 0, -1):
+        #     dS[dS<1*10**-j] = 0.5-j/10
+        # add smoothed random noise scaled with depth (and OPTIONAL with gradient for S) 
+        # and random (reversed) diversion from initial through time scaled with depth 
+        S = S + uniform_filter1d(
+            np.random.random(S.shape)/5*(1-z_norm) + 
+            random_walk*(np.max(S).values - np.min(S).values)*(1-z_norm)*t_norm/10, 
+            max(int(len(time)/40), 1))
+        T = T + uniform_filter1d(
+            np.random.random(T.shape)*5*(1-z_norm) - 
+            random_walk/2*(np.max(T).values - np.min(T).values)*(1-z_norm)*t_norm/10, 
+            max(int(len(time)/20), 1))
 
-            # reshaping data to export to csv
-            header = f"'pressure [hPa]','temperature [degC]', 'salinity [g kg-1]'"
-            data = np.column_stack([(z/10), T, S])
-            new_line = '\n'
-            np.savetxt(f"./results/CTD_station_{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
-                    comments=f'{x.attrs} {x[0].values}{new_line}{y.attrs}{y[0].values}{new_line}start time: {time[0].values}{new_line}end time: {time[-1].values}{new_line}')
+        # reshaping data to export to csv
+        header = f"'pressure [hPa]','temperature [degC]', 'salinity [g kg-1]'"
+        data = np.column_stack([(z/10), T, S])
+        new_line = '\n'
+        np.savetxt(f"./results/CTD_station_{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
+                comments=f'{x.attrs} {x[0].values}{new_line}{y.attrs}{y[0].values}{new_line}start time: {time[0].values}{new_line}end time: {time[-1].values}{new_line}')
 
 
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
-
     print(config.route_coordinates)
+    sailship(config)
