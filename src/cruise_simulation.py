@@ -9,13 +9,13 @@ from shapely.geometry import Point, Polygon
 from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 
 # set initial location as lon-lat EW-NS 
-coords_input = [[152.8, 36.6], [156.6, 36.9]]
+coords_input = [[-81.25, -11.83], [-77.8, -10,71]]
 
 # Load the CMEMS data (3 weeks for IPO)
-dataset_folder = "/nethome/0448257/Data"
+dataset_folder = "/Users/0448257/Data"
 filenames = {
-    "U": f"{dataset_folder}/JapanWindCurrents.nc",
-    "V": f"{dataset_folder}/JapanWindCurrents.nc"}
+    "U": f"{dataset_folder}/PeruCoast.nc",
+    "V": f"{dataset_folder}/PeruCoast.nc"}
     # "S": f"{dataset_folder}/studentdata_S.nc",
     # "T": f"{dataset_folder}/studentdata_T.nc"}  
 variables = {'U': 'uo', 'V': 'vo'} #, 'S':'so', 'T':'thetao'}
@@ -61,7 +61,8 @@ lons = np.append(np.hstack(lons), endlong)
 lats = np.append(np.hstack(lats), endlat)
 
 # check if input sample locations are within data availability area, only save if so
-poly = Polygon([(152, 36.5), (152, 37), (157, 37), (157, 36.5)])
+#poly = Polygon([(west, north), (west, south), (east, south), (east, north)])
+poly = Polygon([(-83, -6), (-83, -12), (-78, -12), (-78, -6)])
 coords = []
 sample_lons = []
 sample_lats = []
@@ -129,13 +130,13 @@ def SampleVel(particle, fieldset, time):
 ### Run simulation
 
 # Create ADCP like particle with accurate depths, 150 meter every 4 meters as https://rowetechinc.com/seaseven/
-depthnum = 38
+depthnum = 48
 # Initiate ADCP like particle set
 pset = ParticleSet.from_list(
-    fieldset=fieldset, pclass=ADCPParticle, lon=np.full(depthnum,sample_lons[0]), lat=np.full(depthnum,sample_lats[0]), depth=np.linspace(2, 150, num=depthnum), time=0
+    fieldset=fieldset, pclass=ADCPParticle, lon=np.full(depthnum,sample_lons[0]), lat=np.full(depthnum,sample_lats[0]), depth=np.linspace(2, 500, num=depthnum), time=0
 )
 # create a ParticleFile to store the ADCP output
-adcp_output_file = pset.ParticleFile(name="./results/Eckman_adcp.zarr")
+adcp_output_file = pset.ParticleFile(name="./results/Peru_adcp.zarr")
 adcp_dt = timedelta(minutes=5).total_seconds() # timestep of ADCP output, every 5 min == 1080 m (3.6*60*5 =m/s*s/min*min)
 
 # # initialize CTD station number and time 
