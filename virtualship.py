@@ -119,7 +119,7 @@ def shiproute(config):
     return sample_lons, sample_lats
 
 def create_fieldset():
-    datadirname = "/Users/erik/Desktop/VirtualShipData/"#os.path.dirname(__file__)
+    datadirname = os.path.dirname(__file__)
     filenames = {
         "U": f"{datadirname}studentdata_UV.nc",
         "V": f"{datadirname}studentdata_UV.nc",
