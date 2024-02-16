@@ -214,14 +214,16 @@ def sailship(config):
     ADCP_bins = np.arange(config.ADCP_settings["max_depth"], -5, config.ADCP_settings["bin_size_m"])
     vert_particles = len(ADCP_bins)
     pset_ADCP = ParticleSet.from_list(
-        fieldset=fieldset, pclass=ADCPParticle, lon=np.full(vert_particles,sample_lons[0]), lat=np.full(vert_particles,sample_lats[0]), depth=ADCP_bins, time=0
+        fieldset=fieldset, pclass=ADCPParticle, lon=np.full(vert_particles,sample_lons[0]),
+        lat=np.full(vert_particles,sample_lats[0]), depth=ADCP_bins, time=0
     )
     adcp_output_file = pset_ADCP.ParticleFile(name="./results/sailship_ADCP.zarr")
     adcp_dt = timedelta(minutes=5).total_seconds() # timestep of ADCP output, every 5 min
 
     # Create underway particle
     pset_UnderwayData = ParticleSet.from_list(
-        fieldset=fieldset, pclass=UnderwayDataParticle, lon=sample_lons[0], lat=sample_lats[0], depth=-2, time=0
+        fieldset=fieldset, pclass=UnderwayDataParticle, lon=sample_lons[0],
+        lat=sample_lats[0], depth=-2, time=0
     )
     UnderwayData_output_file = pset_UnderwayData.ParticleFile(name="./results/sailship_UnderwayData.zarr")
 
@@ -251,7 +253,8 @@ def sailship(config):
                 ctd += 1
 
                 # release CTD particle
-                pset_CTD = ParticleSet(fieldset=fieldset, pclass=CTDParticle, lon=sample_lons[i], lat=sample_lats[i], depth=-2, time=total_time)
+                pset_CTD = ParticleSet(fieldset=fieldset, pclass=CTDParticle, lon=sample_lons[i], lat=sample_lats[i],
+                                       depth=-2, time=total_time)
 
                 # create a ParticleFile to store the CTD output
                 ctd_output_file = pset_CTD.ParticleFile(name=f"./results/CTD_{ctd}.zarr", outputdt=ctd_dt)
