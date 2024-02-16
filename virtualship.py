@@ -159,11 +159,6 @@ def sailship(config):
         U = Variable('U', dtype=np.float32, initial=0.0)
         V = Variable('V', dtype=np.float32, initial=0.0)
 
-    # define ADCP sampling function without conversion (because of A grid)
-    def SampleVel(particle, fieldset, time):
-        particle.U, particle.V = fieldset.UV.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
-        # particle.V = fieldset.V.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
-
     # Create particle to sample water underway
     class UnderwayDataParticle(JITParticle):
         """Define a new particle class that samples water directly under the hull"""
@@ -177,6 +172,10 @@ def sailship(config):
         temperature = Variable("temperature", initial=np.nan)
         # pressure = Variable("pressure", initial=np.nan)
         raising = Variable("raising", dtype=np.int32, initial=0.0)
+
+    # define ADCP sampling function without conversion (because of A grid)
+    def SampleVel(particle, fieldset, time):
+        particle.U, particle.V = fieldset.UV.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
 
     # define function lowering and raising CTD
     def CTDcast(particle, fieldset, time):
