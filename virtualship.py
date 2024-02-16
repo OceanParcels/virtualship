@@ -1,12 +1,13 @@
 import json
 import os
+import math
 import numpy as np
 import xarray as xr
 import pyproj
 from datetime import timedelta
 from shapely.geometry import Point, Polygon
 from scipy.ndimage import uniform_filter1d
-from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet, AdvectionRK4
+from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet, AdvectionRK4, StatusCode
 
 
 class VirtualShipConfiguration:
@@ -119,10 +120,10 @@ def shiproute(config):
 
 def create_fieldset():
     filenames = {
-        "U": f"studentdata_UV.nc",
-        "V": f"studentdata_UV.nc",
-        "S": f"studentdata_S.nc",
-        "T": f"studentdata_T.nc"}  
+        "U": f"studentdata_UV_klein.nc",
+        "V": f"studentdata_UV_klein.nc",
+        "S": f"studentdata_S_klein.nc",
+        "T": f"studentdata_T_klein.nc"}  
     variables = {'U': 'uo', 'V': 'vo', 'S': 'so', 'T': 'thetao'}
     dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth': 'depth'}
 
@@ -210,7 +211,7 @@ def sailship(config):
     #     particle.pressure = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
     # Create ADCP like particleset and output file
-    ADCP_bins = np.arange(-5, config.ADCP_settings["max_depth"], config.ADCP_settings["bin_size_m"])
+    ADCP_bins = np.arange(config.ADCP_settings["max_depth"], -5, config.ADCP_settings["bin_size_m"])
     vert_particles = len(ADCP_bins)
     pset_ADCP = ParticleSet.from_list(
         fieldset=fieldset, pclass=ADCPParticle, lon=np.full(vert_particles,sample_lons[0]), lat=np.full(vert_particles,sample_lats[0]), depth=ADCP_bins, time=0
@@ -232,7 +233,7 @@ def sailship(config):
     # initialize drifters and argo floats
     drifter = 0
     drifter_time = []
-    argos = 0
+    argo = 0
     argo_time = []
 
     # run the model for the length of the sample_lons list
@@ -310,6 +311,63 @@ def deployments(config, difter_time, argo_time):
     def SampleT(particle, fieldset, time):
         particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
 
+    # Define the new Kernel that mimics Argo vertical movement
+    def ArgoVerticalMovement(particle, fieldset, time):
+        driftdepth = config.driftdepth  # maximum depth in m
+        maxdepth = config.maxdepth  # maximum depth in m
+        vertical_speed = config.vertical_speed  # sink and rise speed in m/s
+        cycletime = config.cycle_days * 86400  # total time of cycle in seconds
+        drifttime = config.drift_days * 86400  # time of deep drift in seconds
+
+        if particle.cycle_phase == 0:
+            # Phase 0: Sinking with vertical_speed until depth is driftdepth
+            particle_ddepth += vertical_speed * particle.dt
+            if particle.depth >= driftdepth:
+                particle.cycle_phase = 1
+
+        elif particle.cycle_phase == 1:
+            # Phase 1: Drifting at depth for drifttime seconds
+            particle.drift_age += particle.dt
+            if particle.drift_age >= drifttime:
+                particle.drift_age = 0  # reset drift_age for next cycle
+                particle.cycle_phase = 2
+
+        elif particle.cycle_phase == 2:
+            # Phase 2: Sinking further to maxdepth
+            particle_ddepth += vertical_speed * particle.dt
+            if particle.depth >= maxdepth:
+                particle.cycle_phase = 3
+
+        elif particle.cycle_phase == 3:
+            # Phase 3: Rising with vertical_speed until at surface
+            particle_ddepth -= vertical_speed * particle.dt
+            particle.cycle_age += particle.dt # solve issue of not updating cycle_age during ascent
+            if particle.depth <= fieldset.mindepth:
+                particle.depth = fieldset.mindepth
+                particle.temp = math.nan  # reset temperature to NaN at end of sampling cycle
+                particle.salt = math.nan  # idem
+                particle.cycle_phase = 4
+            else:
+                particle.temp = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+                particle.salt = fieldset.S[time, particle.depth, particle.lat, particle.lon]
+
+        elif particle.cycle_phase == 4:
+            # Phase 4: Transmitting at surface until cycletime is reached
+            if particle.cycle_age > cycletime:
+                particle.cycle_phase = 0
+                particle.cycle_age = 0
+
+        if particle.state == StatusCode.Evaluate:
+            particle.cycle_age += particle.dt  # update cycle_age
+
+
+    def KeepAtSurface(particle, fieldset, time):
+        # Prevent error when float reaches surface
+        if particle.state == StatusCode.ErrorThroughSurface:
+            particle.depth = fieldset.mindepth
+            particle.state = StatusCode.Success
+
+    # initialize drifters and argo floats
     lon = []
     lat = []
     for i in range(len(config.drifter_deploylocations)):
@@ -366,8 +424,8 @@ def postprocess(ctd):
 
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
-    # drifter_time, argo_time = sailship(config)
-    #tmp
-    drifter_time = [0, 1]
-    argo_time = []
+    drifter_time, argo_time = sailship(config)
+    # #tmp
+    # drifter_time = [0, 1]
+    # argo_time = []
     deployments(config, drifter_time, argo_time)
