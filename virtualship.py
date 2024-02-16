@@ -98,6 +98,9 @@ def shiproute(config):
             r = geod.inv_intermediate(startlong, startlat, endlong, endlat, del_s=1545, initial_idx=0, return_back_azimuth=False)
             lons = np.append(lons, r.lons) # stored as a list of arrays
             lats = np.append(lats, r.lats)
+        else:
+            lons = np.append(lons, startlong)
+            lats = np.append(lats, endlat)
 
     # initial_idx will add begin point to each list (but not end point to avoid doubling) so add final endpoint manually
     lons = np.append(np.hstack(lons), endlong)
@@ -120,10 +123,10 @@ def shiproute(config):
 def create_fieldset():
     datadirname = os.path.dirname(__file__)
     filenames = {
-        "U": f"{datadirname}studentdata_UV.nc",
-        "V": f"{datadirname}studentdata_UV.nc",
-        "S": f"{datadirname}studentdata_S.nc",
-        "T": f"{datadirname}studentdata_T.nc"}
+        "U": f"{datadirname}/studentdata_UV.nc",
+        "V": f"{datadirname}/studentdata_UV.nc",
+        "S": f"{datadirname}/studentdata_S.nc",
+        "T": f"{datadirname}/studentdata_T.nc"}
     variables = {'U': 'uo', 'V': 'vo', 'S': 'so', 'T': 'thetao'}
     dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth': 'depth'}
 
@@ -136,7 +139,7 @@ def create_fieldset():
             g.depth = -g.depth  # make depth negative
 
     # add bathymetry data to the fieldset for CTD cast
-    bathymetry_file = f"{datadirname}GLO-MFC_001_024_mask_bathy.nc"
+    bathymetry_file = f"{datadirname}/GLO-MFC_001_024_mask_bathy.nc"
     bathymetry_variables = ('bathymetry', 'deptho')
     bathymetry_dimensions = {'lon': 'longitude', 'lat': 'latitude'}
     bathymetry_field = Field.from_netcdf(bathymetry_file, bathymetry_variables, bathymetry_dimensions)
@@ -153,9 +156,9 @@ def sailship(config):
     sample_lons, sample_lats = shiproute(config)
     print("Arrived in region of interest, starting to gather data")
 
-    # Create ADCP like particles to sample the ocean
-    class ADCPParticle(JITParticle):
-        """Define a new particle class that does ADCP like measurements"""
+    # Create Vessel Mounted ADCP like particles to sample the ocean
+    class VM_ADCPParticle(JITParticle):
+        """Define a new particle class that does Vessel Mounted ADCP like measurements"""
         U = Variable('U', dtype=np.float32, initial=0.0)
         V = Variable('V', dtype=np.float32, initial=0.0)
 
@@ -170,7 +173,6 @@ def sailship(config):
         """Define a new particle class that does CTD like measurements"""
         salinity = Variable("salinity", initial=np.nan)
         temperature = Variable("temperature", initial=np.nan)
-        # pressure = Variable("pressure", initial=np.nan)
         raising = Variable("raising", dtype=np.int32, initial=0.0)
 
     # define ADCP sampling function without conversion (because of A grid)
@@ -205,15 +207,11 @@ def sailship(config):
     def SampleT(particle, fieldset, time):
         particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
 
-    # # define function sampling Pressure
-    # def SampleP(particle, fieldset, time):
-    #     particle.pressure = fieldset.P[time, particle.depth, particle.lat, particle.lon]
-
     # Create ADCP like particleset and output file
     ADCP_bins = np.arange(config.ADCP_settings["max_depth"], -5, config.ADCP_settings["bin_size_m"])
     vert_particles = len(ADCP_bins)
     pset_ADCP = ParticleSet.from_list(
-        fieldset=fieldset, pclass=ADCPParticle, lon=np.full(vert_particles,sample_lons[0]),
+        fieldset=fieldset, pclass=VM_ADCPParticle, lon=np.full(vert_particles,sample_lons[0]),
         lat=np.full(vert_particles,sample_lats[0]), depth=ADCP_bins, time=0
     )
     adcp_output_file = pset_ADCP.ParticleFile(name="./results/sailship_ADCP.zarr")
@@ -259,7 +257,7 @@ def sailship(config):
                 ctd_output_file = pset_CTD.ParticleFile(name=f"./results/CTD_{ctd}.zarr", outputdt=ctd_dt)
 
                 # record the temperature and salinity of the particle
-                pset_CTD.execute([SampleS, SampleT, CTDcast], runtime=timedelta(hours=4), dt=ctd_dt, output_file=ctd_output_file, verbose_progress=False)
+                pset_CTD.execute([SampleS, SampleT, CTDcast], runtime=timedelta(hours=8), dt=ctd_dt, output_file=ctd_output_file, verbose_progress=False)
                 total_time = pset_CTD.time[0] + timedelta(minutes=20).total_seconds() # add CTD time and 20 minutes for deployment
 
         # check if we are at a drifter deployment location
@@ -302,7 +300,14 @@ def sailship(config):
 def deployments(config, difter_time, argo_time):
     '''Deploys drifters and argo floats, returns results folder'''
 
+    # TODO update to bigger input files
     fieldset = create_fieldset()
+    fieldset.add_constant('driftdepth', config.argo_characteristics["driftdepth"])
+    fieldset.add_constant('maxdepth', config.argo_characteristics["maxdepth"])
+    fieldset.add_constant('vertical_speed', config.argo_characteristics["vertical_speed"])
+    fieldset.add_constant('cycle_days', config.argo_characteristics["cycle_days"])
+    fieldset.add_constant('drift_days', config.argo_characteristics["drift_days"])
+    fieldset.mindepth = fieldset.U.depth[0]  # uppermost layer in the hydrodynamic data
 
     # Create particle to sample water underway
     class DrifterParticle(JITParticle):
@@ -315,11 +320,11 @@ def deployments(config, difter_time, argo_time):
 
     # Define the new Kernel that mimics Argo vertical movement
     def ArgoVerticalMovement(particle, fieldset, time):
-        driftdepth = config.driftdepth  # maximum depth in m
-        maxdepth = config.maxdepth  # maximum depth in m
-        vertical_speed = config.vertical_speed  # sink and rise speed in m/s
-        cycletime = config.cycle_days * 86400  # total time of cycle in seconds
-        drifttime = config.drift_days * 86400  # time of deep drift in seconds
+        driftdepth = fieldset.driftdepth  # maximum depth in m
+        maxdepth = fieldset.maxdepth  # maximum depth in m
+        vertical_speed = fieldset.vertical_speed  # sink and rise speed in m/s
+        cycletime = fieldset.cycle_days * 86400  # total time of cycle in seconds
+        drifttime = fieldset.drift_days * 86400  # time of deep drift in seconds
 
         if particle.cycle_phase == 0:
             # Phase 0: Sinking with vertical_speed until depth is driftdepth
@@ -346,12 +351,12 @@ def deployments(config, difter_time, argo_time):
             particle.cycle_age += particle.dt # solve issue of not updating cycle_age during ascent
             if particle.depth <= fieldset.mindepth:
                 particle.depth = fieldset.mindepth
-                particle.temp = math.nan  # reset temperature to NaN at end of sampling cycle
-                particle.salt = math.nan  # idem
+                particle.temperature = math.nan  # reset temperature to NaN at end of sampling cycle
+                particle.salinity = math.nan  # idem
                 particle.cycle_phase = 4
             else:
-                particle.temp = fieldset.T[time, particle.depth, particle.lat, particle.lon]
-                particle.salt = fieldset.S[time, particle.depth, particle.lat, particle.lon]
+                particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+                particle.salinity = fieldset.S[time, particle.depth, particle.lat, particle.lon]
 
         elif particle.cycle_phase == 4:
             # Phase 4: Transmitting at surface until cycletime is reached
@@ -385,9 +390,10 @@ def deployments(config, difter_time, argo_time):
     time = drifter_time
 
     # Create and execute drifter particles
-    pset = ParticleSet(fieldset=fieldset, pclass=DrifterParticle, lon=lon, lat=lat, time=time)
-    output_file = pset.ParticleFile(name="./results/Drifters.zarr", outputdt=timedelta(hours=1))
-    pset.execute([AdvectionRK4, SampleT], runtime=timedelta(hours=24), dt=timedelta(minutes=5), output_file=output_file)
+    if len(config.drifter_deploylocations) > 0:
+        pset = ParticleSet(fieldset=fieldset, pclass=DrifterParticle, lon=lon, lat=lat, time=time)
+        output_file = pset.ParticleFile(name="./results/Drifters.zarr", outputdt=timedelta(hours=1))
+        pset.execute([AdvectionRK4, SampleT], runtime=timedelta(hours=24), dt=timedelta(minutes=5), output_file=output_file)
 
     # initialize drifters and argo floats
     lon = []
@@ -398,13 +404,14 @@ def deployments(config, difter_time, argo_time):
     time = argo_time
 
     # Create and execute argo particles
-    argoset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=lon, lat=lat, time=time)
-    argo_output_file = argoset.ParticleFile(name="./results/Argo.zarr", outputdt=timedelta(minutes=5), chunks=(1,500))
-    argoset.execute(
-        [ArgoVerticalMovement, AdvectionRK4, KeepAtSurface],  # list of kernels to be executed
-        runtime=timedelta(weeks=6), dt=timedelta(minutes=5),
-        output_file=argo_output_file
-    )
+    if len(config.argo_deploylocations) > 0:
+        argoset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=lon, lat=lat, time=time)
+        argo_output_file = argoset.ParticleFile(name="./results/Argo.zarr", outputdt=timedelta(minutes=5), chunks=(1,500))
+        argoset.execute(
+            [ArgoVerticalMovement, AdvectionRK4, KeepAtSurface],  # list of kernels to be executed
+            runtime=timedelta(weeks=6), dt=timedelta(minutes=5),
+            output_file=argo_output_file
+        )
 
 
 
