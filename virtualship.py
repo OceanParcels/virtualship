@@ -176,7 +176,7 @@ def sailship(config):
         """Define a new particle class that does CTD like measurements"""
         salinity = Variable("salinity", initial=np.nan)
         temperature = Variable("temperature", initial=np.nan)
-        pressure = Variable("pressure", initial=np.nan)
+        # pressure = Variable("pressure", initial=np.nan)
         raising = Variable("raising", dtype=np.int32, initial=0.0)
 
     # define function lowering and raising CTD
@@ -368,6 +368,13 @@ def deployments(config, difter_time, argo_time):
             particle.depth = fieldset.mindepth
             particle.state = StatusCode.Success
 
+    class ArgoParticle(JITParticle):
+        cycle_phase = Variable("cycle_phase", dtype=np.int32, initial=0.0)
+        cycle_age = Variable("cycle_age", dtype=np.float32, initial=0.0)
+        drift_age = Variable("drift_age", dtype=np.float32, initial=0.0)
+        salinity = Variable("salinity", initial=np.nan)
+        temperature = Variable("temperature", initial=np.nan)
+
     # initialize drifters and argo floats
     lon = []
     lat = []
@@ -380,6 +387,24 @@ def deployments(config, difter_time, argo_time):
     pset = ParticleSet(fieldset=fieldset, pclass=DrifterParticle, lon=lon, lat=lat, time=time)
     output_file = pset.ParticleFile(name="./results/Drifters.zarr", outputdt=timedelta(hours=1))
     pset.execute([AdvectionRK4, SampleT], runtime=timedelta(hours=24), dt=timedelta(minutes=5), output_file=output_file)
+
+    # initialize drifters and argo floats
+    lon = []
+    lat = []
+    for i in range(len(config.argo_deploylocations)):
+        lon.append(config.argo_deploylocations[i][0])
+        lat.append(config.argo_deploylocations[i][1])
+    time = argo_time
+
+    # Create and execute argo particles
+    argoset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=lon, lat=lat, time=time)
+    argo_output_file = argoset.ParticleFile(name="./results/Argo.zarr", outputdt=timedelta(minutes=5), chunks=(1,500))
+    argoset.execute(
+        [ArgoVerticalMovement, AdvectionRK4, KeepAtSurface],  # list of kernels to be executed
+        runtime=timedelta(weeks=6), dt=timedelta(minutes=5),
+        output_file=argo_output_file
+    )
+
 
 
 def postprocess(ctd):
@@ -425,8 +450,8 @@ def postprocess(ctd):
 
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
-    drifter_time, argo_time = sailship(config)
+    # drifter_time, argo_time = sailship(config)
     # #tmp
-    # drifter_time = [0, 1]
-    # argo_time = []
+    drifter_time = []
+    argo_time = [0, 1]
     deployments(config, drifter_time, argo_time)

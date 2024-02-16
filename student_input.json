@@ -22,10 +22,10 @@
     [-83.737793, 3.591884]
   ],
   "drifter_deploylocations": [
-    [-83.737793, 3.591884], [-83.737794, 3.591885]
+
   ],
   "argo_deploylocations": [
-
+    [-83.737793, 3.591884], [-83.737794, 3.591885]
   ],
   "argo_characteristics": {
     "driftdepth": -1000,
