@@ -85,7 +85,6 @@ def shiproute(config):
     lats = []
 
     # Loop over station coordinates and calculate intermediate points along great circle path
-    i = 0
     for i in (range(len(config.route_coordinates)-1)):
         startlong = config.route_coordinates[i][0]
         startlat = config.route_coordinates[i][1]
