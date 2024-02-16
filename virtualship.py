@@ -65,12 +65,16 @@ class VirtualShipConfiguration:
             raise ValueError("Invalid bin size for ADCP")
         if self.ADCP_settings['max_depth'] > 0:
             raise ValueError("Invalid depth for ADCP")
-        if self.argo_characteristics['driftdepth'] > 0 or self.argo_characteristics['driftdepth'] < -2000:
+        if self.argo_characteristics['driftdepth'] > 0 or self.argo_characteristics['driftdepth'] < -6000:
             raise ValueError("Invalid drift depth for argo")
-        if self.argo_characteristics['maxdepth'] > 0 or self.argo_characteristics['maxdepth'] < -2000:
+        if self.argo_characteristics['maxdepth'] > 0 or self.argo_characteristics['maxdepth'] < -6000:
             raise ValueError("Invalid max depth for argo")
+        if type(self.argo_characteristics['vertical_speed']) != float:
+            raise ValueError("Specify vertical speed for argo with decimals in m/s")
         if self.argo_characteristics['vertical_speed'] > 0:
-            raise ValueError("Specify a negative vertical speed for argo")
+            self.argo_characteristics['vertical_speed'] = -self.argo_characteristics['vertical_speed']
+        if abs(self.argo_characteristics['vertical_speed']) < 0.06 or abs(self.argo_characteristics['vertical_speed']) > 0.12:
+            raise ValueError("Specify a realistic speed for argo, i.e. between -0.06 and -0.12 m/s")
         if self.argo_characteristics['cycle_days'] < 0:
             raise ValueError("Specify a postitive number of cycle days for argo")
         if self.argo_characteristics['drift_days'] < 0:
@@ -91,10 +95,12 @@ def shiproute(config):
         endlong = config.route_coordinates[i+1][0]
         endlat = config.route_coordinates[i+1][1]
 
-        # calculate line string along path with segments every 5 min = 1545 m for ADCP measurements
+        # calculate line string along path with segments every 5 min for ADCP measurements 
+        # current cruise speed is 10knots = 5.14 m/s * 60*5 = 1542 m 
+        cruise_speed = 5.14
         geod = pyproj.Geod(ellps='WGS84')
         azimuth1, azimuth2, distance = geod.inv(startlong, startlat, endlong, endlat)
-        if distance > 1545:
+        if distance > (cruise_speed*60*5):
             r = geod.inv_intermediate(startlong, startlat, endlong, endlat, del_s=1545, initial_idx=0, return_back_azimuth=False)
             lons = np.append(lons, r.lons) # stored as a list of arrays
             lats = np.append(lats, r.lats)
@@ -121,6 +127,7 @@ def shiproute(config):
     return sample_lons, sample_lats
 
 def create_fieldset():
+    '''Creates fieldset from netcdf files and adds bathymetry data for CTD cast, returns fieldset with negative depth values'''
     datadirname = os.path.dirname(__file__)
     filenames = {
         "U": f"{datadirname}/studentdata_UV.nc",
@@ -382,29 +389,29 @@ def deployments(config, difter_time, argo_time):
         temperature = Variable("temperature", initial=np.nan)
 
     # initialize drifters and argo floats
-    lon = []
-    lat = []
-    for i in range(len(config.drifter_deploylocations)):
-        lon.append(config.drifter_deploylocations[i][0])
-        lat.append(config.drifter_deploylocations[i][1])
-    time = drifter_time
-
-    # Create and execute drifter particles
     if len(config.drifter_deploylocations) > 0:
+        lon = []
+        lat = []
+        for i in range(len(config.drifter_deploylocations)):
+            lon.append(config.drifter_deploylocations[i][0])
+            lat.append(config.drifter_deploylocations[i][1])
+        time = drifter_time
+
+        # Create and execute drifter particles
         pset = ParticleSet(fieldset=fieldset, pclass=DrifterParticle, lon=lon, lat=lat, time=time)
         output_file = pset.ParticleFile(name="./results/Drifters.zarr", outputdt=timedelta(hours=1))
         pset.execute([AdvectionRK4, SampleT], runtime=timedelta(hours=24), dt=timedelta(minutes=5), output_file=output_file)
 
-    # initialize drifters and argo floats
-    lon = []
-    lat = []
-    for i in range(len(config.argo_deploylocations)):
-        lon.append(config.argo_deploylocations[i][0])
-        lat.append(config.argo_deploylocations[i][1])
-    time = argo_time
-
-    # Create and execute argo particles
+    # initialize argo floats
     if len(config.argo_deploylocations) > 0:
+        lon = []
+        lat = []
+        for i in range(len(config.argo_deploylocations)):
+            lon.append(config.argo_deploylocations[i][0])
+            lat.append(config.argo_deploylocations[i][1])
+        time = argo_time
+
+        # Create and execute argo particles
         argoset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=lon, lat=lat, time=time)
         argo_output_file = argoset.ParticleFile(name="./results/Argo.zarr", outputdt=timedelta(minutes=5), chunks=(1,500))
         argoset.execute(
@@ -462,4 +469,4 @@ if __name__ == '__main__':
     # #tmp
     drifter_time = []
     argo_time = [0, 1]
-    deployments(config, drifter_time, argo_time)
+    # deployments(config, drifter_time, argo_time)
