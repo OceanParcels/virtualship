@@ -182,18 +182,18 @@ def sailship(config):
     # define function lowering and raising CTD
     def CTDcast(particle, fieldset, time):
         seafloor = fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon]
-        vertical_speed = 1.0  # sink and rise speed in m/s
+        winch_speed = 1.0  # sink and rise speed in m/s
 
         if particle.raising == 0:
-            # Sinking with vertical_speed until near seafloor
-            particle_ddepth = vertical_speed * particle.dt
+            # Sinking with winch_speed until near seafloor
+            particle_ddepth = winch_speed * particle.dt
             if particle.depth >= 200: #TODO remove 200: (seafloor - 20):
                 particle.raising = 1
 
         if particle.raising == 1:
-            # Rising with vertical_speed until depth is 2 m
+            # Rising with winch_speed until depth is 2 m
             if particle.depth > 2:
-                particle_ddepth = -vertical_speed * particle.dt
+                particle_ddepth = -winch_speed * particle.dt
                 if particle.depth + particle_ddepth <= 2:
                     # to break the loop ...
                     particle.state = 41
