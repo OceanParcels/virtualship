@@ -99,7 +99,7 @@ def shiproute(config):
             lons = np.append(lons, r.lons) # stored as a list of arrays
             lats = np.append(lats, r.lats)
 
-    # initial_idx will add begin point to each list (but not end point to avoid dubbling) so add final endpoint manually
+    # initial_idx will add begin point to each list (but not end point to avoid doubling) so add final endpoint manually
     lons = np.append(np.hstack(lons), endlong)
     lats = np.append(np.hstack(lats), endlat)
 
@@ -228,7 +228,7 @@ def sailship(config):
     # initialize CTD station number and time
     total_time = timedelta(hours=0).total_seconds()
     ctd = 0
-    ctd_dt = timedelta(seconds=10) # timestep of CTD output reflecting post-proces binning into 10m bins
+    ctd_dt = timedelta(seconds=10) # timestep of CTD output reflecting post-process binning into 10m bins
 
     # initialize drifters and argo floats
     drifter = 0
@@ -245,7 +245,7 @@ def sailship(config):
         pset_UnderwayData.execute([SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False)
         UnderwayData_output_file.write(pset_UnderwayData, time=pset_ADCP[0].time)
 
-        # check if we are at a CTD station
+        # check if virtual ship is at a CTD station
         if ctd < len(config.CTD_locations):
             if (sample_lons[i] - config.CTD_locations[ctd][0]) < 0.001 and (sample_lats[i] - config.CTD_locations[ctd][1]) < 0.001:
                 ctd += 1
