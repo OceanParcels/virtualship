@@ -1,36 +1,36 @@
 {
   "region_of_interest": {
-      "North": 38,
-      "East": -121,
-      "South": 36,
-      "West": -124
+      "North": 5,
+      "East": -75,
+      "South": -10,
+      "West": -170
     },
   "route_coordinates": [
-    [-122.09307, 36.80571],
-    [-121.98870, 36.24953],
-    [-122.54900, 36.61635],
-    [-123.03240, 37.24864],
-    [-122.68084, 37.69767]
+    [-83.737793, 3.591884], [-83.737794, 3.591885],
+    [-86.879883, 4.258768], 
+    [-86.879883, -0.747049], 
+    [-86.791992, -4.740675], 
+    [-86.791992, -9.058702]
   ],
   "underway_data": false,
   "ADCP_data": true,
   "ADCP_settings": {
-      "max_depth": 1000,
+      "max_depth": -1000,
       "bin_size_m": 24
     },
   "CTD_locations": [
-    [-122.68084, 37.69767]
+    [-83.737793, 3.591884]
   ],
   "drifter_deploylocations": [
-
+    [-83.737793, 3.591884], [-83.737794, 3.591885]
   ],
   "argo_deploylocations": [
 
   ],
   "argo_characteristics": {
-    "driftdepth": 1000,
-    "maxdepth": 2000,
-    "vertical_speed": 0.10, 
+    "driftdepth": -1000,
+    "maxdepth": -2000,
+    "vertical_speed": -0.10, 
     "cycle_days" : 10, 
     "drift_days": 9
   }
