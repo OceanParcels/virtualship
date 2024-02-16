@@ -287,7 +287,7 @@ def sailship(config):
         pset_ADCP.time_nextloop[:] = total_time
         pset_UnderwayData.time_nextloop[:] = total_time
         if i % 24 == 0:
-            print(f"Gathered data {total_time/3600} hours since start")
+            print(f"Gathered data {total_time/3600:.2f} hours since start")
 
     # write the final locations of the ADCP and Underway data particles
     pset_ADCP.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
