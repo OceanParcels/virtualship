@@ -119,11 +119,12 @@ def shiproute(config):
     return sample_lons, sample_lats
 
 def create_fieldset():
+    datadirname = "/Users/erik/Desktop/VirtualShipData/"#os.path.dirname(__file__)
     filenames = {
-        "U": f"studentdata_UV_klein.nc",
-        "V": f"studentdata_UV_klein.nc",
-        "S": f"studentdata_S_klein.nc",
-        "T": f"studentdata_T_klein.nc"}  
+        "U": f"{datadirname}studentdata_UV.nc",
+        "V": f"{datadirname}studentdata_UV.nc",
+        "S": f"{datadirname}studentdata_S.nc",
+        "T": f"{datadirname}studentdata_T.nc"}
     variables = {'U': 'uo', 'V': 'vo', 'S': 'so', 'T': 'thetao'}
     dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth': 'depth'}
 
@@ -136,7 +137,7 @@ def create_fieldset():
             g.depth = -g.depth  # make depth negative
 
     # add bathymetry data to the fieldset for CTD cast
-    bathymetry_file = f"GLO-MFC_001_024_mask_bathy.nc"
+    bathymetry_file = f"{datadirname}GLO-MFC_001_024_mask_bathy.nc"
     bathymetry_variables = ('bathymetry', 'deptho')
     bathymetry_dimensions = {'lon': 'longitude', 'lat': 'latitude'}
     bathymetry_field = Field.from_netcdf(bathymetry_file, bathymetry_variables, bathymetry_dimensions)
