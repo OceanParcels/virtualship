@@ -95,8 +95,8 @@ def shiproute(config):
         endlong = config.route_coordinates[i+1][0]
         endlat = config.route_coordinates[i+1][1]
 
-        # calculate line string along path with segments every 5 min for ADCP measurements 
-        # current cruise speed is 10knots = 5.14 m/s * 60*5 = 1542 m 
+        # calculate line string along path with segments every 5 min for ADCP measurements
+        # current cruise speed is 10knots = 5.14 m/s * 60*5 = 1542 m
         cruise_speed = 5.14
         geod = pyproj.Geod(ellps='WGS84')
         azimuth1, azimuth2, distance = geod.inv(startlong, startlat, endlong, endlat)
@@ -327,34 +327,29 @@ def deployments(config, difter_time, argo_time):
 
     # Define the new Kernel that mimics Argo vertical movement
     def ArgoVerticalMovement(particle, fieldset, time):
-        driftdepth = fieldset.driftdepth  # maximum depth in m
-        maxdepth = fieldset.maxdepth  # maximum depth in m
-        vertical_speed = fieldset.vertical_speed  # sink and rise speed in m/s
-        cycletime = fieldset.cycle_days * 86400  # total time of cycle in seconds
-        drifttime = fieldset.drift_days * 86400  # time of deep drift in seconds
 
         if particle.cycle_phase == 0:
             # Phase 0: Sinking with vertical_speed until depth is driftdepth
-            particle_ddepth += vertical_speed * particle.dt
-            if particle.depth >= driftdepth:
+            particle_ddepth += fieldset.vertical_speed * particle.dt
+            if particle.depth >= fieldset.driftdepth:
                 particle.cycle_phase = 1
 
         elif particle.cycle_phase == 1:
             # Phase 1: Drifting at depth for drifttime seconds
             particle.drift_age += particle.dt
-            if particle.drift_age >= drifttime:
+            if particle.drift_age >= fieldset.drift_days * 86400:
                 particle.drift_age = 0  # reset drift_age for next cycle
                 particle.cycle_phase = 2
 
         elif particle.cycle_phase == 2:
             # Phase 2: Sinking further to maxdepth
-            particle_ddepth += vertical_speed * particle.dt
-            if particle.depth >= maxdepth:
+            particle_ddepth += fieldset.vertical_speed * particle.dt
+            if particle.depth >= fieldset.maxdepth:
                 particle.cycle_phase = 3
 
         elif particle.cycle_phase == 3:
             # Phase 3: Rising with vertical_speed until at surface
-            particle_ddepth -= vertical_speed * particle.dt
+            particle_ddepth -= fieldset.vertical_speed * particle.dt
             particle.cycle_age += particle.dt # solve issue of not updating cycle_age during ascent
             if particle.depth <= fieldset.mindepth:
                 particle.depth = fieldset.mindepth
@@ -367,7 +362,7 @@ def deployments(config, difter_time, argo_time):
 
         elif particle.cycle_phase == 4:
             # Phase 4: Transmitting at surface until cycletime is reached
-            if particle.cycle_age > cycletime:
+            if particle.cycle_age > fieldset.cycle_days * 86400:
                 particle.cycle_phase = 0
                 particle.cycle_age = 0
 
