@@ -41,6 +41,12 @@ class VirtualShipConfiguration:
                     raise ValueError("Invalid coordinates in route")
                 if not poly.contains(Point(coord)):
                     raise ValueError("CTD coordinates need to be within the region of interest")
+        if type(self.CTD_settings['max_depth']) != int:
+            if self.CTD_settings['max_depth'] != "max":
+                raise ValueError('Specify "max" for maximum depth or a negative integer for max_depth in CTD_settings')
+        if type(self.CTD_settings['max_depth']) == int:
+            if self.CTD_settings['max_depth'] > 0:
+                raise ValueError("Invalid depth for CTD")
         if not len(self.drifter_deploylocations) == 0:
             for coord in self.drifter_deploylocations:
                 if coord not in self.route_coordinates:
@@ -130,15 +136,15 @@ def create_fieldset():
     '''Creates fieldset from netcdf files and adds bathymetry data for CTD cast, returns fieldset with negative depth values'''
     datadirname = os.path.dirname(__file__)
     filenames = {
-        "U": f"{datadirname}/studentdata_UV.nc",
-        "V": f"{datadirname}/studentdata_UV.nc",
-        "S": f"{datadirname}/studentdata_S.nc",
-        "T": f"{datadirname}/studentdata_T.nc"}
+        "U": f"{datadirname}/studentdata_UV_klein.nc",
+        "V": f"{datadirname}/studentdata_UV_klein.nc",
+        "S": f"{datadirname}/studentdata_S_klein.nc",
+        "T": f"{datadirname}/studentdata_T_klein.nc"}
     variables = {'U': 'uo', 'V': 'vo', 'S': 'so', 'T': 'thetao'}
     dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth': 'depth'}
 
     # create the fieldset and set interpolation methods
-    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions)
+    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True)
     fieldset.T.interp_method = "linear_invdist_land_tracer"
     fieldset.S.interp_method = "linear_invdist_land_tracer"
     for g in fieldset.gridset.grids:
@@ -160,6 +166,9 @@ def sailship(config):
 
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
     fieldset = create_fieldset()
+    fieldset.add_constant('max_depth', config.CTD_settings["max_depth"])
+    fieldset.add_constant("maxtime", fieldset.U.grid.time_full[-1])
+
     sample_lons, sample_lats = shiproute(config)
     print("Arrived in region of interest, starting to gather data")
 
@@ -188,20 +197,24 @@ def sailship(config):
 
     # define function lowering and raising CTD
     def CTDcast(particle, fieldset, time):
-        seafloor = fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon]
-        winch_speed = 1.0  # sink and rise speed in m/s
+        # TODO question: if is executed every time... move outside function? Not if "drifting" now possible
+        if fieldset.max_depth <= 0:
+            maxdepth = fieldset.max_depth
+        else :
+            maxdepth = fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
+        winch_speed = -1.0  # sink and rise speed in m/s
 
         if particle.raising == 0:
             # Sinking with winch_speed until near seafloor
             particle_ddepth = winch_speed * particle.dt
-            if particle.depth >= 200: #TODO remove 200: (seafloor - 20):
+            if particle.depth <= maxdepth:
                 particle.raising = 1
 
         if particle.raising == 1:
-            # Rising with winch_speed until depth is 2 m
-            if particle.depth > 2:
+            # Rising with winch_speed until depth is -2 m
+            if particle.depth < -2:
                 particle_ddepth = -winch_speed * particle.dt
-                if particle.depth + particle_ddepth <= 2:
+                if particle.depth + particle_ddepth >= -2:
                     # to break the loop ...
                     particle.state = 41
                     print("CTD cast finished")
@@ -213,6 +226,11 @@ def sailship(config):
     # define function sampling Temperature
     def SampleT(particle, fieldset, time):
         particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+
+    def GracefulFail(particle, fieldset, time):
+        if particle.time > fieldset.maxtime:
+            print("Ship time is over, waiting for drifters and/or Argo floats to finish.")
+            particle.delete()
 
     # Create ADCP like particleset and output file
     ADCP_bins = np.arange(config.ADCP_settings["max_depth"], -5, config.ADCP_settings["bin_size_m"])
@@ -246,10 +264,13 @@ def sailship(config):
     for i in range(len(sample_lons)-1):
 
         # execute the ADCP kernels to sample U and V and underway T and S
-        pset_ADCP.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
+        pset_ADCP.execute([SampleVel], dt=adcp_dt, runtime=1, verbose_progress=False)
         adcp_output_file.write(pset_ADCP, time=pset_ADCP[0].time)
         pset_UnderwayData.execute([SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False)
         UnderwayData_output_file.write(pset_UnderwayData, time=pset_ADCP[0].time)
+        if pset_ADCP[0].time > fieldset.maxtime:
+            print("Ship time is over, waiting for drifters and/or Argo floats to finish.")
+            return drifter_time, argo_time
 
         # check if virtual ship is at a CTD station
         if ctd < len(config.CTD_locations):
@@ -264,7 +285,7 @@ def sailship(config):
                 ctd_output_file = pset_CTD.ParticleFile(name=f"./results/CTD_{ctd}.zarr", outputdt=ctd_dt)
 
                 # record the temperature and salinity of the particle
-                pset_CTD.execute([SampleS, SampleT, CTDcast], runtime=timedelta(hours=8), dt=ctd_dt, output_file=ctd_output_file, verbose_progress=False)
+                pset_CTD.execute([SampleS, SampleT, CTDcast], runtime=timedelta(hours=8), dt=ctd_dt, output_file=ctd_output_file, verbose_progress=True)
                 total_time = pset_CTD.time[0] + timedelta(minutes=20).total_seconds() # add CTD time and 20 minutes for deployment
 
         # check if we are at a drifter deployment location
@@ -292,7 +313,7 @@ def sailship(config):
         total_time += adcp_dt
         pset_ADCP.time_nextloop[:] = total_time
         pset_UnderwayData.time_nextloop[:] = total_time
-        if i % 24 == 0:
+        if i % 48 == 0:
             print(f"Gathered data {total_time/3600:.2f} hours since start")
 
     # write the final locations of the ADCP and Underway data particles
@@ -304,6 +325,7 @@ def sailship(config):
 
     return drifter_time, argo_time
 
+
 def deployments(config, difter_time, argo_time):
     '''Deploys drifters and argo floats, returns results folder'''
 
@@ -314,7 +336,8 @@ def deployments(config, difter_time, argo_time):
     fieldset.add_constant('vertical_speed', config.argo_characteristics["vertical_speed"])
     fieldset.add_constant('cycle_days', config.argo_characteristics["cycle_days"])
     fieldset.add_constant('drift_days', config.argo_characteristics["drift_days"])
-    fieldset.mindepth = fieldset.U.depth[0]  # uppermost layer in the hydrodynamic data
+    fieldset.mindepth = -fieldset.U.depth[0]  # uppermost layer in the hydrodynamic data
+    print(fieldset.mindepth)
 
     # Create particle to sample water underway
     class DrifterParticle(JITParticle):
@@ -344,14 +367,14 @@ def deployments(config, difter_time, argo_time):
         elif particle.cycle_phase == 2:
             # Phase 2: Sinking further to maxdepth
             particle_ddepth += fieldset.vertical_speed * particle.dt
-            if particle.depth >= fieldset.maxdepth:
+            if particle.depth <= fieldset.maxdepth:
                 particle.cycle_phase = 3
 
         elif particle.cycle_phase == 3:
             # Phase 3: Rising with vertical_speed until at surface
             particle_ddepth -= fieldset.vertical_speed * particle.dt
             particle.cycle_age += particle.dt # solve issue of not updating cycle_age during ascent
-            if particle.depth <= fieldset.mindepth:
+            if particle.depth >= fieldset.mindepth:
                 particle.depth = fieldset.mindepth
                 particle.temperature = math.nan  # reset temperature to NaN at end of sampling cycle
                 particle.salinity = math.nan  # idem
@@ -376,6 +399,10 @@ def deployments(config, difter_time, argo_time):
             particle.depth = fieldset.mindepth
             particle.state = StatusCode.Success
 
+    def CheckError(particle, fieldset, time):
+        if particle.state >= 50:  # This captures all Errors
+            particle.delete()
+
     class ArgoParticle(JITParticle):
         cycle_phase = Variable("cycle_phase", dtype=np.int32, initial=0.0)
         cycle_age = Variable("cycle_age", dtype=np.float32, initial=0.0)
@@ -393,9 +420,9 @@ def deployments(config, difter_time, argo_time):
         time = drifter_time
 
         # Create and execute drifter particles
-        pset = ParticleSet(fieldset=fieldset, pclass=DrifterParticle, lon=lon, lat=lat, time=time)
+        pset = ParticleSet(fieldset=fieldset, pclass=DrifterParticle, lon=lon, lat=lat, depth=np.zeros(len(time)), time=time)
         output_file = pset.ParticleFile(name="./results/Drifters.zarr", outputdt=timedelta(hours=1))
-        pset.execute([AdvectionRK4, SampleT], runtime=timedelta(hours=24), dt=timedelta(minutes=5), output_file=output_file)
+        pset.execute([AdvectionRK4, SampleT, CheckError], runtime=timedelta(weeks=6), dt=timedelta(minutes=5), output_file=output_file)
 
     # initialize argo floats
     if len(config.argo_deploylocations) > 0:
@@ -407,10 +434,10 @@ def deployments(config, difter_time, argo_time):
         time = argo_time
 
         # Create and execute argo particles
-        argoset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=lon, lat=lat, time=time)
+        argoset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=lon, lat=lat, depth=np.zeros(len(time)), time=time)
         argo_output_file = argoset.ParticleFile(name="./results/Argo.zarr", outputdt=timedelta(minutes=5), chunks=(1,500))
         argoset.execute(
-            [ArgoVerticalMovement, AdvectionRK4, KeepAtSurface],  # list of kernels to be executed
+            [ArgoVerticalMovement, AdvectionRK4, KeepAtSurface, CheckError],  # list of kernels to be executed
             runtime=timedelta(weeks=6), dt=timedelta(minutes=5),
             output_file=argo_output_file
         )
@@ -460,8 +487,8 @@ def postprocess(ctd):
 
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
-    # drifter_time, argo_time = sailship(config)
-    # #tmp
-    drifter_time = []
-    argo_time = [0, 1]
-    # deployments(config, drifter_time, argo_time)
+    drifter_time, argo_time = sailship(config)
+    # # #tmp
+    # drifter_time = []
+    # argo_time = [0, 1]
+    deployments(config, drifter_time, argo_time)

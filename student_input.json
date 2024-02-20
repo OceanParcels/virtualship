@@ -21,6 +21,9 @@
   "CTD_locations": [
     [-83.737793, 3.591884]
   ],
+  "CTD_settings": {
+      "max_depth": -100
+    },
   "drifter_deploylocations": [
 
   ],
