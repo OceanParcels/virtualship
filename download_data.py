@@ -62,9 +62,9 @@ if __name__ == '__main__':
 
     if len(config.argo_deploylocations) > 0:
         download_dict = {
-            'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "argosdata_UV.nc",},
-            'Sdata' : {'dataset_id': 'cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i', 'variables': ['so'], 'output_filename': "argosdata_S.nc"},
-            'Tdata': {'dataset_id': 'cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i', 'variables': ['thetao'], 'output_filename': "argosdata_T.nc"}
+            'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "argodata_UV.nc",},
+            'Sdata' : {'dataset_id': 'cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i', 'variables': ['so'], 'output_filename': "argodata_S.nc"},
+            'Tdata': {'dataset_id': 'cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i', 'variables': ['thetao'], 'output_filename': "argodata_T.nc"}
         }    
 
         for dataset in download_dict:

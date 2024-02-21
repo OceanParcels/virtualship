@@ -72,10 +72,10 @@ class VirtualShipConfiguration:
             raise ValueError("Invalid bin size for ADCP")
         if self.ADCP_settings['max_depth'] > 0:
             raise ValueError("Invalid depth for ADCP")
-        if self.argo_characteristics['driftdepth'] > 0 or self.argo_characteristics['driftdepth'] < -6000:
-            raise ValueError("Invalid drift depth for argo")
-        if self.argo_characteristics['maxdepth'] > 0 or self.argo_characteristics['maxdepth'] < -6000:
-            raise ValueError("Invalid max depth for argo")
+        if self.argo_characteristics['driftdepth'] > 0 or self.argo_characteristics['driftdepth'] < -5727:
+            raise ValueError("Specify negative depth. Max drift depth for argo is -5727 m due to data availability")
+        if self.argo_characteristics['maxdepth'] > 0 or self.argo_characteristics['maxdepth'] < -5727:
+            raise ValueError("Specify negative depth. Max depth for argo is -5727 m due to data availability")
         if type(self.argo_characteristics['vertical_speed']) != float:
             raise ValueError("Specify vertical speed for argo with decimals in m/s")
         if self.argo_characteristics['vertical_speed'] > 0:
@@ -133,8 +133,9 @@ def shiproute(config):
             sample_lats.append(lats[i])
     return sample_lons, sample_lats
 
-def create_fieldset():
+def create_fieldset(config):
     '''Creates fieldset from netcdf files and adds bathymetry data for CTD cast, returns fieldset with negative depth values'''
+
     datadirname = os.path.dirname(__file__)
     filenames = {
         "U": os.path.join(datadirname, "studentdata_UV_klein.nc"),
@@ -163,11 +164,57 @@ def create_fieldset():
     fieldset.computeTimeChunk(0,1)
     return fieldset
 
+def create_drifter_fieldset(config):
+    '''Creates fieldset from netcdf files for drifters, returns fieldset with negative depth values'''
+
+    datadirname = os.path.dirname(__file__)
+    filenames = {
+        "U": os.path.join(datadirname, "drifterdata_UV.nc"),
+        "V": os.path.join(datadirname, "drifterdata_UV.nc"),
+        "T": os.path.join(datadirname, "drifterdata_T.nc")}
+    variables = {'U': 'uo', 'V': 'vo', 'T': 'thetao'}
+    dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth': 'depth'}
+
+    # create the fieldset and set interpolation methods
+    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=False)
+    fieldset.T.interp_method = "linear_invdist_land_tracer"
+    for g in fieldset.gridset.grids:
+        if max(g.depth) > 0:
+            g.depth = -g.depth  # make depth negative
+    fieldset.mindepth = -fieldset.U.depth[0]  # uppermost layer in the hydrodynamic data
+    return fieldset
+
+def create_argo_fieldset(config):
+    '''Creates fieldset from netcdf files for argo floats, returns fieldset with negative depth values'''
+
+    datadirname = os.path.dirname(__file__)
+    filenames = {
+        "U": os.path.join(datadirname, "argodata_UV.nc"),
+        "V": os.path.join(datadirname, "argodata_UV.nc"),
+        "S": os.path.join(datadirname, "argodata_S.nc"),
+        "T": os.path.join(datadirname, "argodata_T.nc")}
+    variables = {'U': 'uo', 'V': 'vo', 'S': 'so', 'T': 'thetao'}
+    dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth': 'depth'}
+
+    # create the fieldset and set interpolation methods
+    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=False)
+    fieldset.T.interp_method = "linear_invdist_land_tracer"
+    for g in fieldset.gridset.grids:
+        if max(g.depth) > 0:
+            g.depth = -g.depth  # make depth negative
+    fieldset.mindepth = -fieldset.U.depth[0]  # uppermost layer in the hydrodynamic data
+    fieldset.add_constant('driftdepth', config.argo_characteristics["driftdepth"])
+    fieldset.add_constant('maxdepth', config.argo_characteristics["maxdepth"])
+    fieldset.add_constant('vertical_speed', config.argo_characteristics["vertical_speed"])
+    fieldset.add_constant('cycle_days', config.argo_characteristics["cycle_days"])
+    fieldset.add_constant('drift_days', config.argo_characteristics["drift_days"])
+    return fieldset
+
 def sailship(config):
     '''Uses parcels to simulate the ship, take CTDs and measure ADCP and underwaydata, returns results folder'''
 
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
-    fieldset = create_fieldset()
+    fieldset = create_fieldset(config)
     fieldset.add_constant('max_depth', config.CTD_settings["max_depth"])
     fieldset.add_constant("maxtime", fieldset.U.grid.time_full[-1])
 
@@ -323,91 +370,26 @@ def sailship(config):
     return drifter_time, argo_time
 
 
-def deployments(config, drifter_time, argo_time):
-    '''Deploys drifters and argo floats, returns results folder'''
+def drifter_deployments(config, drifter_time):
 
-    # TODO update to bigger input files
-    fieldset = create_fieldset()
-    fieldset.add_constant('driftdepth', config.argo_characteristics["driftdepth"])
-    fieldset.add_constant('maxdepth', config.argo_characteristics["maxdepth"])
-    fieldset.add_constant('vertical_speed', config.argo_characteristics["vertical_speed"])
-    fieldset.add_constant('cycle_days', config.argo_characteristics["cycle_days"])
-    fieldset.add_constant('drift_days', config.argo_characteristics["drift_days"])
-    fieldset.mindepth = -fieldset.U.depth[0]  # uppermost layer in the hydrodynamic data
-
-    # Create particle to sample water underway
-    class DrifterParticle(JITParticle):
-        """Define a new particle class that samples Temperature as a surface drifter"""
-        temperature = Variable("temperature", initial=np.nan)
-
-    # define function sampling Temperature
-    def SampleT(particle, fieldset, time):
-        particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
-
-    # Define the new Kernel that mimics Argo vertical movement
-    def ArgoVerticalMovement(particle, fieldset, time):
-
-        if particle.cycle_phase == 0:
-            # Phase 0: Sinking with vertical_speed until depth is driftdepth
-            particle_ddepth += fieldset.vertical_speed * particle.dt
-            if particle.depth >= fieldset.driftdepth:
-                particle.cycle_phase = 1
-
-        elif particle.cycle_phase == 1:
-            # Phase 1: Drifting at depth for drifttime seconds
-            particle.drift_age += particle.dt
-            if particle.drift_age >= fieldset.drift_days * 86400:
-                particle.drift_age = 0  # reset drift_age for next cycle
-                particle.cycle_phase = 2
-
-        elif particle.cycle_phase == 2:
-            # Phase 2: Sinking further to maxdepth
-            particle_ddepth += fieldset.vertical_speed * particle.dt
-            if particle.depth <= fieldset.maxdepth:
-                particle.cycle_phase = 3
-
-        elif particle.cycle_phase == 3:
-            # Phase 3: Rising with vertical_speed until at surface
-            particle_ddepth -= fieldset.vertical_speed * particle.dt
-            particle.cycle_age += particle.dt # solve issue of not updating cycle_age during ascent
-            if particle.depth >= fieldset.mindepth:
-                particle.depth = fieldset.mindepth
-                particle.temperature = math.nan  # reset temperature to NaN at end of sampling cycle
-                particle.salinity = math.nan  # idem
-                particle.cycle_phase = 4
-            else:
-                particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
-                particle.salinity = fieldset.S[time, particle.depth, particle.lat, particle.lon]
-
-        elif particle.cycle_phase == 4:
-            # Phase 4: Transmitting at surface until cycletime is reached
-            if particle.cycle_age > fieldset.cycle_days * 86400:
-                particle.cycle_phase = 0
-                particle.cycle_age = 0
-
-        if particle.state == StatusCode.Evaluate:
-            particle.cycle_age += particle.dt  # update cycle_age
-
-
-    def KeepAtSurface(particle, fieldset, time):
-        # Prevent error when float reaches surface
-        if particle.state == StatusCode.ErrorThroughSurface:
-            particle.depth = fieldset.mindepth
-            particle.state = StatusCode.Success
-
-    def CheckError(particle, fieldset, time):
-        if particle.state >= 50:  # This captures all Errors
-            particle.delete()
-
-    class ArgoParticle(JITParticle):
-        cycle_phase = Variable("cycle_phase", dtype=np.int32, initial=0.0)
-        cycle_age = Variable("cycle_age", dtype=np.float32, initial=0.0)
-        drift_age = Variable("drift_age", dtype=np.float32, initial=0.0)
-        salinity = Variable("salinity", initial=np.nan)
-        temperature = Variable("temperature", initial=np.nan)
-
-    # initialize drifters and argo floats
     if len(config.drifter_deploylocations) > 0:
+
+        fieldset = create_drifter_fieldset(config)
+
+        # Create particle to sample water underway
+        class DrifterParticle(JITParticle):
+            """Define a new particle class that samples Temperature as a surface drifter"""
+            temperature = Variable("temperature", initial=np.nan)
+
+        # define function sampling Temperature
+        def SampleT(particle, fieldset, time):
+            particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+
+        def CheckError(particle, fieldset, time):
+            if particle.state >= 50:  # This captures all Errors
+                particle.delete()
+
+        # initialize drifters 
         lon = []
         lat = []
         for i in range(len(config.drifter_deploylocations)):
@@ -420,8 +402,76 @@ def deployments(config, drifter_time, argo_time):
         output_file = pset.ParticleFile(name=os.path.join("results","Drifters.zarr"), outputdt=timedelta(hours=1))
         pset.execute([AdvectionRK4, SampleT, CheckError], runtime=timedelta(weeks=6), dt=timedelta(minutes=5), output_file=output_file)
 
-    # initialize argo floats
+
+def argo_deployments(config, argo_time):
+    '''Deploys argo floats, returns results folder'''
+
     if len(config.argo_deploylocations) > 0:
+
+        fieldset = create_argo_fieldset(config)
+
+        # Define the new Kernel that mimics Argo vertical movement
+        def ArgoVerticalMovement(particle, fieldset, time):
+
+            if particle.cycle_phase == 0:
+                # Phase 0: Sinking with vertical_speed until depth is driftdepth
+                particle_ddepth += fieldset.vertical_speed * particle.dt
+                if particle.depth >= fieldset.driftdepth:
+                    particle.cycle_phase = 1
+
+            elif particle.cycle_phase == 1:
+                # Phase 1: Drifting at depth for drifttime seconds
+                particle.drift_age += particle.dt
+                if particle.drift_age >= fieldset.drift_days * 86400:
+                    particle.drift_age = 0  # reset drift_age for next cycle
+                    particle.cycle_phase = 2
+
+            elif particle.cycle_phase == 2:
+                # Phase 2: Sinking further to maxdepth
+                particle_ddepth += fieldset.vertical_speed * particle.dt
+                if particle.depth <= fieldset.maxdepth:
+                    particle.cycle_phase = 3
+
+            elif particle.cycle_phase == 3:
+                # Phase 3: Rising with vertical_speed until at surface
+                particle_ddepth -= fieldset.vertical_speed * particle.dt
+                particle.cycle_age += particle.dt # solve issue of not updating cycle_age during ascent
+                if particle.depth >= fieldset.mindepth:
+                    particle.depth = fieldset.mindepth
+                    particle.temperature = math.nan  # reset temperature to NaN at end of sampling cycle
+                    particle.salinity = math.nan  # idem
+                    particle.cycle_phase = 4
+                else:
+                    particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+                    particle.salinity = fieldset.S[time, particle.depth, particle.lat, particle.lon]
+
+            elif particle.cycle_phase == 4:
+                # Phase 4: Transmitting at surface until cycletime is reached
+                if particle.cycle_age > fieldset.cycle_days * 86400:
+                    particle.cycle_phase = 0
+                    particle.cycle_age = 0
+
+            if particle.state == StatusCode.Evaluate:
+                particle.cycle_age += particle.dt  # update cycle_age
+
+        def KeepAtSurface(particle, fieldset, time):
+            # Prevent error when float reaches surface
+            if particle.state == StatusCode.ErrorThroughSurface:
+                particle.depth = fieldset.mindepth
+                particle.state = StatusCode.Success
+
+        def CheckError(particle, fieldset, time):
+            if particle.state >= 50:  # This captures all Errors
+                particle.delete()
+
+        class ArgoParticle(JITParticle):
+            cycle_phase = Variable("cycle_phase", dtype=np.int32, initial=0.0)
+            cycle_age = Variable("cycle_age", dtype=np.float32, initial=0.0)
+            drift_age = Variable("drift_age", dtype=np.float32, initial=0.0)
+            salinity = Variable("salinity", initial=np.nan)
+            temperature = Variable("temperature", initial=np.nan)
+
+        # initialize argo floats
         lon = []
         lat = []
         for i in range(len(config.argo_deploylocations)):
@@ -437,7 +487,6 @@ def deployments(config, drifter_time, argo_time):
             runtime=timedelta(weeks=6), dt=timedelta(minutes=5),
             output_file=argo_output_file
         )
-
 
 
 def postprocess():
@@ -473,15 +522,16 @@ def postprocess():
                 max(int(len(time)/20), 1))
 
             # reshaping data to export to csv
-            header = f"'pressure [hPa]','temperature [degC]', 'salinity [g kg-1]'"
+            header = f"pressure [hPa],temperature [degC],salinity [g kg-1]"
             data = np.column_stack([(z/10), T, S])
             new_line = '\n'
-            np.savetxt(f"{os.path.join('results','CTDs','CTD_station_')}{i}.csv", data, fmt="%.4f", header=header, delimiter=',',
-                    comments=f'{x.attrs} {x[0].values}{new_line}{y.attrs}{y[0].values}{new_line}start time: {time[0].values}{new_line}end time: {time[-1].values}{new_line}')
+            np.savetxt(f"{os.path.join('results','CTDs','CTD_station_')}{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
+                        comments=f'longitude,{x[0].values},”{x.attrs}”{new_line}latitude,{y[0].values},”{y.attrs}”{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
             # shutil.rmtree(filename.path)
 
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
     drifter_time, argo_time = sailship(config)
-    deployments(config, drifter_time, argo_time)
+    drifter_deployments(config, drifter_time)
+    argo_deployments(config, argo_time)
     postprocess()

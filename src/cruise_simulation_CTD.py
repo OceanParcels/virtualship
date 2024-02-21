@@ -211,9 +211,9 @@ for i in range(1, ctd+1):
         max(int(len(time)/20), 1))
 
     # reshaping data to export to csv
-    header = f"'pressure [hPa]','temperature [degC]', 'salinity [g kg-1]'"
+    header = f"pressure [hPa],temperature [degC],salinity [g kg-1]"
     data = np.column_stack([(z/10), T, S])
     new_line = '\n'
     np.savetxt(f"./results/CTD_Japan_station_{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
-               comments=f'{x.attrs}{new_line}{x[0].values}{new_line}{y.attrs}{new_line}{y[0].values}{new_line}start time: {time[0].values}{new_line}end time: {time[-1].values}{new_line}')
+               comments=f'longitude,{x[0].values},”{x.attrs}”{new_line}latitude,{y[0].values},”{y.attrs}”{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
 
