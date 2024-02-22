@@ -1,8 +1,10 @@
+# run file from commandline with echo -e "\n\n\n\n\n\n\n\n" | python download_data.py
+
 import os
 import json
 import copernicusmarine
 import datetime
-
+# from virtualship import VirtualShipConfiguration
 
 class VirtualShipConfiguration:
     def __init__(self, json_file):
@@ -11,16 +13,14 @@ class VirtualShipConfiguration:
             for key in json_input:
                 setattr(self, key, json_input[key])
 
-
-download_dict = {
-    'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "studentdata_UV.nc",},
-    'Sdata': {'dataset_id': 'cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i', 'variables': ['so'], 'output_filename': "studentdata_S.nc"},
-    'Tdata': {'dataset_id': 'cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i', 'variables': ['thetao'], 'output_filename': "studentdata_T.nc"}
-}
-
-
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
+
+    download_dict = {
+        'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "studentdata_UV.nc",},
+        'Sdata': {'dataset_id': 'cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i', 'variables': ['so'], 'output_filename': "studentdata_S.nc"},
+        'Tdata': {'dataset_id': 'cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i', 'variables': ['thetao'], 'output_filename': "studentdata_T.nc"}
+    }
 
     for dataset in download_dict:
         copernicusmarine.subset(

@@ -5,6 +5,7 @@ import numpy as np
 import xarray as xr
 import pyproj
 import shutil
+import datetime
 from datetime import timedelta
 from shapely.geometry import Point, Polygon
 from scipy.ndimage import uniform_filter1d
@@ -27,6 +28,12 @@ class VirtualShipConfiguration:
         # validate input, raise ValueErrors if invalid
         if self.region_of_interest["North"] > 90 or self.region_of_interest["South"] < -90 or self.region_of_interest["East"] > 180 or self.region_of_interest["West"] < -180:
             raise ValueError("Invalid coordinates in region of interest")
+        if self.requested_ship_time["start"] > self.requested_ship_time["end"]:
+            raise ValueError("Start time should be before end time")
+        if datetime.datetime.strptime(self.requested_ship_time["end"],"%Y-%m-%dT%H:%M:%S") > datetime.datetime.now()+timedelta(days=2):
+            raise ValueError("End time cannot be more then 2 days into the future")
+        if datetime.datetime.strptime(self.requested_ship_time["end"],"%Y-%m-%dT%H:%M:%S") - datetime.datetime.strptime(self.requested_ship_time["start"],"%Y-%m-%dT%H:%M:%S") > timedelta(days=21):
+            raise ValueError("The time period is too long, maximum is 21 days")                                      
         if len(self.route_coordinates) < 2:
             raise ValueError("Route needs to consist of at least 2 longitude-latitude coordinate sets")
         for coord in self.route_coordinates:
@@ -138,10 +145,10 @@ def create_fieldset(config):
 
     datadirname = os.path.dirname(__file__)
     filenames = {
-        "U": os.path.join(datadirname, "studentdata_UV_klein.nc"),
-        "V": os.path.join(datadirname, "studentdata_UV_klein.nc"),
-        "S": os.path.join(datadirname, "studentdata_S_klein.nc"),
-        "T": os.path.join(datadirname, "studentdata_T_klein.nc")}
+        "U": os.path.join(datadirname, "studentdata_UV.nc"),
+        "V": os.path.join(datadirname, "studentdata_UV.nc"),
+        "S": os.path.join(datadirname, "studentdata_S.nc"),
+        "T": os.path.join(datadirname, "studentdata_T.nc")}
     variables = {'U': 'uo', 'V': 'vo', 'S': 'so', 'T': 'thetao'}
     dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth': 'depth'}
 
@@ -526,8 +533,9 @@ def postprocess():
             data = np.column_stack([(z/10), T, S])
             new_line = '\n'
             np.savetxt(f"{os.path.join('results','CTDs','CTD_station_')}{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
-                        comments=f'longitude,{x[0].values},”{x.attrs}”{new_line}latitude,{y[0].values},”{y.attrs}”{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
+                        comments=f'longitude,{x[0].values},"{x.attrs}"{new_line}latitude,{y[0].values},"{y.attrs}"{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
             # shutil.rmtree(filename.path)
+            print("CTD data postprocessed")
 
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
@@ -535,3 +543,4 @@ if __name__ == '__main__':
     drifter_deployments(config, drifter_time)
     argo_deployments(config, argo_time)
     postprocess()
+    print("All data has been gathered and postprocessed, returning home")
