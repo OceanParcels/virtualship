@@ -8,4 +8,4 @@
 #SBATCH -e log%j.e        # the name of the file where potential errors will be written to. %j will be the jobid determined by SLURM
 
 conda activate parcels
-srun ./cruise_simulation.py           
+srun ./cruise_simulation_CTD.py           
