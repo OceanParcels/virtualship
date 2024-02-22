@@ -535,7 +535,7 @@ def postprocess():
             np.savetxt(f"{os.path.join('results','CTDs','CTD_station_')}{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
                         comments=f'longitude,{x[0].values},"{x.attrs}"{new_line}latitude,{y[0].values},"{y.attrs}"{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
             # shutil.rmtree(filename.path)
-            print("CTD data postprocessed")
+        print("CTD data postprocessed")
 
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
