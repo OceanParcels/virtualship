@@ -1,3 +1,6 @@
+# Install as in https://help.marine.copernicus.eu/en/articles/7970514-copernicus-marine-toolbox-installation
+# test student_input with VirtualshipConfiguration from virtualship.py (different conda env)
+# conda activate cmt_1.0
 # run file from commandline with echo -e "\n\n\n\n\n\n\n\n" | python download_data.py
 
 import os

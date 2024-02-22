@@ -178,6 +178,7 @@ from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 ### Post-processing
 import xarray as xr
 from scipy.ndimage import uniform_filter1d
+import numpy as np
 
 ctd = 5
 # rewrite CTD data to cvs
