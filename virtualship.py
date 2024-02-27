@@ -255,10 +255,14 @@ def sailship(config):
     def CTDcast(particle, fieldset, time):
         # TODO question: if is executed every time... move outside function? Not if "drifting" now possible
         if fieldset.max_depth <= 0:
-            maxdepth = fieldset.max_depth
+            if fieldset.bathymetry[time, particle.lat, particle.lon] < fieldset.max_depth:
+                maxdepth = fieldset.bathymetry[time, particle.lat, particle.lon] + 20
+            else:
+                maxdepth = fieldset.max_depth
         else :
             maxdepth = fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
         winch_speed = -1.0  # sink and rise speed in m/s
+        print(maxdepth)
 
         if particle.raising == 0:
             # Sinking with winch_speed until near seafloor
@@ -315,10 +319,12 @@ def sailship(config):
     for i in range(len(sample_lons)-1):
 
         # execute the ADCP kernels to sample U and V and underway T and S
-        pset_ADCP.execute([SampleVel], dt=adcp_dt, runtime=1, verbose_progress=False)
-        adcp_output_file.write(pset_ADCP, time=pset_ADCP[0].time)
-        pset_UnderwayData.execute([SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False)
-        UnderwayData_output_file.write(pset_UnderwayData, time=pset_ADCP[0].time)
+        if config.ADCP_data:
+            pset_ADCP.execute([SampleVel], dt=adcp_dt, runtime=1, verbose_progress=False)
+            adcp_output_file.write(pset_ADCP, time=pset_ADCP[0].time)
+        if config.underway_data:
+            pset_UnderwayData.execute([SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False)
+            UnderwayData_output_file.write(pset_UnderwayData, time=pset_ADCP[0].time)
         if pset_ADCP[0].time > fieldset.maxtime:
             print("Ship time is over, waiting for drifters and/or Argo floats to finish.")
             return drifter_time, argo_time
@@ -368,10 +374,12 @@ def sailship(config):
             print(f"Gathered data {total_time/3600:.2f} hours since start")
 
     # write the final locations of the ADCP and Underway data particles
-    pset_ADCP.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
-    adcp_output_file.write_latest_locations(pset_ADCP, time=total_time)
-    pset_UnderwayData.execute([SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False)
-    UnderwayData_output_file.write_latest_locations(pset_UnderwayData, time=total_time)
+    if config.adcp_data:
+        pset_ADCP.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
+        adcp_output_file.write_latest_locations(pset_ADCP, time=total_time)
+    if config.underway_data:
+        pset_UnderwayData.execute([SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False)
+        UnderwayData_output_file.write_latest_locations(pset_UnderwayData, time=total_time)
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
     return drifter_time, argo_time
@@ -529,8 +537,8 @@ def postprocess():
                 max(int(len(time)/20), 1))
 
             # reshaping data to export to csv
-            header = f"pressure [hPa],temperature [degC],salinity [g kg-1]"
-            data = np.column_stack([(z/10), T, S])
+            header = f"pressure [dbar],temperature [degC],salinity [g kg-1]"
+            data = np.column_stack([-z, T, S])
             new_line = '\n'
             np.savetxt(f"{os.path.join('results','CTDs','CTD_station_')}{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
                         comments=f'longitude,{x[0].values},"{x.attrs}"{new_line}latitude,{y[0].values},"{y.attrs}"{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
