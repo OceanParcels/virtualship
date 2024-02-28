@@ -9,9 +9,12 @@ To use the material please create an environment called Parcels with the command
 `conda env create -f environment.yml
 
 ### Input data
-The scripts are written to work with A-grid ocean data, specifically that from CMEMS
-Sample instructions for data to be downloaded can be found in 
-`datadownload.py` 
+The scripts are written to work with A-grid ocean data, specifically that from CMEMS. 
+Data can be downloaded with the download_data.py script. For now a different conda env is needed for downloading, see comments in the script.  
 
 ### Sailing the ship
-Fill in the accompanying JSON file and run virtualship.py to start measuring. 
+Fill in the accompanying JSON file and run virtualship.py to start measuring. You can also use Sail_the_ship.ipynb
+
+### Ideas for improvements to be made 
+- ACDP #bins instead of max_depth
+- bug when argo(/drifter?) deployed at final location? depth=(len(time))

@@ -55,6 +55,8 @@ class VirtualShipConfiguration:
         if type(self.CTD_settings['max_depth']) == int:
             if self.CTD_settings['max_depth'] > 0:
                 raise ValueError("Invalid depth for CTD")
+        if len(self.drifter_deploylocations) > 30:
+            raise ValueError("Too many drifter deployment locations, maximum is 30")
         if not len(self.drifter_deploylocations) == 0:
             for coord in self.drifter_deploylocations:
                 if coord not in self.route_coordinates:
@@ -63,6 +65,8 @@ class VirtualShipConfiguration:
                     raise ValueError("Invalid coordinates in route")
                 if not poly.contains(Point(coord)):
                     raise ValueError("Drifter coordinates need to be within the region of interest")
+        if len(self.argo_deploylocations) > 30:
+            raise ValueError("Too many argo deployment locations, maximum is 30")
         if not len(self.argo_deploylocations) == 0:
             for coord in self.argo_deploylocations:
                 if coord not in self.route_coordinates:
@@ -110,7 +114,8 @@ def shiproute(config):
         endlat = config.route_coordinates[i+1][1]
 
         # calculate line string along path with segments every 5 min for ADCP measurements
-        # current cruise speed is 10knots = 5.14 m/s * 60*5 = 1542 m
+        # current cruise speed is 10knots = 5.14 m/s * 60*5 = 1542 m every 5 min
+        # Realistic time between measurements is 2 min on Pelagia according to Floran
         cruise_speed = 5.14
         geod = pyproj.Geod(ellps='WGS84')
         azimuth1, azimuth2, distance = geod.inv(startlong, startlat, endlong, endlat)
@@ -160,6 +165,11 @@ def create_fieldset(config):
         if max(g.depth) > 0:
             g.depth = -g.depth  # make depth negative
     fieldset.mindepth = -fieldset.U.depth[0]  # uppermost layer in the hydrodynamic data
+    if config.CTD_settings["max_depth"] == "max":
+        fieldset.add_constant('max_depth', -fieldset.U.depth[-1])
+    else:
+        fieldset.add_constant('max_depth', config.CTD_settings["max_depth"])
+    fieldset.add_constant("maxtime", fieldset.U.grid.time_full[-1])
 
     # add bathymetry data to the fieldset for CTD cast
     bathymetry_file = os.path.join(datadirname, "GLO-MFC_001_024_mask_bathy.nc")
@@ -231,8 +241,6 @@ def sailship(config):
 
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
     fieldset = create_fieldset(config)
-    fieldset.add_constant('max_depth', config.CTD_settings["max_depth"])
-    fieldset.add_constant("maxtime", fieldset.U.grid.time_full[-1])
 
     sample_lons, sample_lats = shiproute(config)
     print("Arrived in region of interest, starting to gather data")
@@ -262,14 +270,11 @@ def sailship(config):
 
     # define function lowering and raising CTD
     def CTDcast(particle, fieldset, time):
-        # TODO question: if is executed every time... move outside function? Not if "drifting" now possible
-        if not fieldset.max_depth <= 0:
+        # TODO question: if is executed every time... move outside function? Not if "drifting" now possible 
+        if -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] > fieldset.max_depth:
             maxdepth = -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
         else:
-            if -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] > fieldset.max_depth:
-                maxdepth = -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
-            else:
-                maxdepth = fieldset.max_depth
+            maxdepth = fieldset.max_depth
         winch_speed = -1.0  # sink and rise speed in m/s
 
         if particle.raising == 0:
@@ -357,6 +362,7 @@ def sailship(config):
             while (sample_lons[i] - config.drifter_deploylocations[drifter][0]) < 0.01 and (sample_lats[i] - config.drifter_deploylocations[drifter][1]) < 0.01:
                 drifter_time.append(total_time)
                 drifter += 1
+                print(f"Drifter {drifter} deployed at {sample_lons[i]}, {sample_lats[i]}")
                 if drifter == len(config.drifter_deploylocations):
                     break
 
@@ -365,6 +371,7 @@ def sailship(config):
             while (sample_lons[i] - config.argo_deploylocations[argo][0]) < 0.01 and (sample_lats[i] - config.argo_deploylocations[argo][1]) < 0.01:
                 argo_time.append(total_time)
                 argo += 1
+                print(f"Argo {argo} deployed at {sample_lons[i]}, {sample_lats[i]}")
                 if argo == len(config.argo_deploylocations):
                     break
 
@@ -381,7 +388,7 @@ def sailship(config):
             print(f"Gathered data {total_time/3600:.2f} hours since start")
 
     # write the final locations of the ADCP and Underway data particles
-    if config.adcp_data:
+    if config.ADCP_data:
         pset_ADCP.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
         adcp_output_file.write_latest_locations(pset_ADCP, time=total_time)
     if config.underway_data:
@@ -422,7 +429,7 @@ def drifter_deployments(config, drifter_time):
         # Create and execute drifter particles
         pset = ParticleSet(fieldset=fieldset, pclass=DrifterParticle, lon=lon, lat=lat, depth=np.repeat(fieldset.mindepth,len(time)), time=time)
         output_file = pset.ParticleFile(name=os.path.join("results","Drifters.zarr"), outputdt=timedelta(hours=1))
-        pset.execute([AdvectionRK4, SampleT, CheckError], runtime=timedelta(weeks=6), dt=timedelta(minutes=5), output_file=output_file)
+        pset.execute([AdvectionRK4, SampleT, CheckError], runtime=timedelta(weeks=6)-timedelta(seconds=drifter_time[0]), dt=timedelta(minutes=5), output_file=output_file)
 
 
 def argo_deployments(config, argo_time):
@@ -506,7 +513,7 @@ def argo_deployments(config, argo_time):
         argo_output_file = argoset.ParticleFile(name=os.path.join("results","Argos.zarr"), outputdt=timedelta(minutes=5), chunks=(1,500))
         argoset.execute(
             [ArgoVerticalMovement, AdvectionRK4, KeepAtSurface, CheckError],  # list of kernels to be executed
-            runtime=timedelta(weeks=6), dt=timedelta(minutes=5),
+            endtime=datetime.datetime.strptime(config.requested_ship_time["start"],"%Y-%m-%dT%H:%M:%S")+timedelta(weeks=6)-timedelta(seconds=argo_time[0])-timedelta(minutes=5), dt=timedelta(minutes=5),
             output_file=argo_output_file
         )
 
@@ -549,7 +556,7 @@ def postprocess():
             new_line = '\n'
             np.savetxt(f"{os.path.join('results','CTDs','CTD_station_')}{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
                         comments=f'longitude,{x[0].values},"{x.attrs}"{new_line}latitude,{y[0].values},"{y.attrs}"{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
-            # shutil.rmtree(filename.path)
+            shutil.rmtree(filename.path)
         print("CTD data postprocessed")
 
 if __name__ == '__main__':
