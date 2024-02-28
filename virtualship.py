@@ -169,6 +169,15 @@ def create_fieldset(config):
     fieldset.add_field(bathymetry_field)
     # read in data already
     fieldset.computeTimeChunk(0,1)
+
+    if fieldset.U.lon.min() > config.region_of_interest["West"]:
+        raise ValueError("FieldSet western boundary is outside region of interest. Please run download_data.py again.")
+    if fieldset.U.lon.max() < config.region_of_interest["East"]:
+        raise ValueError("FieldSet eastern boundary is outside region of interest. Please run download_data.py again.")
+    if fieldset.U.lat.min() > config.region_of_interest["South"]:
+        raise ValueError("FieldSet southern boundary is outside region of interest. Please run download_data.py again.")
+    if fieldset.U.lat.max() < config.region_of_interest["North"]:
+        raise ValueError("FieldSet northern boundary is outside region of interest. Please run download_data.py again.")
     return fieldset
 
 def create_drifter_fieldset(config):
@@ -254,15 +263,14 @@ def sailship(config):
     # define function lowering and raising CTD
     def CTDcast(particle, fieldset, time):
         # TODO question: if is executed every time... move outside function? Not if "drifting" now possible
-        if fieldset.max_depth <= 0:
-            if fieldset.bathymetry[time, particle.lat, particle.lon] < fieldset.max_depth:
-                maxdepth = fieldset.bathymetry[time, particle.lat, particle.lon] + 20
+        if not fieldset.max_depth <= 0:
+            maxdepth = -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
+        else:
+            if -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] > fieldset.max_depth:
+                maxdepth = -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
             else:
                 maxdepth = fieldset.max_depth
-        else :
-            maxdepth = fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
         winch_speed = -1.0  # sink and rise speed in m/s
-        print(maxdepth)
 
         if particle.raising == 0:
             # Sinking with winch_speed until near seafloor
@@ -341,8 +349,7 @@ def sailship(config):
                 ctd_output_file = pset_CTD.ParticleFile(name=f"{os.path.join('results','CTDs','CTD_')}{ctd}.zarr", outputdt=ctd_dt)
 
                 # record the temperature and salinity of the particle
-                pset_CTD.execute([SampleS, SampleT, CTDcast], runtime=timedelta(hours=8), dt=ctd_dt, 
-                                 output_file=ctd_output_file, verbose_progress=False)
+                pset_CTD.execute([SampleS, SampleT, CTDcast], runtime=timedelta(hours=8), dt=ctd_dt, output_file=ctd_output_file, verbose_progress=False)
                 total_time = pset_CTD.time[0] + timedelta(minutes=20).total_seconds() # add CTD time and 20 minutes for deployment
 
         # check if we are at a drifter deployment location
