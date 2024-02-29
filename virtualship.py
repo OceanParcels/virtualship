@@ -33,7 +33,7 @@ class VirtualShipConfiguration:
         if datetime.datetime.strptime(self.requested_ship_time["end"],"%Y-%m-%dT%H:%M:%S") > datetime.datetime.now()+timedelta(days=2):
             raise ValueError("End time cannot be more then 2 days into the future")
         if datetime.datetime.strptime(self.requested_ship_time["end"],"%Y-%m-%dT%H:%M:%S") - datetime.datetime.strptime(self.requested_ship_time["start"],"%Y-%m-%dT%H:%M:%S") > timedelta(days=21):
-            raise ValueError("The time period is too long, maximum is 21 days")                                      
+            raise ValueError("The time period is too long, maximum is 21 days")
         if len(self.route_coordinates) < 2:
             raise ValueError("Route needs to consist of at least 2 longitude-latitude coordinate sets")
         for coord in self.route_coordinates:
@@ -270,7 +270,7 @@ def sailship(config):
 
     # define function lowering and raising CTD
     def CTDcast(particle, fieldset, time):
-        # TODO question: if is executed every time... move outside function? Not if "drifting" now possible 
+        # TODO question: if is executed every time... move outside function? Not if "drifting" now possible
         if -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] > fieldset.max_depth:
             maxdepth = -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
         else:
@@ -418,7 +418,7 @@ def drifter_deployments(config, drifter_time):
             if particle.state >= 50:  # This captures all Errors
                 particle.delete()
 
-        # initialize drifters 
+        # initialize drifters
         lon = []
         lat = []
         for i in range(len(config.drifter_deploylocations)):
@@ -539,7 +539,7 @@ def postprocess():
             random_walk = np.random.random()/10
             z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
             t_norm = np.linspace(0, 1, num=len(time))
-            # add smoothed random noise scaled with depth 
+            # add smoothed random noise scaled with depth
             # and random (reversed) diversion from initial through time scaled with depth
             S = S + uniform_filter1d(
                 np.random.random(S.shape)/5*(1-z_norm) +
@@ -554,7 +554,7 @@ def postprocess():
             header = f"pressure [dbar],temperature [degC],salinity [g kg-1]"
             data = np.column_stack([-z, T, S])
             new_line = '\n'
-            np.savetxt(f"{os.path.join('results','CTDs','CTD_station_')}{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
+            np.savetxt(f"{os.path.join('results','CTDs','CTD_station_')}{i}.csv", data, fmt="%.4f", header=header, delimiter=',',
                         comments=f'longitude,{x[0].values},"{x.attrs}"{new_line}latitude,{y[0].values},"{y.attrs}"{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
             shutil.rmtree(filename.path)
         print("CTD data postprocessed")
