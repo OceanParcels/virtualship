@@ -243,7 +243,7 @@ def sailship(config):
     fieldset = create_fieldset(config)
 
     sample_lons, sample_lats = shiproute(config)
-    print("Arrived in region of interest, starting to gather data")
+    print("Arrived in region of interest, starting to gather data.")
 
     # Create Vessel Mounted ADCP like particles to sample the ocean
     class VM_ADCPParticle(JITParticle):
@@ -290,7 +290,7 @@ def sailship(config):
                 if particle.depth + particle_ddepth >= -2:
                     # to break the loop ...
                     particle.state = 41
-                    print("CTD cast finished")
+                    print("CTD cast finished.")
 
     # define function sampling Salinity
     def SampleS(particle, fieldset, time):
@@ -384,8 +384,8 @@ def sailship(config):
         total_time += adcp_dt
         pset_ADCP.time_nextloop[:] = total_time
         pset_UnderwayData.time_nextloop[:] = total_time
-        if i % 48 == 0:
-            print(f"Gathered data {total_time/3600:.2f} hours since start")
+        if i % 96 == 0:
+            print(f"Gathered data {timedelta(seconds=total_time)} hours since start.")
 
     # write the final locations of the ADCP and Underway data particles
     if config.ADCP_data:
@@ -568,7 +568,7 @@ def postprocess():
             np.savetxt(f"{os.path.join('results','CTDs','CTD_station_')}{i}.csv", data, fmt="%.4f", header=header, delimiter=',',
                         comments=f'longitude,{x[0].values},"{x.attrs}"{new_line}latitude,{y[0].values},"{y.attrs}"{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
             shutil.rmtree(filename.path)
-        print("CTD data postprocessed")
+    print("CTD data postprocessed.")
 
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
@@ -576,4 +576,4 @@ if __name__ == '__main__':
     drifter_deployments(config, drifter_time)
     argo_deployments(config, argo_time)
     postprocess()
-    print("All data has been gathered and postprocessed, returning home")
+    print("All data has been gathered and postprocessed, returning home.")
