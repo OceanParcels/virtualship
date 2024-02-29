@@ -429,7 +429,15 @@ def drifter_deployments(config, drifter_time):
         # Create and execute drifter particles
         pset = ParticleSet(fieldset=fieldset, pclass=DrifterParticle, lon=lon, lat=lat, depth=np.repeat(fieldset.mindepth,len(time)), time=time)
         output_file = pset.ParticleFile(name=os.path.join("results","Drifters.zarr"), outputdt=timedelta(hours=1))
-        pset.execute([AdvectionRK4, SampleT, CheckError], runtime=timedelta(weeks=6)-timedelta(seconds=drifter_time[0]), dt=timedelta(minutes=5), output_file=output_file)
+
+        fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
+        drifter_endtime = np.array((datetime.datetime.strptime(config.requested_ship_time["start"],"%Y-%m-%dT%H:%M:%S") + timedelta(weeks=6))).astype('datetime64[ms]')
+
+        pset.execute(
+            [AdvectionRK4, SampleT, CheckError],
+            endtime=min(fieldset_endtime, drifter_endtime), dt=timedelta(minutes=5),
+            output_file=output_file
+        )
 
 
 def argo_deployments(config, argo_time):
@@ -511,9 +519,12 @@ def argo_deployments(config, argo_time):
         # Create and execute argo particles
         argoset = ParticleSet(fieldset=fieldset, pclass=ArgoParticle, lon=lon, lat=lat, depth=np.repeat(fieldset.mindepth,len(time)), time=time)
         argo_output_file = argoset.ParticleFile(name=os.path.join("results","Argos.zarr"), outputdt=timedelta(minutes=5), chunks=(1,500))
+        fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
+        argo_endtime = np.array((datetime.datetime.strptime(config.requested_ship_time["start"],"%Y-%m-%dT%H:%M:%S") + timedelta(weeks=6))).astype('datetime64[ms]')
+
         argoset.execute(
             [ArgoVerticalMovement, AdvectionRK4, KeepAtSurface, CheckError],  # list of kernels to be executed
-            endtime=datetime.datetime.strptime(config.requested_ship_time["start"],"%Y-%m-%dT%H:%M:%S")+timedelta(weeks=6)-timedelta(seconds=argo_time[0])-timedelta(minutes=5), dt=timedelta(minutes=5),
+            endtime=min(fieldset_endtime, argo_endtime), dt=timedelta(minutes=5),
             output_file=argo_output_file
         )
 
