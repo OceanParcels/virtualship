@@ -17,10 +17,11 @@ class VirtualShipConfiguration:
                 setattr(self, key, json_input[key])
 
 if __name__ == '__main__':
-    config = VirtualShipConfiguration('student_input.json')
+    config = VirtualShipConfiguration('student_input_groupF.json')
+    datadir = 'data_groupF'
 
     download_dict = {
-        'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "studentdata_UV.nc",},
+        'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "studentdata_UV.nc"},
         'Sdata': {'dataset_id': 'cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i', 'variables': ['so'], 'output_filename': "studentdata_S.nc"},
         'Tdata': {'dataset_id': 'cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i', 'variables': ['thetao'], 'output_filename': "studentdata_T.nc"}
     }
@@ -37,14 +38,15 @@ if __name__ == '__main__':
             end_datetime=config.requested_ship_time["end"],
             minimum_depth=0.49402499198913574,
             maximum_depth=5727.9169921875,
-            output_filename=download_dict[dataset]['output_filename']
+            output_filename=download_dict[dataset]['output_filename'],
+            output_directory=datadir
         )
 
 
     if len(config.drifter_deploylocations) > 0:
 
         download_dict = {
-            'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "drifterdata_UV.nc",},
+            'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "drifterdata_UV.nc"},
             'Tdata': {'dataset_id': 'cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i', 'variables': ['thetao'], 'output_filename': "drifterdata_T.nc"}
         }    
 
@@ -60,12 +62,13 @@ if __name__ == '__main__':
                 end_datetime=f'{datetime.datetime.strptime(config.requested_ship_time["end"],"%Y-%m-%dT%H:%M:%S")+datetime.timedelta(days=21):%Y-%m-%dT%H:%M:%S}',
                 minimum_depth=0.49402499198913574,
                 maximum_depth=0.49402499198913574,
-                output_filename=download_dict[dataset]['output_filename']
+                output_filename=download_dict[dataset]['output_filename'],
+                output_directory=datadir
             )
 
     if len(config.argo_deploylocations) > 0:
         download_dict = {
-            'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "argodata_UV.nc",},
+            'UVdata': {'dataset_id': 'cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i', 'variables': ['uo', 'vo'], 'output_filename': "argodata_UV.nc"},
             'Sdata' : {'dataset_id': 'cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i', 'variables': ['so'], 'output_filename': "argodata_S.nc"},
             'Tdata': {'dataset_id': 'cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i', 'variables': ['thetao'], 'output_filename': "argodata_T.nc"}
         }    
@@ -82,5 +85,6 @@ if __name__ == '__main__':
                 end_datetime=f'{datetime.datetime.strptime(config.requested_ship_time["end"],"%Y-%m-%dT%H:%M:%S")+datetime.timedelta(days=21):%Y-%m-%dT%H:%M:%S}',
                 minimum_depth=0.49402499198913574,
                 maximum_depth=5727.9169921875,
-                output_filename=download_dict[dataset]['output_filename']
+                output_filename=download_dict[dataset]['output_filename'],
+                output_directory=datadir
             )

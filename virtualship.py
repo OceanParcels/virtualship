@@ -39,8 +39,8 @@ class VirtualShipConfiguration:
         for coord in self.route_coordinates:
             if coord[1] > 90 or coord[1] < -90 or coord[0] > 180 or coord[0] < -180:
                 raise ValueError("Invalid coordinates in route")
-            if not poly.contains(Point(coord)):
-                raise ValueError("Route coordinates need to be within the region of interest")
+            # if not poly.contains(Point(coord)):
+            #     raise ValueError("Route coordinates need to be within the region of interest")
         if not len(self.CTD_locations) == 0:
             for coord in self.CTD_locations:
                 if coord not in self.route_coordinates:
