@@ -359,7 +359,7 @@ def sailship(config):
 
         # check if we are at a drifter deployment location
         if drifter < len(config.drifter_deploylocations):
-            while (sample_lons[i] - config.drifter_deploylocations[drifter][0]) < 0.01 and (sample_lats[i] - config.drifter_deploylocations[drifter][1]) < 0.01:
+            while abs(sample_lons[i] - config.drifter_deploylocations[drifter][0]) < 0.01 and abs(sample_lats[i] - config.drifter_deploylocations[drifter][1]) < 0.01:
                 drifter_time.append(total_time)
                 drifter += 1
                 print(f"Drifter {drifter} deployed at {sample_lons[i]}, {sample_lats[i]}")
