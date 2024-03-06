@@ -124,7 +124,7 @@ def shiproute(config):
             lons = np.append(lons, r.lons) # stored as a list of arrays
             lats = np.append(lats, r.lats)
         else:
-            lons = np.append(lons, startlong)
+            lons = np.append(lons, endlong)
             lats = np.append(lats, endlat)
 
     # initial_idx will add begin point to each list (but not end point to avoid doubling) so add final endpoint manually
@@ -547,7 +547,7 @@ def postprocess():
             S = ds["salinity"][:].squeeze()
             ds.close()
 
-            if time and time.size!=0:
+            if (time is not None) and (time.size!=0):
                 random_walk = np.random.random()/10
                 z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
                 t_norm = np.linspace(0, 1, num=len(time))
