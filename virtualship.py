@@ -547,7 +547,7 @@ def postprocess():
             S = ds["salinity"][:].squeeze()
             ds.close()
 
-            if len(time) != 0:
+            if time is not None and len(time) != 0:
                 random_walk = np.random.random()/10
                 z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
                 t_norm = np.linspace(0, 1, num=len(time))
