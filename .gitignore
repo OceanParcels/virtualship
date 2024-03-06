@@ -12,6 +12,7 @@ __pycache__/
 *.geojson
 *.zarr
 *.nc
+*.zip
 
 # C extensions
 *.so

@@ -547,19 +547,20 @@ def postprocess():
             S = ds["salinity"][:].squeeze()
             ds.close()
 
-            random_walk = np.random.random()/10
-            z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
-            t_norm = np.linspace(0, 1, num=len(time))
-            # add smoothed random noise scaled with depth
-            # and random (reversed) diversion from initial through time scaled with depth
-            S = S + uniform_filter1d(
-                np.random.random(S.shape)/5*(1-z_norm) +
-                random_walk*(np.max(S).values - np.min(S).values)*(1-z_norm)*t_norm/10,
-                max(int(len(time)/40), 1))
-            T = T + uniform_filter1d(
-                np.random.random(T.shape)*5*(1-z_norm) -
-                random_walk/2*(np.max(T).values - np.min(T).values)*(1-z_norm)*t_norm/10,
-                max(int(len(time)/20), 1))
+            if len(time) != 0:
+                random_walk = np.random.random()/10
+                z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
+                t_norm = np.linspace(0, 1, num=len(time))
+                # add smoothed random noise scaled with depth
+                # and random (reversed) diversion from initial through time scaled with depth
+                S = S + uniform_filter1d(
+                    np.random.random(S.shape)/5*(1-z_norm) +
+                    random_walk*(np.max(S).values - np.min(S).values)*(1-z_norm)*t_norm/10,
+                    max(int(len(time)/40), 1))
+                T = T + uniform_filter1d(
+                    np.random.random(T.shape)*5*(1-z_norm) -
+                    random_walk/2*(np.max(T).values - np.min(T).values)*(1-z_norm)*t_norm/10,
+                    max(int(len(time)/20), 1))
 
             # reshaping data to export to csv
             header = f"pressure [dbar],temperature [degC],salinity [g kg-1]"
