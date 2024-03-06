@@ -368,7 +368,7 @@ def sailship(config):
 
         # check if we are at a argo deployment location
         if argo < len(config.argo_deploylocations):
-            while (sample_lons[i] - config.argo_deploylocations[argo][0]) < 0.01 and (sample_lats[i] - config.argo_deploylocations[argo][1]) < 0.01:
+            while abs(sample_lons[i] - config.argo_deploylocations[argo][0]) < 0.01 and abs(sample_lats[i] - config.argo_deploylocations[argo][1]) < 0.01:
                 argo_time.append(total_time)
                 argo += 1
                 print(f"Argo {argo} deployed at {sample_lons[i]}, {sample_lats[i]}")
