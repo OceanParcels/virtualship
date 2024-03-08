@@ -453,7 +453,8 @@ def argo_deployments(config, argo_time):
             if particle.cycle_phase == 0:
                 # Phase 0: Sinking with vertical_speed until depth is driftdepth
                 particle_ddepth += fieldset.vertical_speed * particle.dt
-                if particle.depth >= fieldset.driftdepth:
+                if particle.depth + particle_ddepth >= fieldset.driftdepth:
+                    particle_ddepth = fieldset.driftdepth - particle.depth
                     particle.cycle_phase = 1
 
             elif particle.cycle_phase == 1:
@@ -466,15 +467,16 @@ def argo_deployments(config, argo_time):
             elif particle.cycle_phase == 2:
                 # Phase 2: Sinking further to maxdepth
                 particle_ddepth += fieldset.vertical_speed * particle.dt
-                if particle.depth <= fieldset.maxdepth:
+                if particle.depth + particle_ddepth <= fieldset.maxdepth:
+                    particle_ddepth = fieldset.maxdepth - particle.depth
                     particle.cycle_phase = 3
 
             elif particle.cycle_phase == 3:
                 # Phase 3: Rising with vertical_speed until at surface
                 particle_ddepth -= fieldset.vertical_speed * particle.dt
                 particle.cycle_age += particle.dt # solve issue of not updating cycle_age during ascent
-                if particle.depth >= fieldset.mindepth:
-                    particle.depth = fieldset.mindepth
+                if particle.depth + particle_ddepth >= fieldset.mindepth:
+                    particle_ddepth = fieldset.mindepth - particle.depth
                     particle.temperature = math.nan  # reset temperature to NaN at end of sampling cycle
                     particle.salinity = math.nan  # idem
                     particle.cycle_phase = 4
