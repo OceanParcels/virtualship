@@ -453,7 +453,7 @@ def argo_deployments(config, argo_time):
             if particle.cycle_phase == 0:
                 # Phase 0: Sinking with vertical_speed until depth is driftdepth
                 particle_ddepth += fieldset.vertical_speed * particle.dt
-                if particle.depth + particle_ddepth >= fieldset.driftdepth:
+                if particle.depth + particle_ddepth <= fieldset.driftdepth:
                     particle_ddepth = fieldset.driftdepth - particle.depth
                     particle.cycle_phase = 1
 
