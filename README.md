@@ -18,3 +18,5 @@ Fill in the accompanying JSON file and run virtualship.py to start measuring. Yo
 ### Ideas for improvements to be made 
 - ACDP #bins instead of max_depth
 - bug when argo(/drifter?) deployed at final location? depth=(len(time))
+- documentation that ships sails great circle path
+- CTDs op land?

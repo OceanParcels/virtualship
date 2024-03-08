@@ -535,9 +535,9 @@ def postprocess():
     if os.path.isdir(os.path.join("results","CTDs")):
         i = 0
         for filename in os.scandir(os.path.join("results","CTDs")):
-            # not so happy about using filename and i as they might not be identical
+            # TODO not so happy about using filename and i as they might not be identical
             if filename.path.endswith(".zarr"):
-                try: 
+                try: #too many errors, just skip the faulty zarr files
                     i += 1
                     # Open output and read to x, y, z
                     ds = xr.open_zarr(filename.path)
@@ -549,20 +549,19 @@ def postprocess():
                     S = ds["salinity"][:].squeeze()
                     ds.close()
 
-                    if (time is not None) and (time.size!=0):
-                        random_walk = np.random.random()/10
-                        z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
-                        t_norm = np.linspace(0, 1, num=len(time))
-                        # add smoothed random noise scaled with depth
-                        # and random (reversed) diversion from initial through time scaled with depth
-                        S = S + uniform_filter1d(
-                            np.random.random(S.shape)/5*(1-z_norm) +
-                            random_walk*(np.max(S).values - np.min(S).values)*(1-z_norm)*t_norm/10,
-                            max(int(len(time)/40), 1))
-                        T = T + uniform_filter1d(
-                            np.random.random(T.shape)*5*(1-z_norm) -
-                            random_walk/2*(np.max(T).values - np.min(T).values)*(1-z_norm)*t_norm/10,
-                            max(int(len(time)/20), 1))
+                    random_walk = np.random.random()/10
+                    z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
+                    t_norm = np.linspace(0, 1, num=len(time))
+                    # add smoothed random noise scaled with depth
+                    # and random (reversed) diversion from initial through time scaled with depth
+                    S = S + uniform_filter1d(
+                        np.random.random(S.shape)/5*(1-z_norm) +
+                        random_walk*(np.max(S).values - np.min(S).values)*(1-z_norm)*t_norm/10,
+                        max(int(len(time)/40), 1))
+                    T = T + uniform_filter1d(
+                        np.random.random(T.shape)*5*(1-z_norm) -
+                        random_walk/2*(np.max(T).values - np.min(T).values)*(1-z_norm)*t_norm/10,
+                        max(int(len(time)/20), 1))
 
                     # reshaping data to export to csv
                     header = f"pressure [dbar],temperature [degC],salinity [g kg-1]"
