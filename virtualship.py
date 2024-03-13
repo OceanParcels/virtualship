@@ -351,7 +351,7 @@ def sailship(config):
                 pset_CTD = ParticleSet(fieldset=fieldset, pclass=CTDParticle, lon=sample_lons[i], lat=sample_lats[i], depth=fieldset.mindepth, time=total_time)
 
                 # create a ParticleFile to store the CTD output
-                ctd_output_file = pset_CTD.ParticleFile(name=f"{os.path.join('results','CTDs','CTD_')}{ctd}.zarr", outputdt=ctd_dt)
+                ctd_output_file = pset_CTD.ParticleFile(name=f"{os.path.join('results','CTDs','CTD_')}{ctd:03d}.zarr", outputdt=ctd_dt)
 
                 # record the temperature and salinity of the particle
                 pset_CTD.execute([SampleS, SampleT, CTDcast], runtime=timedelta(hours=8), dt=ctd_dt, output_file=ctd_output_file, verbose_progress=False)
@@ -536,13 +536,13 @@ def postprocess():
 
     if os.path.isdir(os.path.join("results","CTDs")):
         i = 0
-        for filename in os.scandir(os.path.join("results","CTDs")):
-            # TODO not so happy about using filename and i as they might not be identical
-            if filename.path.endswith(".zarr"):
+        filenames = os.listdir(os.path.join("results","CTDs"))
+        for filename in sorted(filenames):
+            if filename.endswith(".zarr"):
                 try: #too many errors, just skip the faulty zarr files
                     i += 1
                     # Open output and read to x, y, z
-                    ds = xr.open_zarr(filename.path)
+                    ds = xr.open_zarr(os.path.join("results","CTDs",filename))
                     x = ds["lon"][:].squeeze()
                     y = ds["lat"][:].squeeze()
                     z = ds["z"][:].squeeze()
