@@ -344,7 +344,7 @@ def sailship(config):
 
         # check if virtual ship is at a CTD station
         if ctd < len(config.CTD_locations):
-            if (sample_lons[i] - config.CTD_locations[ctd][0]) < 0.001 and (sample_lats[i] - config.CTD_locations[ctd][1]) < 0.001:
+            if abs(sample_lons[i] - config.CTD_locations[ctd][0]) < 0.001 and abs(sample_lats[i] - config.CTD_locations[ctd][1]) < 0.001:
                 ctd += 1
 
                 # release CTD particle
