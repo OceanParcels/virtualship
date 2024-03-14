@@ -20,3 +20,4 @@ Fill in the accompanying JSON file and run virtualship.py to start measuring. Yo
 - bug when argo(/drifter?) deployed at final location? depth=(len(time))
 - documentation that ships sails great circle path
 - CTDs op land?
+- Argo's/drifters that collide with land. Chance to break?

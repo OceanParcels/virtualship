@@ -331,6 +331,9 @@ def sailship(config):
     # run the model for the length of the sample_lons list
     for i in range(len(sample_lons)-1):
 
+        if i % 96 == 0:
+            print(f"Gathered data {timedelta(seconds=total_time)} hours since start.")
+
         # execute the ADCP kernels to sample U and V and underway T and S
         if config.ADCP_data:
             pset_ADCP.execute([SampleVel], dt=adcp_dt, runtime=1, verbose_progress=False)
@@ -384,8 +387,6 @@ def sailship(config):
         total_time += adcp_dt
         pset_ADCP.time_nextloop[:] = total_time
         pset_UnderwayData.time_nextloop[:] = total_time
-        if i % 96 == 0:
-            print(f"Gathered data {timedelta(seconds=total_time)} hours since start.")
 
     # write the final locations of the ADCP and Underway data particles
     if config.ADCP_data:
@@ -396,7 +397,7 @@ def sailship(config):
         UnderwayData_output_file.write_latest_locations(pset_UnderwayData, time=total_time)
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
-    return drifter_time, argo_time
+    return drifter_time, argo_time, total_time
 
 
 def drifter_deployments(config, drifter_time):
@@ -577,10 +578,26 @@ def postprocess():
                     continue
         print("CTD data postprocessed.")
 
+def costs(config, total_time):
+    '''Calculates cost of the virtual ship'''
+
+    ship_cost_per_day = 30000
+    drifter_deploy_cost = 2500
+    argo_deploy_cost = 15000
+
+    ship_cost = ship_cost_per_day/24 * total_time//3600
+    argo_cost = len(config.argo_deploylocations) * argo_deploy_cost
+    drifter_cost = len(config.drifter_deploylocations) * drifter_deploy_cost
+    
+    cost = ship_cost + argo_cost + drifter_cost
+    return cost
+
 if __name__ == '__main__':
     config = VirtualShipConfiguration('student_input.json')
-    drifter_time, argo_time = sailship(config)
-    drifter_deployments(config, drifter_time)
-    argo_deployments(config, argo_time)
-    postprocess()
+    drifter_time, argo_time, total_time = sailship(config)
+    # drifter_deployments(config, drifter_time)
+    # argo_deployments(config, argo_time)
+    # postprocess()
     print("All data has been gathered and postprocessed, returning home.")
+    cost = costs(config, total_time)
+    print(f"This cruise took {timedelta(seconds=total_time)} and would have cost {cost:,.0f} euros.")
