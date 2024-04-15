@@ -1,5 +1,5 @@
 def costs(config, total_time):
-    '''Calculates cost of the virtual ship'''
+    '''Calculates cost of the virtual ship (in US$)'''
 
     ship_cost_per_day = 30000
     drifter_deploy_cost = 2500
