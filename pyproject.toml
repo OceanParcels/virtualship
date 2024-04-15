@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "virtual_ship"
-description = "Emma's work for the MSc student material. TODO Emma make a good description"
+description = "Code for the Virtual Ship Classroom, where Marine Scientists can combine Copernicus Marine Data with an OceanParcels ship to go on a virtual expedition."
 readme = "README.md"
 dynamic = ["version"]
 authors = [{ name = "oceanparcels.org team" }]
