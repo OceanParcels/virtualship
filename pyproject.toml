@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools >= 61.0", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "virtual_ship"
+description = "Code for the Virtual Ship Classroom, where Marine Scientists can combine Copernicus Marine Data with an OceanParcels ship to go on a virtual expedition."
+readme = "README.md"
+dynamic = ["version"]
+authors = [{ name = "oceanparcels.org team" }]
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Education",
+    "Intended Audience :: Education",
+]
+dependencies = [
+    "shapely >= 2, < 3",
+    "pyproj >= 3, < 4",
+    "parcels >= 3, < 4",
+    "scipy >= 1, < 2",
+    "xarray >= 2023, < 2024"
+]
+
+[project.urls]
+homepage = "https://oceanparcels.org/"
+repository = "https://github.com/OceanParcels/Virtual_ship_classroom"
+tracker = "https://github.com/OceanParcels/Virtual_ship_classroom/issues"
+
+[tool.setuptools]
+packages = ["virtual_ship"]
+
+[tool.setuptools_scm]
+write_to = "virtual_ship/_version_setup.py"
+local_scheme = "no-local-version"
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+
+# Other tools will be added soon.
