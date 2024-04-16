@@ -24,7 +24,13 @@ classifiers = [
     "Topic :: Education",
     "Intended Audience :: Education",
 ]
-dependencies = ["shapely >= 2, < 3", "pyproj > 3, < 4", "parcels > 3, < 4"]
+dependencies = [
+    "shapely >= 2, < 3",
+    "pyproj >= 3, < 4",
+    "parcels >= 3, < 4",
+    "scipy >= 1, < 2",
+    "xarray >= 2023, < 2024"
+]
 
 [project.urls]
 homepage = "https://oceanparcels.org/"
