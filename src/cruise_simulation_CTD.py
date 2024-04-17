@@ -2,13 +2,18 @@
 # # Script to simulate a cruise with CTD casts and ADCP data
 # # Simulating CTD data near Japan in Eddy
 
+from datetime import timedelta
+
 import numpy as np
 import pyproj
-from datetime import timedelta
-from shapely.geometry import Point, Polygon
-from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 
-# # set initial location as lon-lat EW-NS 
+### Post-processing
+import xarray as xr
+from parcels import Field, FieldSet, JITParticle, ParticleSet, Variable
+from scipy.ndimage import uniform_filter1d
+from shapely.geometry import Point, Polygon
+
+# # set initial location as lon-lat EW-NS
 # coords_input = [[154, 38.1], [155, 38.1], [156, 38.1], [157, 38.1], [158, 38.1]]
 
 # # Load the CMEMS data (3 weeks for IPO)
@@ -17,7 +22,7 @@ from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 #     "U": f"{dataset_folder}/JapanUV.nc",
 #     "V": f"{dataset_folder}/JapanUV.nc",
 #     "S": f"{dataset_folder}/JapanS.nc",
-#     "T": f"{dataset_folder}/JapanT.nc"}  
+#     "T": f"{dataset_folder}/JapanT.nc"}
 # variables = {'U': 'uo', 'V': 'vo', 'S':'so', 'T':'thetao'}
 # dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time', 'depth':'depth'}
 
@@ -74,8 +79,8 @@ from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 #         sample_lons.append(lons[i])
 #         sample_lats.append(lats[i])
 
-# ### Define particles and sampling functions 
-        
+# ### Define particles and sampling functions
+
 # # Create ADCP like particles to sample the ocean
 # class ADCPParticle(JITParticle):
 #     """Define a new particle class that does ADCP like measurements"""
@@ -103,13 +108,13 @@ from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 #     if particle.raising == 0:
 #         # Sinking with vertical_speed until near seafloor
 #         particle_ddepth = vertical_speed * particle.dt
-#         if particle.depth >= 2000: #(seafloor - 20): 
+#         if particle.depth >= 2000: #(seafloor - 20):
 #             particle.raising = 1
 
 #     if particle.raising == 1:
 #         # Rising with vertical_speed until depth is 2 m
 #         if particle.depth > 2:
-#             particle_ddepth = -vertical_speed * particle.dt  
+#             particle_ddepth = -vertical_speed * particle.dt
 #             if particle.depth + particle_ddepth <= 2:
 #                 # to break the loop ...
 #                 particle.state = 41
@@ -139,7 +144,7 @@ from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 # adcp_output_file = pset.ParticleFile(name="./results/Japan_ADCP.zarr")
 # adcp_dt = timedelta(minutes=5).total_seconds() # timestep of ADCP output, every 5 min == 1080 m (3.6*60*5 =m/s*s/min*min)
 
-# # # initialize CTD station number and time 
+# # # initialize CTD station number and time
 # total_time = timedelta(hours=0).total_seconds()
 # ctd = 0
 # ctd_dt = timedelta(seconds=10) # timestep of CTD output reflecting post-proces binning into 10m bins
@@ -148,13 +153,13 @@ from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 # for i in range(len(sample_lons)-1):
 
 #     #vexecute the kernels to sample U and V
-#     pset.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False) 
+#     pset.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
 #     adcp_output_file.write(pset, time=pset[0].time)
 
 #     # check if we are at a CTD station
 #     if (sample_lons[i] - coords[ctd][0]) < 0.01 and (sample_lats[i] - coords[ctd][1]) < 0.01:
 #         ctd += 1
-        
+
 #         # release CTD particle
 #         pset_CTD = ParticleSet(fieldset=fieldset, pclass=CTDParticle, lon=sample_lons[i], lat=sample_lats[i], depth=2, time=total_time)
 
@@ -168,22 +173,18 @@ from parcels import Field, FieldSet, JITParticle, Variable, ParticleSet
 #     # update the particle time and location
 #     pset.lon_nextloop[:] = sample_lons[i+1]
 #     pset.lat_nextloop[:] = sample_lats[i+1]
-    
+
 #     total_time += adcp_dt
 #     pset.time_nextloop[:] = total_time
 # # write the final locations of the ADCP particles
 # pset.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
 # adcp_output_file.write_latest_locations(pset, time=total_time)
 
-### Post-processing
-import xarray as xr
-from scipy.ndimage import uniform_filter1d
-import numpy as np
 
 ctd = 5
 # rewrite CTD data to cvs
-for i in range(1, ctd+1):
-    
+for i in range(1, ctd + 1):
+
     # Open output and read to x, y, z
     ds = xr.open_zarr(f"./results/CTD_Japan_{i}.zarr")
     x = ds["lon"][:].squeeze()
@@ -195,27 +196,43 @@ for i in range(1, ctd+1):
     ds.close()
 
     # add some noise
-    random_walk = np.random.random()/10
-    z_norm = (z-np.min(z))/(np.max(z)-np.min(z))
+    random_walk = np.random.random() / 10
+    z_norm = (z - np.min(z)) / (np.max(z) - np.min(z))
     t_norm = np.linspace(0, 1, num=len(time))
     # dS = abs(np.append(0, np.diff(S))) # scale noise with gradient
     # for j in range(5, 0, -1):
     #     dS[dS<1*10**-j] = 0.5-j/10
-    # add smoothed random noise scaled with depth (and OPTIONAL with gradient for S) 
-    # and random (reversed) diversion from initial through time scaled with depth 
+    # add smoothed random noise scaled with depth (and OPTIONAL with gradient for S)
+    # and random (reversed) diversion from initial through time scaled with depth
     S = S + uniform_filter1d(
-        np.random.random(S.shape)/5*(1-z_norm) + 
-        random_walk*(np.max(S).values - np.min(S).values)*(1-z_norm)*t_norm/10, 
-        max(int(len(time)/40), 1))
+        np.random.random(S.shape) / 5 * (1 - z_norm)
+        + random_walk
+        * (np.max(S).values - np.min(S).values)
+        * (1 - z_norm)
+        * t_norm
+        / 10,
+        max(int(len(time) / 40), 1),
+    )
     T = T + uniform_filter1d(
-        np.random.random(T.shape)*5*(1-z_norm) - 
-        random_walk/2*(np.max(T).values - np.min(T).values)*(1-z_norm)*t_norm/10, 
-        max(int(len(time)/20), 1))
+        np.random.random(T.shape) * 5 * (1 - z_norm)
+        - random_walk
+        / 2
+        * (np.max(T).values - np.min(T).values)
+        * (1 - z_norm)
+        * t_norm
+        / 10,
+        max(int(len(time) / 20), 1),
+    )
 
     # reshaping data to export to csv
     header = f"pressure [hPa],temperature [degC],salinity [g kg-1]"
-    data = np.column_stack([(z/10), T, S])
-    new_line = '\n'
-    np.savetxt(f"./results/CTD_Japan_station_{i}.csv", data, fmt="%.4f", header=header, delimiter=',', 
-               comments=f'longitude,{x[0].values},”{x.attrs}”{new_line}latitude,{y[0].values},”{y.attrs}”{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}')
-
+    data = np.column_stack([(z / 10), T, S])
+    new_line = "\n"
+    np.savetxt(
+        f"./results/CTD_Japan_station_{i}.csv",
+        data,
+        fmt="%.4f",
+        header=header,
+        delimiter=",",
+        comments=f"longitude,{x[0].values},”{x.attrs}”{new_line}latitude,{y[0].values},”{y.attrs}”{new_line}start time,{time[0].values}{new_line}end time,{time[-1].values}{new_line}",
+    )

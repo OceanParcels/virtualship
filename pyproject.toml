@@ -29,7 +29,7 @@ dependencies = [
     "pyproj >= 3, < 4",
     "parcels >= 3, < 4",
     "scipy >= 1, < 2",
-    "xarray >= 2023, < 2024"
+    "xarray >= 2023, < 2024",
 ]
 
 [project.urls]
@@ -44,8 +44,21 @@ packages = ["virtual_ship"]
 write_to = "virtual_ship/_version_setup.py"
 local_scheme = "no-local-version"
 
+[project.optional-dependencies]
+dev = [
+    "black == 24.4.0",
+    "darglint == 1.8.1",
+    "flake8 == 7.0.0",
+    "Flake8-pyproject == 1.2.3",
+    "isort == 5.13.2",
+    "pydocstyle == 6.3.0",
+    "sort-all == 1.2.0",
+]
+
 [tool.isort]
 profile = "black"
 skip_gitignore = true
 
-# Other tools will be added soon.
+[tool.flake8]
+extend-ignore = "E501"     # Don't check line length.
+docstring_style = "sphinx" # Use sphinx docstring style for darglint plugin.
