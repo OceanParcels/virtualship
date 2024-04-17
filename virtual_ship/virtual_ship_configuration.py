@@ -1,12 +1,23 @@
-from shapely.geometry import Point, Polygon
-import os
-import json
+"""VirtualShipConfiguration class."""
+
 import datetime
+import json
+import os
 from datetime import timedelta
+
+from shapely.geometry import Point, Polygon
 
 
 class VirtualShipConfiguration:
+    """Configuration of the virtual ship, initialized from a json file."""
+
     def __init__(self, json_file):
+        """
+        Initialize this object.
+
+        :param json_file: Path to the JSON file to init from.
+        :raises ValueError: If JSON file not valid.
+        """
         with open(os.path.join(os.path.dirname(__file__), json_file), "r") as file:
             json_input = json.loads(file.read())
             for key in json_input:
@@ -59,12 +70,12 @@ class VirtualShipConfiguration:
                     raise ValueError(
                         "CTD coordinates need to be within the region of interest"
                     )
-        if type(self.CTD_settings["max_depth"]) != int:
+        if type(self.CTD_settings["max_depth"]) is not int:
             if self.CTD_settings["max_depth"] != "max":
                 raise ValueError(
                     'Specify "max" for maximum depth or a negative integer for max_depth in CTD_settings'
                 )
-        if type(self.CTD_settings["max_depth"]) == int:
+        if type(self.CTD_settings["max_depth"]) is int:
             if self.CTD_settings["max_depth"] > 0:
                 raise ValueError("Invalid depth for CTD")
         if len(self.drifter_deploylocations) > 30:
@@ -116,7 +127,7 @@ class VirtualShipConfiguration:
             raise ValueError(
                 "Specify negative depth. Max depth for argo is -5727 m due to data availability"
             )
-        if type(self.argo_characteristics["vertical_speed"]) != float:
+        if type(self.argo_characteristics["vertical_speed"]) is not float:
             raise ValueError("Specify vertical speed for argo with decimals in m/s")
         if self.argo_characteristics["vertical_speed"] > 0:
             self.argo_characteristics["vertical_speed"] = -self.argo_characteristics[
