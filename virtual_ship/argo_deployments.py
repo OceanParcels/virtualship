@@ -15,8 +15,10 @@ from parcels import (
     Variable,
 )
 
+from .virtual_ship_configuration import VirtualShipConfiguration
 
-def argo_deployments(config, argo_time, data_dir: str):
+
+def argo_deployments(config: VirtualShipConfiguration, argo_time):
     """
     Deploy argo floats.
 
@@ -28,7 +30,10 @@ def argo_deployments(config, argo_time, data_dir: str):
 
     if len(config.argo_deploylocations) > 0:
 
-        fieldset = create_argo_fieldset(config, data_dir)
+        # fieldset = create_argo_fieldset(
+        #     config, "/home/astuurman/projects/Virtual_ship_classroom/data"
+        # )
+        fieldset = config.argo_fieldset
 
         # Define the new Kernel that mimics Argo vertical movement
         def ArgoVerticalMovement(particle, fieldset, time):
@@ -132,8 +137,9 @@ def argo_deployments(config, argo_time, data_dir: str):
                     config.requested_ship_time["start"], "%Y-%m-%dT%H:%M:%S"
                 )
                 + timedelta(weeks=6)
-            )
-        ).astype("datetime64[ms]")
+            ),
+            dtype="datetime64[ms]",
+        )
 
         argoset.execute(
             [

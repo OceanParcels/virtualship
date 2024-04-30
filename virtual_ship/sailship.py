@@ -11,21 +11,18 @@ from .drifter_deployments import drifter_deployments
 from .argo_deployments import argo_deployments
 from .postprocess import postprocess
 from .costs import costs
+from .virtual_ship_configuration import VirtualShipConfiguration
 
 
-def sailship(config):
+def sailship(config: VirtualShipConfiguration):
     """
     Use parcels to simulate the ship, take CTDs and measure ADCP and underwaydata.
 
     :param config: The cruise configuration.
     :returns: drifter_time, argo_time, total_time
     """
-    # hardcoding this until we refactor more
-    DATA_DIR = "data"
-    data_dir = DATA_DIR
-
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
-    fieldset = create_fieldset(config, data_dir)
+    fieldset = config.ctd_fieldset  # create_fieldset(config, data_dir)
 
     sample_lons, sample_lats = shiproute(config)
     print("Arrived in region of interest, starting to gather data.")
@@ -252,10 +249,10 @@ def sailship(config):
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
     # simulate drifter deployments
-    drifter_deployments(config, drifter_time, data_dir)
+    drifter_deployments(config, drifter_time)
 
     # simulate argo deployments
-    argo_deployments(config, argo_time, data_dir)
+    argo_deployments(config, argo_time)
 
     # convert CTD data to CSV
     postprocess()

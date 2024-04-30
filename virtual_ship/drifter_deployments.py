@@ -6,9 +6,10 @@ from datetime import timedelta
 
 import numpy as np
 from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, Variable
+from .virtual_ship_configuration import VirtualShipConfiguration
 
 
-def drifter_deployments(config, drifter_time, data_dir: str):
+def drifter_deployments(config: VirtualShipConfiguration, drifter_time):
     """
     Deploy drifters.
 
@@ -17,7 +18,7 @@ def drifter_deployments(config, drifter_time, data_dir: str):
     """
     if len(config.drifter_deploylocations) > 0:
 
-        fieldset = create_drifter_fieldset(config, data_dir)
+        fieldset = config.drifter_fieldset
 
         # Create particle to sample water underway
         class DrifterParticle(JITParticle):
