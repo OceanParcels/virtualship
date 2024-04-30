@@ -18,7 +18,7 @@ class VirtualShipConfiguration:
         :param json_file: Path to the JSON file to init from.
         :raises ValueError: If JSON file not valid.
         """
-        with open(os.path.join(os.path.dirname(__file__), json_file), "r") as file:
+        with open(json_file, "r") as file:
             json_input = json.loads(file.read())
             for key in json_input:
                 setattr(self, key, json_input[key])

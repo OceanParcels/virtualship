@@ -16,7 +16,7 @@ from parcels import (
 )
 
 
-def argo_deployments(config, argo_time):
+def argo_deployments(config, argo_time, data_dir: str):
     """
     Deploy argo floats.
 
@@ -28,7 +28,7 @@ def argo_deployments(config, argo_time):
 
     if len(config.argo_deploylocations) > 0:
 
-        fieldset = create_argo_fieldset(config)
+        fieldset = create_argo_fieldset(config, data_dir)
 
         # Define the new Kernel that mimics Argo vertical movement
         def ArgoVerticalMovement(particle, fieldset, time):
@@ -148,19 +148,18 @@ def argo_deployments(config, argo_time):
         )
 
 
-def create_argo_fieldset(config):
+def create_argo_fieldset(config, data_dir: str):
     """
     Create a fieldset from netcdf files for argo floats, return fieldset with negative depth values.
 
     :param config: The cruise configuration.
     :returns: The fieldset.
     """
-    datadirname = os.path.dirname(__file__)
     filenames = {
-        "U": os.path.join(datadirname, "argodata_UV.nc"),
-        "V": os.path.join(datadirname, "argodata_UV.nc"),
-        "S": os.path.join(datadirname, "argodata_S.nc"),
-        "T": os.path.join(datadirname, "argodata_T.nc"),
+        "U": os.path.join(data_dir, "argodata_UV.nc"),
+        "V": os.path.join(data_dir, "argodata_UV.nc"),
+        "S": os.path.join(data_dir, "argodata_S.nc"),
+        "T": os.path.join(data_dir, "argodata_T.nc"),
     }
     variables = {"U": "uo", "V": "vo", "S": "so", "T": "thetao"}
     dimensions = {

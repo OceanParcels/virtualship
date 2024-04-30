@@ -7,6 +7,10 @@ import numpy as np
 import pyproj
 from parcels import Field, FieldSet, JITParticle, ParticleSet, Variable
 from shapely.geometry import Point, Polygon
+from .drifter_deployments import drifter_deployments
+from .argo_deployments import argo_deployments
+from .postprocess import postprocess
+from .costs import costs
 
 
 def sailship(config):
@@ -16,8 +20,12 @@ def sailship(config):
     :param config: The cruise configuration.
     :returns: drifter_time, argo_time, total_time
     """
+    # hardcoding this until we refactor more
+    DATA_DIR = "data"
+    data_dir = DATA_DIR
+
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
-    fieldset = create_fieldset(config)
+    fieldset = create_fieldset(config, data_dir)
 
     sample_lons, sample_lats = shiproute(config)
     print("Arrived in region of interest, starting to gather data.")
@@ -243,10 +251,24 @@ def sailship(config):
         )
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
-    return drifter_time, argo_time, total_time
+    # simulate drifter deployments
+    drifter_deployments(config, drifter_time, data_dir)
+
+    # simulate argo deployments
+    argo_deployments(config, argo_time, data_dir)
+
+    # convert CTD data to CSV
+    postprocess()
+
+    print("All data has been gathered and postprocessed, returning home.")
+
+    cost = costs(config, total_time)
+    print(
+        f"This cruise took {timedelta(seconds=total_time)} and would have cost {cost:,.0f} euros."
+    )
 
 
-def create_fieldset(config):
+def create_fieldset(config, data_dir: str):
     """
     Create fieldset from netcdf files and adds bathymetry data for CTD cast, returns fieldset with negative depth values.
 
@@ -254,12 +276,11 @@ def create_fieldset(config):
     :returns: The fieldset.
     :raises ValueError: If downloaded data is not as expected.
     """
-    datadirname = os.path.dirname(__file__)
     filenames = {
-        "U": os.path.join(datadirname, "studentdata_UV.nc"),
-        "V": os.path.join(datadirname, "studentdata_UV.nc"),
-        "S": os.path.join(datadirname, "studentdata_S.nc"),
-        "T": os.path.join(datadirname, "studentdata_T.nc"),
+        "U": os.path.join(data_dir, "studentdata_UV.nc"),
+        "V": os.path.join(data_dir, "studentdata_UV.nc"),
+        "S": os.path.join(data_dir, "studentdata_S.nc"),
+        "T": os.path.join(data_dir, "studentdata_T.nc"),
     }
     variables = {"U": "uo", "V": "vo", "S": "so", "T": "thetao"}
     dimensions = {
@@ -286,7 +307,7 @@ def create_fieldset(config):
     fieldset.add_constant("maxtime", fieldset.U.grid.time_full[-1])
 
     # add bathymetry data to the fieldset for CTD cast
-    bathymetry_file = os.path.join(datadirname, "GLO-MFC_001_024_mask_bathy.nc")
+    bathymetry_file = os.path.join(data_dir, "GLO-MFC_001_024_mask_bathy.nc")
     bathymetry_variables = ("bathymetry", "deptho")
     bathymetry_dimensions = {"lon": "longitude", "lat": "latitude"}
     bathymetry_field = Field.from_netcdf(
