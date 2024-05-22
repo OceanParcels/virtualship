@@ -39,12 +39,4 @@ def test_sailship() -> None:
         argo_fieldset=argo_fieldset,
     )
 
-    argo_fieldset.add_constant("mindepth", -argo_fieldset.U.depth[0])
-    argo_fieldset.add_constant("driftdepth", config.argo_characteristics["driftdepth"])
-    argo_fieldset.add_constant("maxdepth", config.argo_characteristics["maxdepth"])
-    argo_fieldset.add_constant(
-        "vertical_speed", config.argo_characteristics["vertical_speed"]
-    )
-    argo_fieldset.add_constant("cycle_days", config.argo_characteristics["cycle_days"])
-    argo_fieldset.add_constant("drift_days", config.argo_characteristics["drift_days"])
     sailship(config)

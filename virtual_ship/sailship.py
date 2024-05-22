@@ -12,6 +12,8 @@ from .argo_deployments import argo_deployments
 from .postprocess import postprocess
 from .costs import costs
 from .virtual_ship_configuration import VirtualShipConfiguration
+from .sensors.argo import Argo, simulate_argos
+from .sensors.location import Location
 
 
 def sailship(config: VirtualShipConfiguration):
@@ -137,7 +139,7 @@ def sailship(config: VirtualShipConfiguration):
     drifter = 0
     drifter_time = []
     argo = 0
-    argo_time = []
+    argos: list[Argo] = []
 
     # run the model for the length of the sample_lons list
     for i in range(len(sample_lons) - 1):
@@ -160,7 +162,8 @@ def sailship(config: VirtualShipConfiguration):
             print(
                 "Ship time is over, waiting for drifters and/or Argo floats to finish."
             )
-            return drifter_time, argo_time
+            raise NotImplementedError()
+            # return drifter_time, argo_time
 
         # check if virtual ship is at a CTD station
         if ctd < len(config.CTD_locations):
@@ -219,7 +222,15 @@ def sailship(config: VirtualShipConfiguration):
                 abs(sample_lons[i] - config.argo_deploylocations[argo][0]) < 0.01
                 and abs(sample_lats[i] - config.argo_deploylocations[argo][1]) < 0.01
             ):
-                argo_time.append(total_time)
+                argos.append(
+                    Argo(
+                        location=Location(
+                            latitude=config.argo_deploylocations[argo][0],
+                            longitude=config.argo_deploylocations[argo][1],
+                        ),
+                        deployment_time=total_time,
+                    )
+                )
                 argo += 1
                 print(f"Argo {argo} deployed at {sample_lons[i]}, {sample_lats[i]}")
                 if argo == len(config.argo_deploylocations):
@@ -252,7 +263,16 @@ def sailship(config: VirtualShipConfiguration):
     drifter_deployments(config, drifter_time)
 
     # simulate argo deployments
-    argo_deployments(config, argo_time)
+    simulate_argos(
+        argos=argos,
+        environment=config.argo_fieldset,
+        out_file_name=os.path.join("results", "Argos.zarr"),
+        max_depth=config.argo_characteristics["maxdepth"],
+        drift_depth=config.argo_characteristics["driftdepth"],
+        verticle_speed=config.argo_characteristics["vertical_speed"],
+        cycle_days=config.argo_characteristics["cycle_days"],
+        drift_days=config.argo_characteristics["drift_days"],
+    )
 
     # convert CTD data to CSV
     postprocess()
