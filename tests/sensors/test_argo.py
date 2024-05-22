@@ -1,0 +1,36 @@
+"""Test the simulation of argos."""
+
+from virtual_ship.sensors.argo import simulate_argos, Argo
+from virtual_ship.sensors.location import Location
+from parcels import FieldSet
+import numpy as np
+
+
+def test_simulate_argos() -> None:
+    DRIFT_DEPTH = -1000
+    MAX_DEPTH = -2000
+    VERTICLE_SPEED = -0.10
+    CYCLE_DAYS = 10
+    DRIFT_DAYS = 9
+
+    environment = FieldSet.from_data(
+        {"U": 0, "V": 0, "T": 0, "S": 0},
+        {
+            "lon": 0,
+            "lat": 0,
+            "time": [np.datetime64("1950-01-01") + np.timedelta64(632160, "h")],
+        },
+    )
+
+    argos = [Argo(location=Location(latitude=0, longitude=0), deployment_time=0)]
+
+    simulate_argos(
+        argos=argos,
+        environment=environment,
+        out_file_name="test",
+        drift_depth=DRIFT_DEPTH,
+        max_depth=MAX_DEPTH,
+        verticle_speed=VERTICLE_SPEED,
+        cycle_days=CYCLE_DAYS,
+        drift_days=DRIFT_DAYS,
+    )
