@@ -31,6 +31,7 @@ dependencies = [
     "scipy >= 1, < 2",
     "xarray >= 2023, < 2024",
     # The packages below are parcels packages not included in their distribution requirements.
+    "numpy >= 1, < 2",
     "cgen >= 2020, < 2021",
     "dask >= 2024, < 2025",
     "cftime >= 1, < 2",
