@@ -7,13 +7,13 @@ import numpy as np
 import pyproj
 from parcels import Field, FieldSet, JITParticle, ParticleSet, Variable
 from shapely.geometry import Point, Polygon
-from .drifter_deployments import drifter_deployments
-from .argo_deployments import argo_deployments
-from .postprocess import postprocess
+
 from .costs import costs
-from .virtual_ship_configuration import VirtualShipConfiguration
+from .drifter_deployments import drifter_deployments
 from .instruments.argo import Argo, simulate_argos
 from .instruments.location import Location
+from .postprocess import postprocess
+from .virtual_ship_configuration import VirtualShipConfiguration
 
 
 def sailship(config: VirtualShipConfiguration):
@@ -21,7 +21,7 @@ def sailship(config: VirtualShipConfiguration):
     Use parcels to simulate the ship, take CTDs and measure ADCP and underwaydata.
 
     :param config: The cruise configuration.
-    :returns: drifter_time, argo_time, total_time
+    :raises NotImplementedError: TODO
     """
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
     fieldset = config.ctd_fieldset  # create_fieldset(config, data_dir)
@@ -290,6 +290,7 @@ def create_fieldset(config, data_dir: str):
     Create fieldset from netcdf files and adds bathymetry data for CTD cast, returns fieldset with negative depth values.
 
     :param config: The cruise configuration.
+    :param data_dir: TODO
     :returns: The fieldset.
     :raises ValueError: If downloaded data is not as expected.
     """

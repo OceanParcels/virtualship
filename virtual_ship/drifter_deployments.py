@@ -6,6 +6,7 @@ from datetime import timedelta
 
 import numpy as np
 from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, Variable
+
 from .virtual_ship_configuration import VirtualShipConfiguration
 
 
@@ -80,6 +81,7 @@ def create_drifter_fieldset(config, data_dir: str):
     Create a fieldset from netcdf files for drifters, returns fieldset with negative depth values.
 
     :param config: The cruise configuration.
+    :param data_dir: TODO
     :returns: The fieldset.
     """
     filenames = {

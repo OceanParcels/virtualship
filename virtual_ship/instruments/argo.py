@@ -1,20 +1,26 @@
-from .location import Location
-from dataclasses import dataclass
-from parcels import (
-    ParticleSet,
-    JITParticle,
-    Variable,
-    FieldSet,
-    AdvectionRK4,
-    StatusCode,
-)
+"""Argo instrument."""
+
 import math
-import numpy as np
+from dataclasses import dataclass
 from datetime import timedelta
+
+import numpy as np
+from parcels import (
+    AdvectionRK4,
+    FieldSet,
+    JITParticle,
+    ParticleSet,
+    StatusCode,
+    Variable,
+)
+
+from .location import Location
 
 
 @dataclass
 class Argo:
+    """Configuration for a single Argo."""
+
     location: Location
     deployment_time: float
 
@@ -117,7 +123,6 @@ def simulate_argos(
     :param cycle_days: TODO
     :param drift_days: TODO
     """
-
     lon = [argo.location.lon for argo in argos]
     lat = [argo.location.lat for argo in argos]
     time = [argo.deployment_time for argo in argos]

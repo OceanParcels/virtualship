@@ -2,11 +2,10 @@
 
 import datetime
 import json
-import os
 from datetime import timedelta
 
-from shapely.geometry import Point, Polygon
 from parcels import FieldSet
+from shapely.geometry import Point, Polygon
 
 
 class VirtualShipConfiguration:
@@ -27,6 +26,9 @@ class VirtualShipConfiguration:
         Initialize this object.
 
         :param json_file: Path to the JSON file to init from.
+        :param ctd_fieldset: Fieldset for CTD measurements.
+        :param drifter_fieldset: Fieldset for CTD measurements.
+        :param argo_fieldset: FIeldset for argo measurements.
         :raises ValueError: If JSON file not valid.
         """
         self.ctd_fieldset = ctd_fieldset
