@@ -141,6 +141,8 @@ def sailship(config: VirtualShipConfiguration):
     argo = 0
     argos: list[Argo] = []
 
+    ARGO_MIN_DEPTH = -config.argo_fieldset.U.depth[0]
+
     # run the model for the length of the sample_lons list
     for i in range(len(sample_lons) - 1):
 
@@ -229,6 +231,12 @@ def sailship(config: VirtualShipConfiguration):
                             longitude=config.argo_deploylocations[argo][1],
                         ),
                         deployment_time=total_time,
+                        min_depth=ARGO_MIN_DEPTH,
+                        max_depth=config.argo_characteristics["maxdepth"],
+                        drift_depth=config.argo_characteristics["driftdepth"],
+                        vertical_speed=config.argo_characteristics["vertical_speed"],
+                        cycle_days=config.argo_characteristics["cycle_days"],
+                        drift_days=config.argo_characteristics["drift_days"],
                     )
                 )
                 argo += 1
@@ -267,11 +275,6 @@ def sailship(config: VirtualShipConfiguration):
         argos=argos,
         fieldset=config.argo_fieldset,
         out_file_name=os.path.join("results", "Argos.zarr"),
-        max_depth=config.argo_characteristics["maxdepth"],
-        drift_depth=config.argo_characteristics["driftdepth"],
-        verticle_speed=config.argo_characteristics["vertical_speed"],
-        cycle_days=config.argo_characteristics["cycle_days"],
-        drift_days=config.argo_characteristics["drift_days"],
     )
 
     # convert CTD data to CSV
