@@ -23,6 +23,12 @@ class Argo:
 
     location: Location
     deployment_time: float
+    min_depth: float
+    max_depth: float
+    drift_depth: float
+    vertical_speed: float
+    cycle_days: float
+    drift_days: float
 
 
 class _ArgoParticle(JITParticle):
@@ -31,41 +37,46 @@ class _ArgoParticle(JITParticle):
     drift_age = Variable("drift_age", dtype=np.float32, initial=0.0)
     salinity = Variable("salinity", initial=np.nan)
     temperature = Variable("temperature", initial=np.nan)
+    min_depth = Variable("min_depth", dtype=np.float32)
+    max_depth = Variable("max_depth", dtype=np.float32)
+    drift_depth = Variable("drift_depth", dtype=np.float32)
+    vertical_speed = Variable("vertical_speed", dtype=np.float32)
+    cycle_days = Variable("cycle_days", dtype=np.int32)
+    drift_days = Variable("drift_days", dtype=np.int32)
 
 
 def _argo_vertical_movement(particle, fieldset, time):
-
     if particle.cycle_phase == 0:
-        # Phase 0: Sinking with vertical_speed until depth is driftdepth
+        # Phase 0: Sinking with vertical_speed until depth is drift_depth
         particle_ddepth += (  # noqa See comment above about particle_* variables.
-            fieldset.vertical_speed * particle.dt
+            particle.vertical_speed * particle.dt
         )
-        if particle.depth + particle_ddepth <= fieldset.driftdepth:
-            particle_ddepth = fieldset.driftdepth - particle.depth
+        if particle.depth + particle_ddepth <= particle.drift_depth:
+            particle_ddepth = particle.drift_depth - particle.depth
             particle.cycle_phase = 1
 
     elif particle.cycle_phase == 1:
         # Phase 1: Drifting at depth for drifttime seconds
         particle.drift_age += particle.dt
-        if particle.drift_age >= fieldset.drift_days * 86400:
+        if particle.drift_age >= particle.drift_days * 86400:
             particle.drift_age = 0  # reset drift_age for next cycle
             particle.cycle_phase = 2
 
     elif particle.cycle_phase == 2:
-        # Phase 2: Sinking further to maxdepth
-        particle_ddepth += fieldset.vertical_speed * particle.dt
-        if particle.depth + particle_ddepth <= fieldset.maxdepth:
-            particle_ddepth = fieldset.maxdepth - particle.depth
+        # Phase 2: Sinking further to max_depth
+        particle_ddepth += particle.vertical_speed * particle.dt
+        if particle.depth + particle_ddepth <= particle.max_depth:
+            particle_ddepth = particle.max_depth - particle.depth
             particle.cycle_phase = 3
 
     elif particle.cycle_phase == 3:
         # Phase 3: Rising with vertical_speed until at surface
-        particle_ddepth -= fieldset.vertical_speed * particle.dt
+        particle_ddepth -= particle.vertical_speed * particle.dt
         particle.cycle_age += (
             particle.dt
         )  # solve issue of not updating cycle_age during ascent
-        if particle.depth + particle_ddepth >= fieldset.min_depth:
-            particle_ddepth = fieldset.min_depth - particle.depth
+        if particle.depth + particle_ddepth >= particle.min_depth:
+            particle_ddepth = particle.min_depth - particle.depth
             particle.temperature = (
                 math.nan
             )  # reset temperature to NaN at end of sampling cycle
@@ -81,7 +92,7 @@ def _argo_vertical_movement(particle, fieldset, time):
 
     elif particle.cycle_phase == 4:
         # Phase 4: Transmitting at surface until cycletime is reached
-        if particle.cycle_age > fieldset.cycle_days * 86400:
+        if particle.cycle_age > particle.cycle_days * 86400:
             particle.cycle_phase = 0
             particle.cycle_age = 0
 
@@ -92,7 +103,7 @@ def _argo_vertical_movement(particle, fieldset, time):
 def _keep_at_surface(particle, fieldset, time):
     # Prevent error when float reaches surface
     if particle.state == StatusCode.ErrorThroughSurface:
-        particle.depth = fieldset.min_depth
+        particle.depth = particle.min_depth
         particle.state = StatusCode.Success
 
 
@@ -105,11 +116,6 @@ def simulate_argos(
     argos: list[Argo],
     fieldset: FieldSet,
     out_file_name: str,
-    max_depth: float,
-    drift_depth: float,
-    verticle_speed: float,
-    cycle_days: float,
-    drift_days: float,
 ) -> None:
     """
     Use parcels to simulate a set of argos in a fieldset.
@@ -117,17 +123,10 @@ def simulate_argos(
     :param argos: The argos to simulate.
     :param fieldset: The fieldset to simulate the argos in.
     :param out_file_name: The file to write the results to.
-    :param max_depth: TODO
-    :param drift_depth: TODO
-    :param verticle_speed: TODO
-    :param cycle_days: TODO
-    :param drift_days: TODO
     """
     lon = [argo.location.lon for argo in argos]
     lat = [argo.location.lat for argo in argos]
     time = [argo.deployment_time for argo in argos]
-
-    min_depth = -fieldset.U.depth[0]
 
     # define the parcels simulation
     argoset = ParticleSet(
@@ -135,8 +134,14 @@ def simulate_argos(
         pclass=_ArgoParticle,
         lon=lon,
         lat=lat,
-        depth=np.repeat(min_depth, len(argos)),
+        depth=[argo.min_depth for argo in argos],
         time=time,
+        min_depth=[argo.min_depth for argo in argos],
+        max_depth=[argo.max_depth for argo in argos],
+        drift_depth=[argo.drift_depth for argo in argos],
+        vertical_speed=[argo.vertical_speed for argo in argos],
+        cycle_days=[argo.cycle_days for argo in argos],
+        drift_days=[argo.drift_days for argo in argos],
     )
 
     # define output file for the simulation
@@ -148,15 +153,6 @@ def simulate_argos(
 
     # get time when the fieldset ends
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
-
-    # set constants on fieldset required by kernels.
-    # sadly we must change the fieldset parameter to pass this information
-    fieldset.add_constant("min_depth", min_depth)
-    fieldset.add_constant("maxdepth", max_depth)
-    fieldset.add_constant("driftdepth", drift_depth)
-    fieldset.add_constant("vertical_speed", verticle_speed)
-    fieldset.add_constant("cycle_days", cycle_days)
-    fieldset.add_constant("drift_days", drift_days)
 
     # execute simulation
     argoset.execute(

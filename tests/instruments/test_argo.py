@@ -22,15 +22,19 @@ def test_simulate_argos() -> None:
         },
     )
 
-    argos = [Argo(location=Location(latitude=0, longitude=0), deployment_time=0)]
+    min_depth = -fieldset.U.depth[0]
 
-    simulate_argos(
-        argos=argos,
-        fieldset=fieldset,
-        out_file_name="test",
-        drift_depth=DRIFT_DEPTH,
-        max_depth=MAX_DEPTH,
-        verticle_speed=VERTICLE_SPEED,
-        cycle_days=CYCLE_DAYS,
-        drift_days=DRIFT_DAYS,
-    )
+    argos = [
+        Argo(
+            location=Location(latitude=0, longitude=0),
+            deployment_time=0,
+            min_depth=min_depth,
+            max_depth=MAX_DEPTH,
+            drift_depth=DRIFT_DEPTH,
+            vertical_speed=VERTICLE_SPEED,
+            cycle_days=CYCLE_DAYS,
+            drift_days=DRIFT_DAYS,
+        )
+    ]
+
+    simulate_argos(argos=argos, fieldset=fieldset, out_file_name="test")
