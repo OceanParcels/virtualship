@@ -1,7 +1,7 @@
 """Test the simulation of argos."""
 
-from virtual_ship.sensors.argo import simulate_argos, Argo
-from virtual_ship.sensors.location import Location
+from virtual_ship.instruments.argo import simulate_argos, Argo
+from virtual_ship.instruments.location import Location
 from parcels import FieldSet
 import numpy as np
 
@@ -13,7 +13,7 @@ def test_simulate_argos() -> None:
     CYCLE_DAYS = 10
     DRIFT_DAYS = 9
 
-    environment = FieldSet.from_data(
+    fieldset = FieldSet.from_data(
         {"U": 0, "V": 0, "T": 0, "S": 0},
         {
             "lon": 0,
@@ -26,7 +26,7 @@ def test_simulate_argos() -> None:
 
     simulate_argos(
         argos=argos,
-        environment=environment,
+        fieldset=fieldset,
         out_file_name="test",
         drift_depth=DRIFT_DEPTH,
         max_depth=MAX_DEPTH,

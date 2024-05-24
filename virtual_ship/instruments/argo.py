@@ -97,7 +97,7 @@ def _check_error(particle, fieldset, time):
 
 def simulate_argos(
     argos: list[Argo],
-    environment: FieldSet,
+    fieldset: FieldSet,
     out_file_name: str,
     max_depth: float,
     drift_depth: float,
@@ -109,7 +109,7 @@ def simulate_argos(
     Use parcels to simulate a set of argos in a fieldset.
 
     :param argos: The argos to simulate.
-    :param environment: The environment to simulate the argos in.
+    :param fieldset: The fieldset to simulate the argos in.
     :param out_file_name: The file to write the results to.
     :param max_depth: TODO
     :param drift_depth: TODO
@@ -122,11 +122,11 @@ def simulate_argos(
     lat = [argo.location.lat for argo in argos]
     time = [argo.deployment_time for argo in argos]
 
-    min_depth = -environment.U.depth[0]
+    min_depth = -fieldset.U.depth[0]
 
     # define the parcels simulation
     argoset = ParticleSet(
-        fieldset=environment,
+        fieldset=fieldset,
         pclass=_ArgoParticle,
         lon=lon,
         lat=lat,
@@ -142,18 +142,16 @@ def simulate_argos(
     )
 
     # get time when the fieldset ends
-    fieldset_endtime = environment.time_origin.fulltime(
-        environment.U.grid.time_full[-1]
-    )
+    fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
 
-    # set constants on environment fieldset required by kernels.
+    # set constants on fieldset required by kernels.
     # sadly we must change the fieldset parameter to pass this information
-    environment.add_constant("min_depth", min_depth)
-    environment.add_constant("maxdepth", max_depth)
-    environment.add_constant("driftdepth", drift_depth)
-    environment.add_constant("vertical_speed", verticle_speed)
-    environment.add_constant("cycle_days", cycle_days)
-    environment.add_constant("drift_days", drift_days)
+    fieldset.add_constant("min_depth", min_depth)
+    fieldset.add_constant("maxdepth", max_depth)
+    fieldset.add_constant("driftdepth", drift_depth)
+    fieldset.add_constant("vertical_speed", verticle_speed)
+    fieldset.add_constant("cycle_days", cycle_days)
+    fieldset.add_constant("drift_days", drift_days)
 
     # execute simulation
     argoset.execute(

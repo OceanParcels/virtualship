@@ -12,8 +12,8 @@ from .argo_deployments import argo_deployments
 from .postprocess import postprocess
 from .costs import costs
 from .virtual_ship_configuration import VirtualShipConfiguration
-from .sensors.argo import Argo, simulate_argos
-from .sensors.location import Location
+from .instruments.argo import Argo, simulate_argos
+from .instruments.location import Location
 
 
 def sailship(config: VirtualShipConfiguration):
@@ -265,7 +265,7 @@ def sailship(config: VirtualShipConfiguration):
     # simulate argo deployments
     simulate_argos(
         argos=argos,
-        environment=config.argo_fieldset,
+        fieldset=config.argo_fieldset,
         out_file_name=os.path.join("results", "Argos.zarr"),
         max_depth=config.argo_characteristics["maxdepth"],
         drift_depth=config.argo_characteristics["driftdepth"],
