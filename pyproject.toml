@@ -30,6 +30,7 @@ dependencies = [
     "parcels >= 3, < 4",
     "scipy >= 1, < 2",
     "xarray >= 2023, < 2024",
+    "cftime >= 1, < 2",
 ]
 
 [project.urls]
