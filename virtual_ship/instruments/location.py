@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Location:
-    """A location on earth."""
+    """A location on a sphere."""
 
     latitude: float
     longitude: float
