@@ -54,6 +54,8 @@ dev = [
     "pydocstyle == 6.3.0",
     "sort-all == 1.2.0",
     "pytest == 8.2.0",
+    "pytest-cov == 5.0.0",
+    "codecov == 2.1.13",
 ]
 
 [tool.isort]

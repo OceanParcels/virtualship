@@ -31,3 +31,15 @@ jobs:
         run: black --diff --check ./$PACKAGE
       - name: isort
         run: isort --check-only --diff ./$PACKAGE
+
+  tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5.1.0
+        with:
+          python-version: 3.12
+      - name: install
+        run: pip install ".[dev]"
+      - name: run_tests
+        run: pytest --cov=virtual_ship tests
