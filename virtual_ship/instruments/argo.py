@@ -118,7 +118,7 @@ def simulate_argos(
     out_file_name: str,
 ) -> None:
     """
-    Use parcels to simulate a set of argos in a fieldset.
+    Use parcels to simulate a set of Argo floats in a fieldset.
 
     :param argos: The argos to simulate.
     :param fieldset: The fieldset to simulate the argos in.
