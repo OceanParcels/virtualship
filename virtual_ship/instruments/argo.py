@@ -120,7 +120,7 @@ def simulate_argos(
     """
     Use parcels to simulate a set of Argo floats in a fieldset.
 
-    :param argos: The argos to simulate.
+    :param argos: A list of Argo floats to simulate.
     :param fieldset: The fieldset to simulate the argos in.
     :param out_file_name: The file to write the results to.
     """
