@@ -1,10 +1,12 @@
 """Test the simulation of drifters."""
 
-from virtual_ship.instruments.drifter import simulate_drifters, Drifter
-from virtual_ship.instruments import Location
-from parcels import FieldSet
-import numpy as np
 from datetime import timedelta
+
+import numpy as np
+from parcels import FieldSet
+
+from virtual_ship.instruments import Location
+from virtual_ship.instruments.drifter import Drifter, simulate_drifters
 
 
 def test_simulate_drifters() -> None:
