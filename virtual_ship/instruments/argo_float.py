@@ -116,6 +116,7 @@ def simulate_argo_floats(
     argo_floats: list[ArgoFloat],
     fieldset: FieldSet,
     out_file_name: str,
+    outputdt: timedelta,
 ) -> None:
     """
     Use parcels to simulate a set of Argo floats in a fieldset.
@@ -123,6 +124,7 @@ def simulate_argo_floats(
     :param argo_floats: A list of Argo floats to simulate.
     :param fieldset: The fieldset to simulate the Argo floats in.
     :param out_file_name: The file to write the results to.
+    :param outputdt: Interval which dictates the update frequency of file output during simulation
     """
     lon = [argo.location.lon for argo in argo_floats]
     lat = [argo.location.lat for argo in argo_floats]
@@ -163,6 +165,6 @@ def simulate_argo_floats(
             _check_error,
         ],
         endtime=fieldset_endtime,
-        dt=timedelta(minutes=5),
+        dt=outputdt,
         output_file=out_file,
     )

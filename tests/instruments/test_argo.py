@@ -4,6 +4,7 @@ from virtual_ship.instruments.argo_float import simulate_argo_floats, ArgoFloat
 from virtual_ship.instruments import Location
 from parcels import FieldSet
 import numpy as np
+from datetime import timedelta
 
 
 def test_simulate_argo_floats() -> None:
@@ -38,5 +39,8 @@ def test_simulate_argo_floats() -> None:
     ]
 
     simulate_argo_floats(
-        argo_floats=argo_floats, fieldset=fieldset, out_file_name="test"
+        argo_floats=argo_floats,
+        fieldset=fieldset,
+        out_file_name="test",
+        outputdt=timedelta(minutes=5),
     )
