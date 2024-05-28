@@ -1,9 +1,10 @@
 """Performs a complete cruise with virtual ship."""
 
-from virtual_ship.virtual_ship_configuration import VirtualShipConfiguration
-from virtual_ship.sailship import sailship
-from parcels import FieldSet
 import numpy as np
+from parcels import FieldSet
+
+from virtual_ship.sailship import sailship
+from virtual_ship.virtual_ship_configuration import VirtualShipConfiguration
 
 
 def test_sailship() -> None:

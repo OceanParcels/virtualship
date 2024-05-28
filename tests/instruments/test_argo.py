@@ -1,10 +1,12 @@
 """Test the simulation of Argo floats."""
 
-from virtual_ship.instruments.argo_float import simulate_argo_floats, ArgoFloat
-from virtual_ship.instruments import Location
-from parcels import FieldSet
-import numpy as np
 from datetime import timedelta
+
+import numpy as np
+from parcels import FieldSet
+
+from virtual_ship.instruments import Location
+from virtual_ship.instruments.argo_float import ArgoFloat, simulate_argo_floats
 
 
 def test_simulate_argo_floats() -> None:
