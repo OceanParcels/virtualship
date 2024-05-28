@@ -131,7 +131,7 @@ def simulate_argo_floats(
     time = [argo.deployment_time for argo in argo_floats]
 
     # define the parcels simulation
-    argo_float_fieldset = ParticleSet(
+    argo_float_particleset = ParticleSet(
         fieldset=fieldset,
         pclass=_ArgoParticle,
         lon=lon,
@@ -147,7 +147,7 @@ def simulate_argo_floats(
     )
 
     # define output file for the simulation
-    out_file = argo_float_fieldset.ParticleFile(
+    out_file = argo_float_particleset.ParticleFile(
         name=out_file_name,
         outputdt=timedelta(minutes=5),
         chunks=(1, 500),
@@ -157,7 +157,7 @@ def simulate_argo_floats(
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
 
     # execute simulation
-    argo_float_fieldset.execute(
+    argo_float_particleset.execute(
         [
             _argo_float_vertical_movement,
             AdvectionRK4,
