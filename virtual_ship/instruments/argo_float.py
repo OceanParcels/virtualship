@@ -1,4 +1,4 @@
-"""Argo instrument."""
+"""Argo float instrument."""
 
 import math
 from dataclasses import dataclass
@@ -18,8 +18,8 @@ from .location import Location
 
 
 @dataclass
-class Argo:
-    """Configuration for a single Argo."""
+class ArgoFloat:
+    """Configuration for a single Argo float."""
 
     location: Location
     deployment_time: float
@@ -45,7 +45,7 @@ class _ArgoParticle(JITParticle):
     drift_days = Variable("drift_days", dtype=np.int32)
 
 
-def _argo_vertical_movement(particle, fieldset, time):
+def _argo_float_vertical_movement(particle, fieldset, time):
     if particle.cycle_phase == 0:
         # Phase 0: Sinking with vertical_speed until depth is drift_depth
         particle_ddepth += (  # noqa See comment above about particle_* variables.
@@ -112,40 +112,40 @@ def _check_error(particle, fieldset, time):
         particle.delete()
 
 
-def simulate_argos(
-    argos: list[Argo],
+def simulate_argo_floats(
+    argo_floats: list[ArgoFloat],
     fieldset: FieldSet,
     out_file_name: str,
 ) -> None:
     """
     Use parcels to simulate a set of Argo floats in a fieldset.
 
-    :param argos: A list of Argo floats to simulate.
-    :param fieldset: The fieldset to simulate the argos in.
+    :param argo_floats: A list of Argo floats to simulate.
+    :param fieldset: The fieldset to simulate the Argo floats in.
     :param out_file_name: The file to write the results to.
     """
-    lon = [argo.location.lon for argo in argos]
-    lat = [argo.location.lat for argo in argos]
-    time = [argo.deployment_time for argo in argos]
+    lon = [argo.location.lon for argo in argo_floats]
+    lat = [argo.location.lat for argo in argo_floats]
+    time = [argo.deployment_time for argo in argo_floats]
 
     # define the parcels simulation
-    argoset = ParticleSet(
+    argo_float_fieldset = ParticleSet(
         fieldset=fieldset,
         pclass=_ArgoParticle,
         lon=lon,
         lat=lat,
-        depth=[argo.min_depth for argo in argos],
+        depth=[argo.min_depth for argo in argo_floats],
         time=time,
-        min_depth=[argo.min_depth for argo in argos],
-        max_depth=[argo.max_depth for argo in argos],
-        drift_depth=[argo.drift_depth for argo in argos],
-        vertical_speed=[argo.vertical_speed for argo in argos],
-        cycle_days=[argo.cycle_days for argo in argos],
-        drift_days=[argo.drift_days for argo in argos],
+        min_depth=[argo.min_depth for argo in argo_floats],
+        max_depth=[argo.max_depth for argo in argo_floats],
+        drift_depth=[argo.drift_depth for argo in argo_floats],
+        vertical_speed=[argo.vertical_speed for argo in argo_floats],
+        cycle_days=[argo.cycle_days for argo in argo_floats],
+        drift_days=[argo.drift_days for argo in argo_floats],
     )
 
     # define output file for the simulation
-    out_file = argoset.ParticleFile(
+    out_file = argo_float_fieldset.ParticleFile(
         name=out_file_name,
         outputdt=timedelta(minutes=5),
         chunks=(1, 500),
@@ -155,9 +155,9 @@ def simulate_argos(
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
 
     # execute simulation
-    argoset.execute(
+    argo_float_fieldset.execute(
         [
-            _argo_vertical_movement,
+            _argo_float_vertical_movement,
             AdvectionRK4,
             _keep_at_surface,
             _check_error,

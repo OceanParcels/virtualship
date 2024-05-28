@@ -10,7 +10,7 @@ from shapely.geometry import Point, Polygon
 
 from .costs import costs
 from .drifter_deployments import drifter_deployments
-from .instruments.argo import Argo, simulate_argos
+from .instruments.argo_float import ArgoFloat, simulate_argo_floats
 from .instruments.location import Location
 from .postprocess import postprocess
 from .virtual_ship_configuration import VirtualShipConfiguration
@@ -139,9 +139,9 @@ def sailship(config: VirtualShipConfiguration):
     drifter = 0
     drifter_time = []
     argo = 0
-    argos: list[Argo] = []
+    argo_floats: list[ArgoFloat] = []
 
-    ARGO_MIN_DEPTH = -config.argo_fieldset.U.depth[0]
+    ARGO_MIN_DEPTH = -config.argo_float_fieldset.U.depth[0]
 
     # run the model for the length of the sample_lons list
     for i in range(len(sample_lons) - 1):
@@ -224,8 +224,8 @@ def sailship(config: VirtualShipConfiguration):
                 abs(sample_lons[i] - config.argo_deploylocations[argo][0]) < 0.01
                 and abs(sample_lats[i] - config.argo_deploylocations[argo][1]) < 0.01
             ):
-                argos.append(
-                    Argo(
+                argo_floats.append(
+                    ArgoFloat(
                         location=Location(
                             latitude=config.argo_deploylocations[argo][0],
                             longitude=config.argo_deploylocations[argo][1],
@@ -271,10 +271,10 @@ def sailship(config: VirtualShipConfiguration):
     drifter_deployments(config, drifter_time)
 
     # simulate argo deployments
-    simulate_argos(
-        argos=argos,
-        fieldset=config.argo_fieldset,
-        out_file_name=os.path.join("results", "Argos.zarr"),
+    simulate_argo_floats(
+        argo_floats=argo_floats,
+        fieldset=config.argo_float_fieldset,
+        out_file_name=os.path.join("results", "argo_floats.zarr"),
     )
 
     # convert CTD data to CSV

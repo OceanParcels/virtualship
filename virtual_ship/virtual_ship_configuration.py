@@ -13,14 +13,14 @@ class VirtualShipConfiguration:
 
     ctd_fieldset: FieldSet
     drifter_fieldset: FieldSet
-    argo_fieldset: FieldSet
+    argo_float_fieldset: FieldSet
 
     def __init__(
         self,
         json_file,
         ctd_fieldset: FieldSet,
         drifter_fieldset: FieldSet,
-        argo_fieldset: FieldSet,
+        argo_float_fieldset: FieldSet,
     ):
         """
         Initialize this object.
@@ -28,12 +28,12 @@ class VirtualShipConfiguration:
         :param json_file: Path to the JSON file to init from.
         :param ctd_fieldset: Fieldset for CTD measurements.
         :param drifter_fieldset: Fieldset for CTD measurements.
-        :param argo_fieldset: FIeldset for argo measurements.
+        :param argo_float_fieldset: FIeldset for argo float measurements.
         :raises ValueError: If JSON file not valid.
         """
         self.ctd_fieldset = ctd_fieldset
         self.drifter_fieldset = drifter_fieldset
-        self.argo_fieldset = argo_fieldset
+        self.argo_float_fieldset = argo_float_fieldset
 
         with open(json_file, "r") as file:
             json_input = json.loads(file.read())

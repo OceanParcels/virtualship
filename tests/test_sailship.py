@@ -23,7 +23,7 @@ def test_sailship() -> None:
         {"lon": 0, "lat": 0},
     )
 
-    argo_fieldset = FieldSet.from_data(
+    argo_float_fieldset = FieldSet.from_data(
         {"U": 0, "V": 0, "T": 0, "S": 0},
         {
             "lon": 0,
@@ -36,7 +36,7 @@ def test_sailship() -> None:
         "sailship_config.json",
         ctd_fieldset=ctd_fieldset,
         drifter_fieldset=drifter_fieldset,
-        argo_fieldset=argo_fieldset,
+        argo_float_fieldset=argo_float_fieldset,
     )
 
     sailship(config)

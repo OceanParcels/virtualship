@@ -1,12 +1,12 @@
-"""Test the simulation of argos."""
+"""Test the simulation of Argo floats."""
 
-from virtual_ship.instruments.argo import simulate_argos, Argo
-from virtual_ship.instruments.location import Location
+from virtual_ship.instruments.argo_float import simulate_argo_floats, ArgoFloat
+from virtual_ship.instruments import Location
 from parcels import FieldSet
 import numpy as np
 
 
-def test_simulate_argos() -> None:
+def test_simulate_argo_floats() -> None:
     DRIFT_DEPTH = -1000
     MAX_DEPTH = -2000
     VERTICLE_SPEED = -0.10
@@ -24,8 +24,8 @@ def test_simulate_argos() -> None:
 
     min_depth = -fieldset.U.depth[0]
 
-    argos = [
-        Argo(
+    argo_floats = [
+        ArgoFloat(
             location=Location(latitude=0, longitude=0),
             deployment_time=0,
             min_depth=min_depth,
@@ -37,4 +37,6 @@ def test_simulate_argos() -> None:
         )
     ]
 
-    simulate_argos(argos=argos, fieldset=fieldset, out_file_name="test")
+    simulate_argo_floats(
+        argo_floats=argo_floats, fieldset=fieldset, out_file_name="test"
+    )
