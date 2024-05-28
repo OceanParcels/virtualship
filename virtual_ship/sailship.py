@@ -9,8 +9,8 @@ from parcels import Field, FieldSet, JITParticle, ParticleSet, Variable
 from shapely.geometry import Point, Polygon
 
 from .costs import costs
-from .drifter_deployments import drifter_deployments
 from .instruments.argo_float import ArgoFloat, simulate_argo_floats
+from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.location import Location
 from .postprocess import postprocess
 from .virtual_ship_configuration import VirtualShipConfiguration
@@ -137,11 +137,12 @@ def sailship(config: VirtualShipConfiguration):
 
     # initialize drifters and argo floats
     drifter = 0
-    drifter_time = []
+    drifters: list[Drifter] = []
     argo = 0
     argo_floats: list[ArgoFloat] = []
 
-    ARGO_MIN_DEPTH = -config.argo_float_fieldset.U.depth[0]
+    argo_min_depth = -config.argo_float_fieldset.U.depth[0]
+    drifter_min_depth = -config.drifter_fieldset.U.depth[0]
 
     # run the model for the length of the sample_lons list
     for i in range(len(sample_lons) - 1):
@@ -203,14 +204,23 @@ def sailship(config: VirtualShipConfiguration):
                     pset_CTD.time[0] + timedelta(minutes=20).total_seconds()
                 )  # add CTD time and 20 minutes for deployment
 
-        # check if we are at a drifter deployment location
+        # check if we are at a `drifter` deployment location
         if drifter < len(config.drifter_deploylocations):
             while (
                 abs(sample_lons[i] - config.drifter_deploylocations[drifter][0]) < 0.01
                 and abs(sample_lats[i] - config.drifter_deploylocations[drifter][1])
                 < 0.01
             ):
-                drifter_time.append(total_time)
+                drifters.append(
+                    Drifter(
+                        location=Location(
+                            latitude=config.drifter_deploylocations[drifter][0],
+                            longitude=config.drifter_deploylocations[drifter][1],
+                        ),
+                        deployment_time=total_time,
+                        min_depth=drifter_min_depth,
+                    )
+                )
                 drifter += 1
                 print(
                     f"Drifter {drifter} deployed at {sample_lons[i]}, {sample_lats[i]}"
@@ -231,7 +241,7 @@ def sailship(config: VirtualShipConfiguration):
                             longitude=config.argo_deploylocations[argo][1],
                         ),
                         deployment_time=total_time,
-                        min_depth=ARGO_MIN_DEPTH,
+                        min_depth=argo_min_depth,
                         max_depth=config.argo_characteristics["maxdepth"],
                         drift_depth=config.argo_characteristics["driftdepth"],
                         vertical_speed=config.argo_characteristics["vertical_speed"],
@@ -267,10 +277,15 @@ def sailship(config: VirtualShipConfiguration):
         )
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
-    # simulate drifter deployments
-    drifter_deployments(config, drifter_time)
+    # simulate drifters
+    simulate_drifters(
+        drifters=drifters,
+        fieldset=config.drifter_fieldset,
+        out_file_name=os.path.join("results", "drifters.zarr"),
+        outputdt=timedelta(minutes=5),
+    )
 
-    # simulate argo deployments
+    # simulate argo floats
     simulate_argo_floats(
         argo_floats=argo_floats,
         fieldset=config.argo_float_fieldset,

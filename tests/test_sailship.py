@@ -17,11 +17,12 @@ def test_sailship() -> None:
     ctd_fieldset.add_constant("max_depth", -ctd_fieldset.U.depth[-1])
 
     drifter_fieldset = FieldSet.from_data(
+        {"U": 0, "V": 0, "T": 0},
         {
-            "U": 0,
-            "V": 0,
+            "lon": 0,
+            "lat": 0,
+            "time": [np.datetime64("1950-01-01") + np.timedelta64(632160, "h")],
         },
-        {"lon": 0, "lat": 0},
     )
 
     argo_float_fieldset = FieldSet.from_data(
