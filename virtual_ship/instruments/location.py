@@ -1,4 +1,4 @@
-"""Location class."""
+"""Location class. See class description."""
 
 from dataclasses import dataclass
 
