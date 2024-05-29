@@ -10,8 +10,8 @@ from shapely.geometry import Point, Polygon
 
 from .costs import costs
 from .instruments.argo_float import ArgoFloat, simulate_argo_floats
-from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.ctd import CTDInstrument, simulate_ctd
+from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.location import Location
 from .postprocess import postprocess
 from .virtual_ship_configuration import VirtualShipConfiguration
