@@ -12,7 +12,7 @@ from virtual_ship.instruments.argo_float import ArgoFloat, simulate_argo_floats
 def test_simulate_argo_floats() -> None:
     DRIFT_DEPTH = -1000
     MAX_DEPTH = -2000
-    VERTICLE_SPEED = -0.10
+    VERTICAL_SPEED = -0.10
     CYCLE_DAYS = 10
     DRIFT_DAYS = 9
 
@@ -34,7 +34,7 @@ def test_simulate_argo_floats() -> None:
             min_depth=min_depth,
             max_depth=MAX_DEPTH,
             drift_depth=DRIFT_DEPTH,
-            vertical_speed=VERTICLE_SPEED,
+            vertical_speed=VERTICAL_SPEED,
             cycle_days=CYCLE_DAYS,
             drift_days=DRIFT_DAYS,
         )
