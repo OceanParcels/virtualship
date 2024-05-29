@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 env:
   PACKAGE: virtual_ship
+  TESTS: tests
 
 jobs:
   codetools:
@@ -19,7 +20,7 @@ jobs:
       - name: install
         run: pip install ".[dev]"
       - name: flake8
-        run: flake8 ./$PACKAGE
+        run: flake8 ./$PACKAGE ./$TESTS
       - name: pydocstyle
         run: pydocstyle ./$PACKAGE
       - name: sort-all
@@ -28,6 +29,18 @@ jobs:
           [[ -z $(git status -s) ]]
           git checkout -- .
       - name: black
-        run: black --diff --check ./$PACKAGE
+        run: black --diff --check ./$PACKAGE ./$TESTS
       - name: isort
-        run: isort --check-only --diff ./$PACKAGE
+        run: isort --check-only --diff ./$PACKAGE ./$TESTS
+
+  tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5.1.0
+        with:
+          python-version: 3.12
+      - name: install
+        run: pip install ".[dev]"
+      - name: run_tests
+        run: pytest --cov=virtual_ship tests

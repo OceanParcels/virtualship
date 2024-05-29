@@ -30,6 +30,16 @@ dependencies = [
     "parcels >= 3, < 4",
     "scipy >= 1, < 2",
     "xarray >= 2023, < 2024",
+    # The packages below are parcels packages not included in their distribution requirements.
+    "numpy >= 1, < 2",
+    "cgen >= 2020, < 2021",
+    "dask >= 2023, < 2025",
+    "cftime >= 1, < 2",
+    "psutil >= 1, < 2",
+    "netCDF4 >= 1, < 2",
+    "zarr >= 2, < 3",
+    "tqdm >= 4, < 5",
+    "pymbolic >= 2022, < 2023",
 ]
 
 [project.urls]
@@ -53,6 +63,9 @@ dev = [
     "isort == 5.13.2",
     "pydocstyle == 6.3.0",
     "sort-all == 1.2.0",
+    "pytest == 8.2.0",
+    "pytest-cov == 5.0.0",
+    "codecov == 2.1.13",
 ]
 
 [tool.isort]

@@ -7,8 +7,10 @@ from datetime import timedelta
 import numpy as np
 from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, Variable
 
+from .virtual_ship_configuration import VirtualShipConfiguration
 
-def drifter_deployments(config, drifter_time):
+
+def drifter_deployments(config: VirtualShipConfiguration, drifter_time):
     """
     Deploy drifters.
 
@@ -17,7 +19,7 @@ def drifter_deployments(config, drifter_time):
     """
     if len(config.drifter_deploylocations) > 0:
 
-        fieldset = create_drifter_fieldset(config)
+        fieldset = config.drifter_fieldset
 
         # Create particle to sample water underway
         class DrifterParticle(JITParticle):
@@ -74,18 +76,18 @@ def drifter_deployments(config, drifter_time):
         )
 
 
-def create_drifter_fieldset(config):
+def create_drifter_fieldset(config, data_dir: str):
     """
     Create a fieldset from netcdf files for drifters, returns fieldset with negative depth values.
 
     :param config: The cruise configuration.
+    :param data_dir: TODO
     :returns: The fieldset.
     """
-    datadirname = os.path.dirname(__file__)
     filenames = {
-        "U": os.path.join(datadirname, "drifterdata_UV.nc"),
-        "V": os.path.join(datadirname, "drifterdata_UV.nc"),
-        "T": os.path.join(datadirname, "drifterdata_T.nc"),
+        "U": os.path.join(data_dir, "drifterdata_UV.nc"),
+        "V": os.path.join(data_dir, "drifterdata_UV.nc"),
+        "T": os.path.join(data_dir, "drifterdata_T.nc"),
     }
     variables = {"U": "uo", "V": "vo", "T": "thetao"}
     dimensions = {
