@@ -152,7 +152,7 @@ def simulate_argo_floats(
     # define output file for the simulation
     out_file = argo_float_particleset.ParticleFile(
         name=out_file_name,
-        outputdt=timedelta(minutes=5),
+        outputdt=outputdt,
         chunks=(1, 500),
     )
 

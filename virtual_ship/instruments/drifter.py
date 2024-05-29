@@ -65,7 +65,7 @@ def simulate_drifters(
     # define output file for the simulation
     out_file = drifter_particleset.ParticleFile(
         name=out_file_name,
-        outputdt=timedelta(minutes=5),
+        outputdt=outputdt,
         chunks=(1, 500),
     )
 
