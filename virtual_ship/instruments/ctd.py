@@ -16,12 +16,14 @@ class CTDInstrument:
     location: Location
     deployment_time: float
     min_depth: float
+    max_depth: float
 
 
 class _CTDParticle(JITParticle):
     salinity = Variable("salinity", initial=np.nan)
     temperature = Variable("temperature", initial=np.nan)
     raising = Variable("raising", dtype=np.int32, initial=0.0)
+    max_depth = Variable("max_depth", dtype=np.float32)
 
 
 def _sample_temperature(particle, fieldset, time):
@@ -37,13 +39,13 @@ def _ctd_cast(particle, fieldset, time):
     # TODO question: if is executed every time... move outside function? Not if "drifting" now possible
     if (
         -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon]
-        > fieldset.max_depth
+        > particle.max_depth
     ):
         maxdepth = (
             -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
         )
     else:
-        maxdepth = fieldset.max_depth
+        maxdepth = particle.max_depth
     winch_speed = -1.0  # sink and rise speed in m/s
 
     if particle.raising == 0:
@@ -62,7 +64,7 @@ def _ctd_cast(particle, fieldset, time):
                 print("CTD cast finished.")
 
 
-def simulate_drifters(
+def simulate_ctd(
     ctd_instruments: list[CTDInstrument],
     fieldset: FieldSet,
     out_file_name: str,
@@ -88,6 +90,7 @@ def simulate_drifters(
         lat=lat,
         depth=[ctd.min_depth for ctd in ctd_instruments],
         time=time,
+        max_depth=[ctd.max_depth for ctd in ctd_instruments],
     )
 
     # define output file for the simulation
