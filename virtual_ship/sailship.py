@@ -8,16 +8,23 @@ import pyproj
 from parcels import Field, FieldSet, JITParticle, ParticleSet, Variable
 from shapely.geometry import Point, Polygon
 
+from .costs import costs
+from .drifter_deployments import drifter_deployments
+from .instruments.argo_float import ArgoFloat, simulate_argo_floats
+from .instruments.location import Location
+from .postprocess import postprocess
+from .virtual_ship_configuration import VirtualShipConfiguration
 
-def sailship(config):
+
+def sailship(config: VirtualShipConfiguration):
     """
     Use parcels to simulate the ship, take CTDs and measure ADCP and underwaydata.
 
     :param config: The cruise configuration.
-    :returns: drifter_time, argo_time, total_time
+    :raises NotImplementedError: TODO
     """
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
-    fieldset = create_fieldset(config)
+    fieldset = config.ctd_fieldset  # create_fieldset(config, data_dir)
 
     sample_lons, sample_lats = shiproute(config)
     print("Arrived in region of interest, starting to gather data.")
@@ -132,7 +139,9 @@ def sailship(config):
     drifter = 0
     drifter_time = []
     argo = 0
-    argo_time = []
+    argo_floats: list[ArgoFloat] = []
+
+    ARGO_MIN_DEPTH = -config.argo_float_fieldset.U.depth[0]
 
     # run the model for the length of the sample_lons list
     for i in range(len(sample_lons) - 1):
@@ -155,7 +164,8 @@ def sailship(config):
             print(
                 "Ship time is over, waiting for drifters and/or Argo floats to finish."
             )
-            return drifter_time, argo_time
+            raise NotImplementedError()
+            # return drifter_time, argo_time
 
         # check if virtual ship is at a CTD station
         if ctd < len(config.CTD_locations):
@@ -214,7 +224,21 @@ def sailship(config):
                 abs(sample_lons[i] - config.argo_deploylocations[argo][0]) < 0.01
                 and abs(sample_lats[i] - config.argo_deploylocations[argo][1]) < 0.01
             ):
-                argo_time.append(total_time)
+                argo_floats.append(
+                    ArgoFloat(
+                        location=Location(
+                            latitude=config.argo_deploylocations[argo][0],
+                            longitude=config.argo_deploylocations[argo][1],
+                        ),
+                        deployment_time=total_time,
+                        min_depth=ARGO_MIN_DEPTH,
+                        max_depth=config.argo_characteristics["maxdepth"],
+                        drift_depth=config.argo_characteristics["driftdepth"],
+                        vertical_speed=config.argo_characteristics["vertical_speed"],
+                        cycle_days=config.argo_characteristics["cycle_days"],
+                        drift_days=config.argo_characteristics["drift_days"],
+                    )
+                )
                 argo += 1
                 print(f"Argo {argo} deployed at {sample_lons[i]}, {sample_lats[i]}")
                 if argo == len(config.argo_deploylocations):
@@ -243,23 +267,42 @@ def sailship(config):
         )
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
-    return drifter_time, argo_time, total_time
+    # simulate drifter deployments
+    drifter_deployments(config, drifter_time)
+
+    # simulate argo deployments
+    simulate_argo_floats(
+        argo_floats=argo_floats,
+        fieldset=config.argo_float_fieldset,
+        out_file_name=os.path.join("results", "argo_floats.zarr"),
+        outputdt=timedelta(minutes=5),
+    )
+
+    # convert CTD data to CSV
+    postprocess()
+
+    print("All data has been gathered and postprocessed, returning home.")
+
+    cost = costs(config, total_time)
+    print(
+        f"This cruise took {timedelta(seconds=total_time)} and would have cost {cost:,.0f} euros."
+    )
 
 
-def create_fieldset(config):
+def create_fieldset(config, data_dir: str):
     """
     Create fieldset from netcdf files and adds bathymetry data for CTD cast, returns fieldset with negative depth values.
 
     :param config: The cruise configuration.
+    :param data_dir: TODO
     :returns: The fieldset.
     :raises ValueError: If downloaded data is not as expected.
     """
-    datadirname = os.path.dirname(__file__)
     filenames = {
-        "U": os.path.join(datadirname, "studentdata_UV.nc"),
-        "V": os.path.join(datadirname, "studentdata_UV.nc"),
-        "S": os.path.join(datadirname, "studentdata_S.nc"),
-        "T": os.path.join(datadirname, "studentdata_T.nc"),
+        "U": os.path.join(data_dir, "studentdata_UV.nc"),
+        "V": os.path.join(data_dir, "studentdata_UV.nc"),
+        "S": os.path.join(data_dir, "studentdata_S.nc"),
+        "T": os.path.join(data_dir, "studentdata_T.nc"),
     }
     variables = {"U": "uo", "V": "vo", "S": "so", "T": "thetao"}
     dimensions = {
@@ -286,7 +329,7 @@ def create_fieldset(config):
     fieldset.add_constant("maxtime", fieldset.U.grid.time_full[-1])
 
     # add bathymetry data to the fieldset for CTD cast
-    bathymetry_file = os.path.join(datadirname, "GLO-MFC_001_024_mask_bathy.nc")
+    bathymetry_file = os.path.join(data_dir, "GLO-MFC_001_024_mask_bathy.nc")
     bathymetry_variables = ("bathymetry", "deptho")
     bathymetry_dimensions = {"lon": "longitude", "lat": "latitude"}
     bathymetry_field = Field.from_netcdf(

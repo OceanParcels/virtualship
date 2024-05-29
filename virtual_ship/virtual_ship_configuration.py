@@ -2,23 +2,40 @@
 
 import datetime
 import json
-import os
 from datetime import timedelta
 
+from parcels import FieldSet
 from shapely.geometry import Point, Polygon
 
 
 class VirtualShipConfiguration:
     """Configuration of the virtual ship, initialized from a json file."""
 
-    def __init__(self, json_file):
+    ctd_fieldset: FieldSet
+    drifter_fieldset: FieldSet
+    argo_float_fieldset: FieldSet
+
+    def __init__(
+        self,
+        json_file,
+        ctd_fieldset: FieldSet,
+        drifter_fieldset: FieldSet,
+        argo_float_fieldset: FieldSet,
+    ):
         """
         Initialize this object.
 
         :param json_file: Path to the JSON file to init from.
+        :param ctd_fieldset: Fieldset for CTD measurements.
+        :param drifter_fieldset: Fieldset for CTD measurements.
+        :param argo_float_fieldset: FIeldset for argo float measurements.
         :raises ValueError: If JSON file not valid.
         """
-        with open(os.path.join(os.path.dirname(__file__), json_file), "r") as file:
+        self.ctd_fieldset = ctd_fieldset
+        self.drifter_fieldset = drifter_fieldset
+        self.argo_float_fieldset = argo_float_fieldset
+
+        with open(json_file, "r") as file:
             json_input = json.loads(file.read())
             for key in json_input:
                 setattr(self, key, json_input[key])
