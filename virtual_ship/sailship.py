@@ -11,6 +11,7 @@ from shapely.geometry import Point, Polygon
 from .costs import costs
 from .instruments.argo_float import ArgoFloat, simulate_argo_floats
 from .instruments.drifter import Drifter, simulate_drifters
+from .instruments.ctd import CTDInstrument, simulate_ctd
 from .instruments.location import Location
 from .postprocess import postprocess
 from .virtual_ship_configuration import VirtualShipConfiguration
@@ -18,7 +19,7 @@ from .virtual_ship_configuration import VirtualShipConfiguration
 
 def sailship(config: VirtualShipConfiguration):
     """
-    Use parcels to simulate the ship, take CTDs and measure ADCP and underwaydata.
+    Use parcels to simulate the ship, take ctd_instruments and measure ADCP and underwaydata.
 
     :param config: The cruise configuration.
     :raises NotImplementedError: TODO
@@ -43,49 +44,11 @@ def sailship(config: VirtualShipConfiguration):
         salinity = Variable("salinity", initial=np.nan)
         temperature = Variable("temperature", initial=np.nan)
 
-    # Create CTD like particles to sample the ocean
-    class CTDParticle(JITParticle):
-        """Define a new particle class that does CTD like measurements."""
-
-        salinity = Variable("salinity", initial=np.nan)
-        temperature = Variable("temperature", initial=np.nan)
-        raising = Variable("raising", dtype=np.int32, initial=0.0)
-
     # define ADCP sampling function without conversion (because of A grid)
     def SampleVel(particle, fieldset, time):
         particle.U, particle.V = fieldset.UV.eval(
             time, particle.depth, particle.lat, particle.lon, applyConversion=False
         )
-
-    # define function lowering and raising CTD
-    def CTDcast(particle, fieldset, time):
-        # TODO question: if is executed every time... move outside function? Not if "drifting" now possible
-        if (
-            -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon]
-            > fieldset.max_depth
-        ):
-            maxdepth = (
-                -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon]
-                + 20
-            )
-        else:
-            maxdepth = fieldset.max_depth
-        winch_speed = -1.0  # sink and rise speed in m/s
-
-        if particle.raising == 0:
-            # Sinking with winch_speed until near seafloor
-            particle_ddepth = winch_speed * particle.dt
-            if particle.depth <= maxdepth:
-                particle.raising = 1
-
-        if particle.raising == 1:
-            # Rising with winch_speed until depth is -2 m
-            if particle.depth < -2:
-                particle_ddepth = -winch_speed * particle.dt
-                if particle.depth + particle_ddepth >= -2:
-                    # to break the loop ...
-                    particle.state = 41
-                    print("CTD cast finished.")
 
     # define function sampling Salinity
     def SampleS(particle, fieldset, time):
@@ -128,19 +91,18 @@ def sailship(config: VirtualShipConfiguration):
         name=os.path.join("results", "UnderwayData.zarr")
     )
 
-    # initialize CTD station number and time
+    # initialize time
     total_time = timedelta(hours=0).total_seconds()
-    ctd = 0
-    ctd_dt = timedelta(
-        seconds=10
-    )  # timestep of CTD output reflecting post-process binning into 10m bins
 
     # initialize drifters and argo floats
     drifter = 0
     drifters: list[Drifter] = []
     argo = 0
     argo_floats: list[ArgoFloat] = []
+    ctd = 0
+    ctd_instruments: list[CTDInstrument] = []
 
+    ctd_min_depth = -config.ctd_fieldset.U.depth[0]
     argo_min_depth = -config.argo_float_fieldset.U.depth[0]
     drifter_min_depth = -config.drifter_fieldset.U.depth[0]
 
@@ -171,38 +133,25 @@ def sailship(config: VirtualShipConfiguration):
         # check if virtual ship is at a CTD station
         if ctd < len(config.CTD_locations):
             if (
-                abs(sample_lons[i] - config.CTD_locations[ctd][0]) < 0.001
-                and abs(sample_lats[i] - config.CTD_locations[ctd][1]) < 0.001
+                abs(sample_lons[i] - config.CTD_locations[ctd][0]) < 0.01
+                and abs(sample_lats[i] - config.CTD_locations[ctd][1]) < 0.01
             ):
+                ctd_instruments.append(
+                    CTDInstrument(
+                        location=Location(
+                            latitude=config.CTD_locations[ctd][0],
+                            longitude=config.CTD_locations[ctd][1],
+                        ),
+                        deployment_time=total_time,
+                        min_depth=ctd_min_depth,
+                        max_depth=-config.ctd_fieldset.U.depth[-1],
+                    )
+                )
                 ctd += 1
 
-                # release CTD particle
-                pset_CTD = ParticleSet(
-                    fieldset=fieldset,
-                    pclass=CTDParticle,
-                    lon=sample_lons[i],
-                    lat=sample_lats[i],
-                    depth=fieldset.mindepth,
-                    time=total_time,
-                )
-
-                # create a ParticleFile to store the CTD output
-                ctd_output_file = pset_CTD.ParticleFile(
-                    name=f"{os.path.join('results', 'CTDs', 'CTD_')}{ctd:03d}.zarr",
-                    outputdt=ctd_dt,
-                )
-
-                # record the temperature and salinity of the particle
-                pset_CTD.execute(
-                    [SampleS, SampleT, CTDcast],
-                    runtime=timedelta(hours=8),
-                    dt=ctd_dt,
-                    output_file=ctd_output_file,
-                    verbose_progress=False,
-                )
-                total_time = (
-                    pset_CTD.time[0] + timedelta(minutes=20).total_seconds()
-                )  # add CTD time and 20 minutes for deployment
+                total_time += timedelta(
+                    minutes=20
+                ).total_seconds()  # Add 20 minutes for deployment
 
         # check if we are at a `drifter` deployment location
         if drifter < len(config.drifter_deploylocations):
@@ -276,6 +225,14 @@ def sailship(config: VirtualShipConfiguration):
             pset_UnderwayData, time=total_time
         )
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
+
+    # simulate ctd
+    simulate_ctd(
+        ctd_instruments=ctd_instruments,
+        fieldset=config.ctd_fieldset,
+        out_file_name=os.path.join("results", "ctd_instruments.zarr"),
+        outputdt=timedelta(seconds=10),
+    )
 
     # simulate drifters
     simulate_drifters(

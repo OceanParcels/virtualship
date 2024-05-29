@@ -35,5 +35,5 @@ def test_simulate_drifters() -> None:
         ctd_instruments=ctd_instruments,
         fieldset=fieldset,
         out_file_name="test",
-        outputdt=timedelta(minutes=5),
+        outputdt=timedelta(seconds=10),
     )
