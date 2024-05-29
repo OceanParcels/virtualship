@@ -31,18 +31,21 @@ class ArgoFloat:
     drift_days: float
 
 
-class _ArgoParticle(JITParticle):
-    cycle_phase = Variable("cycle_phase", dtype=np.int32, initial=0.0)
-    cycle_age = Variable("cycle_age", dtype=np.float32, initial=0.0)
-    drift_age = Variable("drift_age", dtype=np.float32, initial=0.0)
-    salinity = Variable("salinity", initial=np.nan)
-    temperature = Variable("temperature", initial=np.nan)
-    min_depth = Variable("min_depth", dtype=np.float32)
-    max_depth = Variable("max_depth", dtype=np.float32)
-    drift_depth = Variable("drift_depth", dtype=np.float32)
-    vertical_speed = Variable("vertical_speed", dtype=np.float32)
-    cycle_days = Variable("cycle_days", dtype=np.int32)
-    drift_days = Variable("drift_days", dtype=np.int32)
+_ArgoParticle = JITParticle.add_variables(
+    [
+        Variable("cycle_phase", dtype=np.int32, initial=0.0),
+        Variable("cycle_age", dtype=np.float32, initial=0.0),
+        Variable("drift_age", dtype=np.float32, initial=0.0),
+        Variable("salinity", initial=np.nan),
+        Variable("temperature", initial=np.nan),
+        Variable("min_depth", dtype=np.float32),
+        Variable("max_depth", dtype=np.float32),
+        Variable("drift_depth", dtype=np.float32),
+        Variable("vertical_speed", dtype=np.float32),
+        Variable("cycle_days", dtype=np.int32),
+        Variable("drift_days", dtype=np.int32),
+    ]
+)
 
 
 def _argo_float_vertical_movement(particle, fieldset, time):
