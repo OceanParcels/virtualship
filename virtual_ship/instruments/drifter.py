@@ -18,11 +18,11 @@ class Drifter:
     min_depth: float
 
 
-class _DrifterParticle(JITParticle):
-    temperature = Variable(
-        "temperature",
-        initial=np.nan,
-    )
+_DrifterParticle = JITParticle.add_variables(
+    [
+        Variable("temperature", initial=np.nan),
+    ]
+)
 
 
 def _sample_temperature(particle, fieldset, time):

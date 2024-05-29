@@ -19,11 +19,14 @@ class CTDInstrument:
     max_depth: float
 
 
-class _CTDParticle(JITParticle):
-    salinity = Variable("salinity", initial=np.nan)
-    temperature = Variable("temperature", initial=np.nan)
-    raising = Variable("raising", dtype=np.int32, initial=0.0)
-    max_depth = Variable("max_depth", dtype=np.float32)
+_CTDParticle = JITParticle.add_variables(
+    [
+        Variable("salinity", initial=np.nan),
+        Variable("temperature", initial=np.nan),
+        Variable("raising", dtype=np.int32, initial=0.0),
+        Variable("max_depth", dtype=np.float32),
+    ]
+)
 
 
 def _sample_temperature(particle, fieldset, time):
