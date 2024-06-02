@@ -133,7 +133,7 @@ def simulate_argo_floats(
     lat = [argo.location.lat for argo in argo_floats]
     time = [argo.deployment_time for argo in argo_floats]
 
-    # define the parcels simulation
+    # define parcel particles
     argo_float_particleset = ParticleSet(
         fieldset=fieldset,
         pclass=_ArgoParticle,

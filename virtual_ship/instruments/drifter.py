@@ -52,7 +52,7 @@ def simulate_drifters(
     lat = [drifter.location.lat for drifter in drifters]
     time = [drifter.deployment_time for drifter in drifters]
 
-    # define the parcels simulation
+    # define parcel particles
     drifter_particleset = ParticleSet(
         fieldset=fieldset,
         pclass=_DrifterParticle,

@@ -85,7 +85,7 @@ def simulate_ctd(
     lat = [ctd.location.lat for ctd in ctd_instruments]
     time = [ctd.deployment_time for ctd in ctd_instruments]
 
-    # release CTD particle
+    # define parcel particles
     ctd_particleset = ParticleSet(
         fieldset=fieldset,
         pclass=_CTDParticle,
