@@ -1,7 +1,6 @@
-"""ADCP."""
+"""ADCP instrument."""
 
 from dataclasses import dataclass
-from datetime import timedelta
 
 import numpy as np
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
