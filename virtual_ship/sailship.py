@@ -24,6 +24,16 @@ def sailship(config: VirtualShipConfiguration):
 
     :param config: The cruise configuration.
     """
+    # TODO this will be in the config later, but for now we don't change the config structure
+    # from here -----
+    ctd_locations_list = [
+        Location(latitude=ctd[1], longitude=ctd[0]) for ctd in config.CTD_locations
+    ]
+    ctd_locations = set(ctd_locations_list)
+    if len(ctd_locations) != len(ctd_locations_list):
+        print("WARN: Some CTD locations are identical and have been combined.")
+    # until here ----
+
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
     adcp_fieldset = config.ctd_fieldset
     ship_st_fieldset = config.ctd_fieldset
@@ -36,13 +46,8 @@ def sailship(config: VirtualShipConfiguration):
     argo = 0
     argo_floats: list[ArgoFloat] = []
 
-    # the preferred locations of all ctd casts yet to be done
-    all_ctd_locations = [
-        Location(latitude=ctd[1], longitude=ctd[0]) for ctd in config.CTD_locations
-    ]
-    remaining_ctd_locations = set(all_ctd_locations)
-    if len(remaining_ctd_locations) != len(all_ctd_locations):
-        print("WARN: Some CTD locations are identical and will be combined.")
+    # ctd cast locations that have been visited
+    ctd_locations_visited: set[Location] = set()
     # ctd cast objects to be used in ctd simulation
     ctds: list[CTD] = []
 
@@ -74,7 +79,7 @@ def sailship(config: VirtualShipConfiguration):
         ctds_here = set(
             [
                 ctd
-                for ctd in remaining_ctd_locations
+                for ctd in ctd_locations - ctd_locations_visited
                 if all(np.isclose([ctd.lat, ctd.lon], [sample_lat, sample_lon]))
             ]
         )
@@ -90,7 +95,7 @@ def sailship(config: VirtualShipConfiguration):
                 max_depth=-config.ctd_fieldset.U.depth[-1],
             )
         )
-        remaining_ctd_locations -= ctds_here
+        ctd_locations_visited = ctd_locations_visited.union(ctds_here)
         # add 20 minutes to sailing time for deployment
         if len(ctds_here) != 0:
             total_time += timedelta(minutes=20).total_seconds()
@@ -149,7 +154,7 @@ def sailship(config: VirtualShipConfiguration):
         total_time += route_points_dt
     total_time -= route_points_dt
 
-    if len(remaining_ctd_locations) != 0:
+    if len(ctd_locations_visited) != len(ctd_locations):
         print(
             "WARN: some CTD casts were not along the route and have not been performed."
         )
