@@ -5,7 +5,6 @@ from datetime import timedelta
 
 import numpy as np
 import pyproj
-from parcels import JITParticle, ParticleSet, Variable
 from shapely.geometry import Point, Polygon
 
 from .costs import costs
@@ -13,6 +12,7 @@ from .instruments.argo_float import ArgoFloat, simulate_argo_floats
 from .instruments.ctd import CTDInstrument, simulate_ctd
 from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.adcp import simulate_adcp, SamplePoint as ADCPSamplePoint
+from .instruments.ship_st import simulate_ship_st, SamplePoint as ShipSTSamplePoint
 from .instruments.location import Location
 from .postprocess import postprocess
 from .virtual_ship_configuration import VirtualShipConfiguration
@@ -23,47 +23,13 @@ def sailship(config: VirtualShipConfiguration):
     Use parcels to simulate the ship, take ctd_instruments and measure ADCP and underwaydata.
 
     :param config: The cruise configuration.
-    :raises NotImplementedError: TODO
     """
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
-    fieldset = config.ctd_fieldset
     adcp_fieldset = config.ctd_fieldset
+    ship_st_fieldset = config.ctd_fieldset
 
     sample_lons, sample_lats = shiproute(config)
     print("Arrived in region of interest, starting to gather data.")
-
-    # Create particle to sample water underway
-    class UnderwayDataParticle(JITParticle):
-        """Define a new particle class that samples water directly under the hull."""
-
-        salinity = Variable("salinity", initial=np.nan)
-        temperature = Variable("temperature", initial=np.nan)
-
-    # define function sampling Salinity
-    def SampleS(particle, fieldset, time):
-        particle.salinity = fieldset.S[time, particle.depth, particle.lat, particle.lon]
-
-    # define function sampling Temperature
-    def SampleT(particle, fieldset, time):
-        particle.temperature = fieldset.T[
-            time, particle.depth, particle.lat, particle.lon
-        ]
-
-    # Create underway particle
-    pset_UnderwayData = ParticleSet.from_list(
-        fieldset=fieldset,
-        pclass=UnderwayDataParticle,
-        lon=sample_lons[0],
-        lat=sample_lats[0],
-        depth=-2,
-        time=0,
-    )
-    UnderwayData_output_file = pset_UnderwayData.ParticleFile(
-        name=os.path.join("results", "UnderwayData.zarr")
-    )
-
-    # initialize time
-    total_time = timedelta(hours=0).total_seconds()
 
     # initialize drifters and argo floats
     drifter = 0
@@ -73,9 +39,13 @@ def sailship(config: VirtualShipConfiguration):
     ctd = 0
     ctd_instruments: list[CTDInstrument] = []
 
-    adcp_dt = timedelta(minutes=5).total_seconds()
+    route_points_dt = timedelta(minutes=5).total_seconds()
     adcp_sample_points = [
-        ADCPSamplePoint(Location(latitude=lat, longitude=lon), n * adcp_dt)
+        ADCPSamplePoint(Location(latitude=lat, longitude=lon), n * route_points_dt)
+        for n, (lat, lon) in enumerate(zip(sample_lats, sample_lons))
+    ]
+    ship_st_sample_points = [
+        ShipSTSamplePoint(Location(latitude=lat, longitude=lon), n * route_points_dt)
         for n, (lat, lon) in enumerate(zip(sample_lats, sample_lons))
     ]
 
@@ -84,18 +54,11 @@ def sailship(config: VirtualShipConfiguration):
     drifter_min_depth = -config.drifter_fieldset.U.depth[0]
 
     # run the model for the length of the sample_lons list
+    total_time = timedelta(hours=0).total_seconds()
     for i in range(len(sample_lons) - 1):
 
         if i % 96 == 0:
             print(f"Gathered data {timedelta(seconds=total_time)} hours since start.")
-
-        if config.underway_data:
-            pset_UnderwayData.execute(
-                [SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False
-            )
-            UnderwayData_output_file.write(
-                pset_UnderwayData, time=pset_UnderwayData[0].time
-            )
 
         # check if virtual ship is at a CTD station
         if ctd < len(config.CTD_locations):
@@ -170,27 +133,20 @@ def sailship(config: VirtualShipConfiguration):
                 if argo == len(config.argo_deploylocations):
                     break
 
-        # update the particle time and location
-        pset_UnderwayData.lon_nextloop[:] = sample_lons[i + 1]
-        pset_UnderwayData.lat_nextloop[:] = sample_lats[i + 1]
+        # update timey
+        total_time += route_points_dt
 
-        total_time += adcp_dt
-        pset_UnderwayData.time_nextloop[:] = total_time
-
-    # write the final locations of the ADCP and Underway data particles
-    # if config.ADCP_data: # TODO what is this
-    #     pset_ADCP.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
-    #     adcp_output_file.write_latest_locations(pset_ADCP, time=total_time)
-    if config.underway_data:
-        pset_UnderwayData.execute(
-            [SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False
-        )
-        UnderwayData_output_file.write_latest_locations(
-            pset_UnderwayData, time=total_time
-        )
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
-    # simulate adcp
+    print("Simulating onboard salinity and temperature measurements.")
+    simulate_ship_st(
+        fieldset=ship_st_fieldset,
+        out_file_name=os.path.join("results", "ship_st.zarr"),
+        depth=-2,
+        sample_points=ship_st_sample_points,
+    )
+
+    print("Simulating onboard ADCP.")
     simulate_adcp(
         fieldset=adcp_fieldset,
         out_file_name=os.path.join("results", "adcp.zarr"),
@@ -200,7 +156,7 @@ def sailship(config: VirtualShipConfiguration):
         sample_points=adcp_sample_points,
     )
 
-    # simulate ctd
+    print("Simulating CTD casts.")
     simulate_ctd(
         ctd_instruments=ctd_instruments,
         fieldset=config.ctd_fieldset,
@@ -208,7 +164,7 @@ def sailship(config: VirtualShipConfiguration):
         outputdt=timedelta(seconds=10),
     )
 
-    # simulate drifters
+    print("Simulating drifters")
     simulate_drifters(
         drifters=drifters,
         fieldset=config.drifter_fieldset,
@@ -216,7 +172,7 @@ def sailship(config: VirtualShipConfiguration):
         outputdt=timedelta(minutes=5),
     )
 
-    # simulate argo floats
+    print("Simulating argo floats")
     simulate_argo_floats(
         argo_floats=argo_floats,
         fieldset=config.argo_float_fieldset,
@@ -225,6 +181,7 @@ def sailship(config: VirtualShipConfiguration):
     )
 
     # convert CTD data to CSV
+    print("Postprocessing..")
     postprocess()
 
     print("All data has been gathered and postprocessed, returning home.")
