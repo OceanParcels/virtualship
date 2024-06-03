@@ -31,12 +31,19 @@ def sailship(config: VirtualShipConfiguration):
     sample_lons, sample_lats = shiproute(config)
     print("Arrived in region of interest, starting to gather data.")
 
-    # initialize drifters and argo floats
     drifter = 0
     drifters: list[Drifter] = []
     argo = 0
     argo_floats: list[ArgoFloat] = []
-    ctd = 0
+
+    # the preferred locations of all ctd casts yet to be done
+    all_ctd_locations = [
+        Location(latitude=ctd[1], longitude=ctd[0]) for ctd in config.CTD_locations
+    ]
+    remaining_ctd_locations = set(all_ctd_locations)
+    if len(remaining_ctd_locations) != len(all_ctd_locations):
+        print("WARN: Some CTD locations are identical and will be combined.")
+    # ctd cast objects to be used in ctd simulation
     ctds: list[CTD] = []
 
     route_points_dt = timedelta(minutes=5).total_seconds()
@@ -55,33 +62,38 @@ def sailship(config: VirtualShipConfiguration):
 
     # run the model for the length of the sample_lons list
     total_time = timedelta(hours=0).total_seconds()
-    for i in range(len(sample_lons) - 1):
+    for i, (sample_lat, sample_lon) in enumerate(
+        zip(sample_lats, sample_lons, strict=True)
+    ):
+        location_here = Location(latitude=sample_lat, longitude=sample_lon)
 
         if i % 96 == 0:
             print(f"Gathered data {timedelta(seconds=total_time)} hours since start.")
 
-        # check if virtual ship is at a CTD station
-        if ctd < len(config.CTD_locations):
-            if (
-                abs(sample_lons[i] - config.CTD_locations[ctd][0]) < 0.01
-                and abs(sample_lats[i] - config.CTD_locations[ctd][1]) < 0.01
-            ):
-                ctds.append(
-                    CTD(
-                        location=Location(
-                            latitude=config.CTD_locations[ctd][0],
-                            longitude=config.CTD_locations[ctd][1],
-                        ),
-                        deployment_time=total_time,
-                        min_depth=ctd_min_depth,
-                        max_depth=-config.ctd_fieldset.U.depth[-1],
-                    )
-                )
-                ctd += 1
-
-                total_time += timedelta(
-                    minutes=20
-                ).total_seconds()  # Add 20 minutes for deployment
+        # find CTD casts to be done at this location
+        ctds_here = set(
+            [
+                ctd
+                for ctd in remaining_ctd_locations
+                if all(np.isclose([ctd.lat, ctd.lon], [sample_lat, sample_lon]))
+            ]
+        )
+        if len(ctds_here) > 1:
+            print(
+                "WARN: Multiple CTD casts match the current location. Only a single cast will be performed."
+            )
+        ctds.append(
+            CTD(
+                location=location_here,
+                deployment_time=total_time,
+                min_depth=ctd_min_depth,
+                max_depth=-config.ctd_fieldset.U.depth[-1],
+            )
+        )
+        remaining_ctd_locations -= ctds_here
+        # add 20 minutes to sailing time for deployment
+        if len(ctds_here) != 0:
+            total_time += timedelta(minutes=20).total_seconds()
 
         # check if we are at a `drifter` deployment location
         if drifter < len(config.drifter_deploylocations):
@@ -133,8 +145,14 @@ def sailship(config: VirtualShipConfiguration):
                 if argo == len(config.argo_deploylocations):
                     break
 
-        # update timey
+        # add time it takes to move to the next route point
         total_time += route_points_dt
+    total_time -= route_points_dt
+
+    if len(remaining_ctd_locations) != 0:
+        print(
+            "WARN: some CTD casts were not along the route and have not been performed."
+        )
 
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
@@ -261,7 +279,7 @@ def sailship(config: VirtualShipConfiguration):
 #     return fieldset
 
 
-def shiproute(config):
+def shiproute(config) -> tuple[list[float], list[float]]:
     """
     Take in route coordinates and return lat and lon points within region of interest to sample.
 
