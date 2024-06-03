@@ -9,7 +9,7 @@ from shapely.geometry import Point, Polygon
 
 from .costs import costs
 from .instruments.argo_float import ArgoFloat, simulate_argo_floats
-from .instruments.ctd import CTDInstrument, simulate_ctd
+from .instruments.ctd import CTD, simulate_ctd
 from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.adcp import simulate_adcp, SamplePoint as ADCPSamplePoint
 from .instruments.ship_st import simulate_ship_st, SamplePoint as ShipSTSamplePoint
@@ -37,7 +37,7 @@ def sailship(config: VirtualShipConfiguration):
     argo = 0
     argo_floats: list[ArgoFloat] = []
     ctd = 0
-    ctd_instruments: list[CTDInstrument] = []
+    ctds: list[CTD] = []
 
     route_points_dt = timedelta(minutes=5).total_seconds()
     adcp_sample_points = [
@@ -66,8 +66,8 @@ def sailship(config: VirtualShipConfiguration):
                 abs(sample_lons[i] - config.CTD_locations[ctd][0]) < 0.01
                 and abs(sample_lats[i] - config.CTD_locations[ctd][1]) < 0.01
             ):
-                ctd_instruments.append(
-                    CTDInstrument(
+                ctds.append(
+                    CTD(
                         location=Location(
                             latitude=config.CTD_locations[ctd][0],
                             longitude=config.CTD_locations[ctd][1],
@@ -158,9 +158,9 @@ def sailship(config: VirtualShipConfiguration):
 
     print("Simulating CTD casts.")
     simulate_ctd(
-        ctd_instruments=ctd_instruments,
+        ctds=ctds,
         fieldset=config.ctd_fieldset,
-        out_file_name=os.path.join("results", "ctd_instruments.zarr"),
+        out_file_name=os.path.join("results", "ctd.zarr"),
         outputdt=timedelta(seconds=10),
     )
 

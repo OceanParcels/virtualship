@@ -10,8 +10,8 @@ from .location import Location
 
 
 @dataclass
-class CTDInstrument:
-    """Configuration for a single CTD instrument."""
+class CTD:
+    """Configuration for a single CTD."""
 
     location: Location
     deployment_time: float
@@ -68,22 +68,22 @@ def _ctd_cast(particle, fieldset, time):
 
 
 def simulate_ctd(
-    ctd_instruments: list[CTDInstrument],
+    ctds: list[CTD],
     fieldset: FieldSet,
     out_file_name: str,
     outputdt: timedelta,
 ) -> None:
     """
-    Use parcels to simulate a set of CTD instruments in a fieldset.
+    Use parcels to simulate a set of CTDs in a fieldset.
 
-    :param ctd_instruments: A list of CTD instruments to simulate.
-    :param fieldset: The fieldset to simulate the CTD instruments in.
+    :param ctd: A list of CTDs to simulate.
+    :param fieldset: The fieldset to simulate the CTDs in.
     :param out_file_name: The file to write the results to.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     """
-    lon = [ctd.location.lon for ctd in ctd_instruments]
-    lat = [ctd.location.lat for ctd in ctd_instruments]
-    time = [ctd.deployment_time for ctd in ctd_instruments]
+    lon = [ctd.location.lon for ctd in ctds]
+    lat = [ctd.location.lat for ctd in ctds]
+    time = [ctd.deployment_time for ctd in ctds]
 
     # define parcel particles
     ctd_particleset = ParticleSet(
@@ -91,9 +91,9 @@ def simulate_ctd(
         pclass=_CTDParticle,
         lon=lon,
         lat=lat,
-        depth=[ctd.min_depth for ctd in ctd_instruments],
+        depth=[ctd.min_depth for ctd in ctds],
         time=time,
-        max_depth=[ctd.max_depth for ctd in ctd_instruments],
+        max_depth=[ctd.max_depth for ctd in ctds],
     )
 
     # define output file for the simulation

@@ -6,7 +6,7 @@ import numpy as np
 from parcels import FieldSet
 
 from virtual_ship.instruments import Location
-from virtual_ship.instruments.ctd import CTDInstrument, simulate_ctd
+from virtual_ship.instruments.ctd import CTD, simulate_ctd
 
 
 def test_simulate_drifters() -> None:
@@ -22,8 +22,8 @@ def test_simulate_drifters() -> None:
     min_depth = -fieldset.U.depth[0]
     max_depth = -fieldset.U.depth[-1]
 
-    ctd_instruments = [
-        CTDInstrument(
+    ctds = [
+        CTD(
             location=Location(latitude=0, longitude=0),
             deployment_time=0,
             min_depth=min_depth,
@@ -32,7 +32,7 @@ def test_simulate_drifters() -> None:
     ]
 
     simulate_ctd(
-        ctd_instruments=ctd_instruments,
+        ctds=ctds,
         fieldset=fieldset,
         out_file_name="test",
         outputdt=timedelta(seconds=10),
