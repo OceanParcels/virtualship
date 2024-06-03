@@ -21,8 +21,8 @@ class CTDInstrument:
 
 _CTDParticle = JITParticle.add_variables(
     [
-        Variable("salinity", initial=np.nan),
-        Variable("temperature", initial=np.nan),
+        Variable("salinity", dtype=np.float32, initial=np.nan),
+        Variable("temperature", dtype=np.float32, initial=np.nan),
         Variable("raising", dtype=np.int32, initial=0.0),
         Variable("max_depth", dtype=np.float32),
     ]

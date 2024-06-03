@@ -14,11 +14,12 @@ class SamplePoint:
     time: float
 
 
-class _ADCPParticle(JITParticle):
-    """ADCP particle sampling a single point at some depth."""
-
-    U = Variable("U", dtype=np.float32, initial=0.0)
-    V = Variable("V", dtype=np.float32, initial=0.0)
+_ADCPParticle = JITParticle.add_variables(
+    [
+        Variable("U", dtype=np.float32, initial=np.nan),
+        Variable("V", dtype=np.float32, initial=np.nan),
+    ]
+)
 
 
 def _sample_velocity(particle, fieldset, time):

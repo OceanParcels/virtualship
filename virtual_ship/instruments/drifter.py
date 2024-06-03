@@ -20,7 +20,7 @@ class Drifter:
 
 _DrifterParticle = JITParticle.add_variables(
     [
-        Variable("temperature", initial=np.nan),
+        Variable("temperature", dtype=np.float32, initial=np.nan),
     ]
 )
 

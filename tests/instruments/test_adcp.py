@@ -1,7 +1,5 @@
 """Test the simulation of Argo floats."""
 
-from datetime import timedelta
-
 import numpy as np
 from parcels import FieldSet
 
