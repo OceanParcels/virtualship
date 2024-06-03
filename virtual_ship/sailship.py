@@ -5,13 +5,14 @@ from datetime import timedelta
 
 import numpy as np
 import pyproj
-from parcels import Field, FieldSet, JITParticle, ParticleSet, Variable
+from parcels import JITParticle, ParticleSet, Variable
 from shapely.geometry import Point, Polygon
 
 from .costs import costs
 from .instruments.argo_float import ArgoFloat, simulate_argo_floats
 from .instruments.ctd import CTDInstrument, simulate_ctd
 from .instruments.drifter import Drifter, simulate_drifters
+from .instruments.adcp import simulate_adcp, SamplePoint as ADCPSamplePoint
 from .instruments.location import Location
 from .postprocess import postprocess
 from .virtual_ship_configuration import VirtualShipConfiguration
@@ -25,17 +26,11 @@ def sailship(config: VirtualShipConfiguration):
     :raises NotImplementedError: TODO
     """
     # Create fieldset and retreive final schip route as sample_lons and sample_lats
-    fieldset = config.ctd_fieldset  # create_fieldset(config, data_dir)
+    fieldset = config.ctd_fieldset
+    adcp_fieldset = config.ctd_fieldset
 
     sample_lons, sample_lats = shiproute(config)
     print("Arrived in region of interest, starting to gather data.")
-
-    # Create Vessel Mounted ADCP like particles to sample the ocean
-    class VM_ADCPParticle(JITParticle):
-        """Define a new particle class that does Vessel Mounted ADCP like measurements."""
-
-        U = Variable("U", dtype=np.float32, initial=0.0)
-        V = Variable("V", dtype=np.float32, initial=0.0)
 
     # Create particle to sample water underway
     class UnderwayDataParticle(JITParticle):
@@ -43,12 +38,6 @@ def sailship(config: VirtualShipConfiguration):
 
         salinity = Variable("salinity", initial=np.nan)
         temperature = Variable("temperature", initial=np.nan)
-
-    # define ADCP sampling function without conversion (because of A grid)
-    def SampleVel(particle, fieldset, time):
-        particle.U, particle.V = fieldset.UV.eval(
-            time, particle.depth, particle.lat, particle.lon, applyConversion=False
-        )
 
     # define function sampling Salinity
     def SampleS(particle, fieldset, time):
@@ -59,24 +48,6 @@ def sailship(config: VirtualShipConfiguration):
         particle.temperature = fieldset.T[
             time, particle.depth, particle.lat, particle.lon
         ]
-
-    # Create ADCP like particleset and output file
-    ADCP_bins = np.arange(
-        config.ADCP_settings["max_depth"], -5, config.ADCP_settings["bin_size_m"]
-    )
-    vert_particles = len(ADCP_bins)
-    pset_ADCP = ParticleSet.from_list(
-        fieldset=fieldset,
-        pclass=VM_ADCPParticle,
-        lon=np.full(vert_particles, sample_lons[0]),
-        lat=np.full(vert_particles, sample_lats[0]),
-        depth=ADCP_bins,
-        time=0,
-    )
-    adcp_output_file = pset_ADCP.ParticleFile(name=os.path.join("results", "ADCP.zarr"))
-    adcp_dt = timedelta(
-        minutes=5
-    ).total_seconds()  # timestep of ADCP output, every 5 min
 
     # Create underway particle
     pset_UnderwayData = ParticleSet.from_list(
@@ -102,6 +73,12 @@ def sailship(config: VirtualShipConfiguration):
     ctd = 0
     ctd_instruments: list[CTDInstrument] = []
 
+    adcp_dt = timedelta(minutes=5).total_seconds()
+    adcp_sample_points = [
+        ADCPSamplePoint(Location(latitude=lat, longitude=lon), n * adcp_dt)
+        for n, (lat, lon) in enumerate(zip(sample_lats, sample_lons))
+    ]
+
     ctd_min_depth = -config.ctd_fieldset.U.depth[0]
     argo_min_depth = -config.argo_float_fieldset.U.depth[0]
     drifter_min_depth = -config.drifter_fieldset.U.depth[0]
@@ -112,23 +89,13 @@ def sailship(config: VirtualShipConfiguration):
         if i % 96 == 0:
             print(f"Gathered data {timedelta(seconds=total_time)} hours since start.")
 
-        # execute the ADCP kernels to sample U and V and underway T and S
-        if config.ADCP_data:
-            pset_ADCP.execute(
-                [SampleVel], dt=adcp_dt, runtime=1, verbose_progress=False
-            )
-            adcp_output_file.write(pset_ADCP, time=pset_ADCP[0].time)
         if config.underway_data:
             pset_UnderwayData.execute(
                 [SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False
             )
-            UnderwayData_output_file.write(pset_UnderwayData, time=pset_ADCP[0].time)
-        if pset_ADCP[0].time > fieldset.maxtime:
-            print(
-                "Ship time is over, waiting for drifters and/or Argo floats to finish."
+            UnderwayData_output_file.write(
+                pset_UnderwayData, time=pset_UnderwayData[0].time
             )
-            raise NotImplementedError()
-            # return drifter_time, argo_time
 
         # check if virtual ship is at a CTD station
         if ctd < len(config.CTD_locations):
@@ -204,19 +171,16 @@ def sailship(config: VirtualShipConfiguration):
                     break
 
         # update the particle time and location
-        pset_ADCP.lon_nextloop[:] = sample_lons[i + 1]
-        pset_ADCP.lat_nextloop[:] = sample_lats[i + 1]
         pset_UnderwayData.lon_nextloop[:] = sample_lons[i + 1]
         pset_UnderwayData.lat_nextloop[:] = sample_lats[i + 1]
 
         total_time += adcp_dt
-        pset_ADCP.time_nextloop[:] = total_time
         pset_UnderwayData.time_nextloop[:] = total_time
 
     # write the final locations of the ADCP and Underway data particles
-    if config.ADCP_data:
-        pset_ADCP.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
-        adcp_output_file.write_latest_locations(pset_ADCP, time=total_time)
+    # if config.ADCP_data: # TODO what is this
+    #     pset_ADCP.execute(SampleVel, dt=adcp_dt, runtime=1, verbose_progress=False)
+    #     adcp_output_file.write_latest_locations(pset_ADCP, time=total_time)
     if config.underway_data:
         pset_UnderwayData.execute(
             [SampleS, SampleT], dt=adcp_dt, runtime=1, verbose_progress=False
@@ -225,6 +189,16 @@ def sailship(config: VirtualShipConfiguration):
             pset_UnderwayData, time=total_time
         )
     print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
+
+    # simulate adcp
+    simulate_adcp(
+        fieldset=adcp_fieldset,
+        out_file_name=os.path.join("results", "adcp.zarr"),
+        max_depth=config.ADCP_settings["max_depth"],
+        min_depth=-5,
+        bin_size=config.ADCP_settings["bin_size_m"],
+        sample_points=adcp_sample_points,
+    )
 
     # simulate ctd
     simulate_ctd(
@@ -261,73 +235,73 @@ def sailship(config: VirtualShipConfiguration):
     )
 
 
-def create_fieldset(config, data_dir: str):
-    """
-    Create fieldset from netcdf files and adds bathymetry data for CTD cast, returns fieldset with negative depth values.
+# def create_fieldset(config, data_dir: str):
+#     """
+#     Create fieldset from netcdf files and adds bathymetry data for CTD cast, returns fieldset with negative depth values.
 
-    :param config: The cruise configuration.
-    :param data_dir: TODO
-    :returns: The fieldset.
-    :raises ValueError: If downloaded data is not as expected.
-    """
-    filenames = {
-        "U": os.path.join(data_dir, "studentdata_UV.nc"),
-        "V": os.path.join(data_dir, "studentdata_UV.nc"),
-        "S": os.path.join(data_dir, "studentdata_S.nc"),
-        "T": os.path.join(data_dir, "studentdata_T.nc"),
-    }
-    variables = {"U": "uo", "V": "vo", "S": "so", "T": "thetao"}
-    dimensions = {
-        "lon": "longitude",
-        "lat": "latitude",
-        "time": "time",
-        "depth": "depth",
-    }
+#     :param config: The cruise configuration.
+#     :param data_dir: TODO
+#     :returns: The fieldset.
+#     :raises ValueError: If downloaded data is not as expected.
+#     """
+#     filenames = {
+#         "U": os.path.join(data_dir, "studentdata_UV.nc"),
+#         "V": os.path.join(data_dir, "studentdata_UV.nc"),
+#         "S": os.path.join(data_dir, "studentdata_S.nc"),
+#         "T": os.path.join(data_dir, "studentdata_T.nc"),
+#     }
+#     variables = {"U": "uo", "V": "vo", "S": "so", "T": "thetao"}
+#     dimensions = {
+#         "lon": "longitude",
+#         "lat": "latitude",
+#         "time": "time",
+#         "depth": "depth",
+#     }
 
-    # create the fieldset and set interpolation methods
-    fieldset = FieldSet.from_netcdf(
-        filenames, variables, dimensions, allow_time_extrapolation=True
-    )
-    fieldset.T.interp_method = "linear_invdist_land_tracer"
-    fieldset.S.interp_method = "linear_invdist_land_tracer"
-    for g in fieldset.gridset.grids:
-        if max(g.depth) > 0:
-            g.depth = -g.depth  # make depth negative
-    fieldset.mindepth = -fieldset.U.depth[0]  # uppermost layer in the hydrodynamic data
-    if config.CTD_settings["max_depth"] == "max":
-        fieldset.add_constant("max_depth", -fieldset.U.depth[-1])
-    else:
-        fieldset.add_constant("max_depth", config.CTD_settings["max_depth"])
-    fieldset.add_constant("maxtime", fieldset.U.grid.time_full[-1])
+#     # create the fieldset and set interpolation methods
+#     fieldset = FieldSet.from_netcdf(
+#         filenames, variables, dimensions, allow_time_extrapolation=True
+#     )
+#     fieldset.T.interp_method = "linear_invdist_land_tracer"
+#     fieldset.S.interp_method = "linear_invdist_land_tracer"
+#     for g in fieldset.gridset.grids:
+#         if max(g.depth) > 0:
+#             g.depth = -g.depth  # make depth negative
+#     fieldset.mindepth = -fieldset.U.depth[0]  # uppermost layer in the hydrodynamic data
+#     if config.CTD_settings["max_depth"] == "max":
+#         fieldset.add_constant("max_depth", -fieldset.U.depth[-1])
+#     else:
+#         fieldset.add_constant("max_depth", config.CTD_settings["max_depth"])
+#     fieldset.add_constant("maxtime", fieldset.U.grid.time_full[-1])
 
-    # add bathymetry data to the fieldset for CTD cast
-    bathymetry_file = os.path.join(data_dir, "GLO-MFC_001_024_mask_bathy.nc")
-    bathymetry_variables = ("bathymetry", "deptho")
-    bathymetry_dimensions = {"lon": "longitude", "lat": "latitude"}
-    bathymetry_field = Field.from_netcdf(
-        bathymetry_file, bathymetry_variables, bathymetry_dimensions
-    )
-    fieldset.add_field(bathymetry_field)
-    # read in data already
-    fieldset.computeTimeChunk(0, 1)
+#     # add bathymetry data to the fieldset for CTD cast
+#     bathymetry_file = os.path.join(data_dir, "GLO-MFC_001_024_mask_bathy.nc")
+#     bathymetry_variables = ("bathymetry", "deptho")
+#     bathymetry_dimensions = {"lon": "longitude", "lat": "latitude"}
+#     bathymetry_field = Field.from_netcdf(
+#         bathymetry_file, bathymetry_variables, bathymetry_dimensions
+#     )
+#     fieldset.add_field(bathymetry_field)
+#     # read in data already
+#     fieldset.computeTimeChunk(0, 1)
 
-    if fieldset.U.lon.min() > config.region_of_interest["West"]:
-        raise ValueError(
-            "FieldSet western boundary is outside region of interest. Please run download_data.py again."
-        )
-    if fieldset.U.lon.max() < config.region_of_interest["East"]:
-        raise ValueError(
-            "FieldSet eastern boundary is outside region of interest. Please run download_data.py again."
-        )
-    if fieldset.U.lat.min() > config.region_of_interest["South"]:
-        raise ValueError(
-            "FieldSet southern boundary is outside region of interest. Please run download_data.py again."
-        )
-    if fieldset.U.lat.max() < config.region_of_interest["North"]:
-        raise ValueError(
-            "FieldSet northern boundary is outside region of interest. Please run download_data.py again."
-        )
-    return fieldset
+#     if fieldset.U.lon.min() > config.region_of_interest["West"]:
+#         raise ValueError(
+#             "FieldSet western boundary is outside region of interest. Please run download_data.py again."
+#         )
+#     if fieldset.U.lon.max() < config.region_of_interest["East"]:
+#         raise ValueError(
+#             "FieldSet eastern boundary is outside region of interest. Please run download_data.py again."
+#         )
+#     if fieldset.U.lat.min() > config.region_of_interest["South"]:
+#         raise ValueError(
+#             "FieldSet southern boundary is outside region of interest. Please run download_data.py again."
+#         )
+#     if fieldset.U.lat.max() < config.region_of_interest["North"]:
+#         raise ValueError(
+#             "FieldSet northern boundary is outside region of interest. Please run download_data.py again."
+#         )
+#     return fieldset
 
 
 def shiproute(config):
