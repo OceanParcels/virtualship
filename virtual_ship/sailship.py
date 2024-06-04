@@ -26,6 +26,26 @@ def sailship(config: VirtualShipConfiguration):
     """
     # TODO this will be in the config later, but for now we don't change the config structure
     # from here -----
+    argo_locations_list = [
+        Location(latitude=argo[1], longitude=argo[0])
+        for argo in config.argo_deploylocations
+    ]
+    argo_locations = set(argo_locations_list)
+    if len(argo_locations) != len(argo_locations_list):
+        print(
+            "WARN: Some argo float deployment locations are identical and have been combined."
+        )
+
+    drifter_locations_list = [
+        Location(latitude=drifter[1], longitude=drifter[0])
+        for drifter in config.drifter_deploylocations
+    ]
+    drifter_locations = set(drifter_locations_list)
+    if len(drifter_locations) != len(drifter_locations_list):
+        print(
+            "WARN: Some drifter deployment locations are identical and have been combined."
+        )
+
     ctd_locations_list = [
         Location(latitude=ctd[1], longitude=ctd[0]) for ctd in config.CTD_locations
     ]
@@ -34,53 +54,98 @@ def sailship(config: VirtualShipConfiguration):
         print("WARN: Some CTD locations are identical and have been combined.")
     # until here ----
 
-    # Create fieldset and retreive final schip route as sample_lons and sample_lats
-    adcp_fieldset = config.ctd_fieldset
-    ship_st_fieldset = config.ctd_fieldset
+    # get discrete points along the ships route were sampling and deployments will be performed
+    route_dt = timedelta(minutes=5)
+    route_points = shiproute(config=config, dt=route_dt)
 
-    sample_lons, sample_lats = shiproute(config)
-    print("Arrived in region of interest, starting to gather data.")
+    # adcp objects to be used in simulation
+    adcps: list[ADCPSamplePoint] = []
 
-    drifter = 0
-    drifters: list[Drifter] = []
-    argo = 0
+    # ship st objects to be used in simulation
+    ship_sts: list[ShipSTSamplePoint] = []
+
+    # argo float deployment locations that have been visited
+    argo_locations_visited: set[Location] = set()
+    # argo float objects to be used in simulation
     argo_floats: list[ArgoFloat] = []
+
+    # drifter deployment locations that have been visited
+    drifter_locations_visited: set[Location] = set()
+    # drifter objects to be used in simulation
+    drifters: list[Drifter] = []
 
     # ctd cast locations that have been visited
     ctd_locations_visited: set[Location] = set()
-    # ctd cast objects to be used in ctd simulation
+    # ctd cast objects to be used in simulation
     ctds: list[CTD] = []
 
-    route_points_dt = timedelta(minutes=5).total_seconds()
-    adcp_sample_points = [
-        ADCPSamplePoint(Location(latitude=lat, longitude=lon), n * route_points_dt)
-        for n, (lat, lon) in enumerate(zip(sample_lats, sample_lons))
-    ]
-    ship_st_sample_points = [
-        ShipSTSamplePoint(Location(latitude=lat, longitude=lon), n * route_points_dt)
-        for n, (lat, lon) in enumerate(zip(sample_lats, sample_lons))
-    ]
-
-    ctd_min_depth = -config.ctd_fieldset.U.depth[0]
-    argo_min_depth = -config.argo_float_fieldset.U.depth[0]
-    drifter_min_depth = -config.drifter_fieldset.U.depth[0]
-
-    # run the model for the length of the sample_lons list
-    total_time = timedelta(hours=0).total_seconds()
-    for i, (sample_lat, sample_lon) in enumerate(
-        zip(sample_lats, sample_lons, strict=True)
-    ):
-        location_here = Location(latitude=sample_lat, longitude=sample_lon)
-
+    # iterate over each discrete route point, find deployment and measurement locations and times, and measure how much time this took
+    time_past = timedelta()
+    for i, route_point in enumerate(route_points):
         if i % 96 == 0:
-            print(f"Gathered data {timedelta(seconds=total_time)} hours since start.")
+            print(f"Gathered data {time_past} hours since start.")
+
+        # find drifter deployments to be done at this location
+        drifters_here = set(
+            [
+                drifter
+                for drifter in drifter_locations - drifter_locations_visited
+                if all(
+                    np.isclose(
+                        [drifter.lat, drifter.lon], [route_point.lat, route_point.lon]
+                    )
+                )
+            ]
+        )
+        if len(drifters_here) > 1:
+            print(
+                "WARN: Multiple drifter deployments match the current location. Only a single deployment will be performed."
+            )
+        drifters.append(
+            Drifter(
+                location=route_point,
+                deployment_time=time_past.total_seconds(),
+                min_depth=-config.drifter_fieldset.U.depth[0],
+            )
+        )
+        drifter_locations_visited = drifter_locations_visited.union(drifters_here)
+
+        # find argo float deployments to be done at this location
+        argos_here = set(
+            [
+                argo
+                for argo in argo_locations - argo_locations_visited
+                if all(
+                    np.isclose([argo.lat, argo.lon], [route_point.lat, route_point.lon])
+                )
+            ]
+        )
+        if len(argos_here) > 1:
+            print(
+                "WARN: Multiple argo float deployments match the current location. Only a single deployment will be performed."
+            )
+        argo_floats.append(
+            ArgoFloat(
+                location=route_point,
+                deployment_time=time_past.total_seconds(),
+                min_depth=-config.argo_float_fieldset.U.depth[0],
+                max_depth=config.argo_characteristics["maxdepth"],
+                drift_depth=config.argo_characteristics["driftdepth"],
+                vertical_speed=config.argo_characteristics["vertical_speed"],
+                cycle_days=config.argo_characteristics["cycle_days"],
+                drift_days=config.argo_characteristics["drift_days"],
+            )
+        )
+        argo_locations_visited = argo_locations_visited.union(argos_here)
 
         # find CTD casts to be done at this location
         ctds_here = set(
             [
                 ctd
                 for ctd in ctd_locations - ctd_locations_visited
-                if all(np.isclose([ctd.lat, ctd.lon], [sample_lat, sample_lon]))
+                if all(
+                    np.isclose([ctd.lat, ctd.lon], [route_point.lat, route_point.lon])
+                )
             ]
         )
         if len(ctds_here) > 1:
@@ -89,70 +154,20 @@ def sailship(config: VirtualShipConfiguration):
             )
         ctds.append(
             CTD(
-                location=location_here,
-                deployment_time=total_time,
-                min_depth=ctd_min_depth,
+                location=route_point,
+                deployment_time=time_past.total_seconds(),
+                min_depth=-config.ctd_fieldset.U.depth[0],
                 max_depth=-config.ctd_fieldset.U.depth[-1],
             )
         )
         ctd_locations_visited = ctd_locations_visited.union(ctds_here)
         # add 20 minutes to sailing time for deployment
         if len(ctds_here) != 0:
-            total_time += timedelta(minutes=20).total_seconds()
-
-        # check if we are at a `drifter` deployment location
-        if drifter < len(config.drifter_deploylocations):
-            while (
-                abs(sample_lons[i] - config.drifter_deploylocations[drifter][0]) < 0.01
-                and abs(sample_lats[i] - config.drifter_deploylocations[drifter][1])
-                < 0.01
-            ):
-                drifters.append(
-                    Drifter(
-                        location=Location(
-                            latitude=config.drifter_deploylocations[drifter][0],
-                            longitude=config.drifter_deploylocations[drifter][1],
-                        ),
-                        deployment_time=total_time,
-                        min_depth=drifter_min_depth,
-                    )
-                )
-                drifter += 1
-                print(
-                    f"Drifter {drifter} deployed at {sample_lons[i]}, {sample_lats[i]}"
-                )
-                if drifter == len(config.drifter_deploylocations):
-                    break
-
-        # check if we are at a argo deployment location
-        if argo < len(config.argo_deploylocations):
-            while (
-                abs(sample_lons[i] - config.argo_deploylocations[argo][0]) < 0.01
-                and abs(sample_lats[i] - config.argo_deploylocations[argo][1]) < 0.01
-            ):
-                argo_floats.append(
-                    ArgoFloat(
-                        location=Location(
-                            latitude=config.argo_deploylocations[argo][0],
-                            longitude=config.argo_deploylocations[argo][1],
-                        ),
-                        deployment_time=total_time,
-                        min_depth=argo_min_depth,
-                        max_depth=config.argo_characteristics["maxdepth"],
-                        drift_depth=config.argo_characteristics["driftdepth"],
-                        vertical_speed=config.argo_characteristics["vertical_speed"],
-                        cycle_days=config.argo_characteristics["cycle_days"],
-                        drift_days=config.argo_characteristics["drift_days"],
-                    )
-                )
-                argo += 1
-                print(f"Argo {argo} deployed at {sample_lons[i]}, {sample_lats[i]}")
-                if argo == len(config.argo_deploylocations):
-                    break
+            time_past += timedelta(minutes=20)
 
         # add time it takes to move to the next route point
-        total_time += route_points_dt
-    total_time -= route_points_dt
+        time_past += route_dt
+    time_past -= route_dt
 
     if len(ctd_locations_visited) != len(ctd_locations):
         print(
@@ -163,20 +178,20 @@ def sailship(config: VirtualShipConfiguration):
 
     print("Simulating onboard salinity and temperature measurements.")
     simulate_ship_st(
-        fieldset=ship_st_fieldset,
+        fieldset=config.ship_st_fieldset,
         out_file_name=os.path.join("results", "ship_st.zarr"),
         depth=-2,
-        sample_points=ship_st_sample_points,
+        sample_points=ship_sts,
     )
 
     print("Simulating onboard ADCP.")
     simulate_adcp(
-        fieldset=adcp_fieldset,
+        fieldset=config.adcp_fieldset,
         out_file_name=os.path.join("results", "adcp.zarr"),
         max_depth=config.ADCP_settings["max_depth"],
         min_depth=-5,
         bin_size=config.ADCP_settings["bin_size_m"],
-        sample_points=adcp_sample_points,
+        sample_points=adcps,
     )
 
     print("Simulating CTD casts.")
@@ -209,10 +224,8 @@ def sailship(config: VirtualShipConfiguration):
 
     print("All data has been gathered and postprocessed, returning home.")
 
-    cost = costs(config, total_time)
-    print(
-        f"This cruise took {timedelta(seconds=total_time)} and would have cost {cost:,.0f} euros."
-    )
+    cost = costs(config, time_past)
+    print(f"This cruise took {time_past} and would have cost {cost:,.0f} euros.")
 
 
 # def create_fieldset(config, data_dir: str):
@@ -284,7 +297,7 @@ def sailship(config: VirtualShipConfiguration):
 #     return fieldset
 
 
-def shiproute(config) -> tuple[list[float], list[float]]:
+def shiproute(config: VirtualShipConfiguration, dt: timedelta) -> list[Location]:
     """
     Take in route coordinates and return lat and lon points within region of interest to sample.
 
@@ -308,7 +321,7 @@ def shiproute(config) -> tuple[list[float], list[float]]:
         cruise_speed = 5.14
         geod = pyproj.Geod(ellps="WGS84")
         azimuth1, azimuth2, distance = geod.inv(startlong, startlat, endlong, endlat)
-        if distance > (cruise_speed * 60 * 5):
+        if distance > (cruise_speed * dt.total_seconds()):
             r = geod.inv_intermediate(
                 startlong,
                 startlat,
@@ -340,4 +353,8 @@ def shiproute(config) -> tuple[list[float], list[float]]:
         if poly.contains(Point(lons[i], lats[i])):
             sample_lons.append(lons[i])
             sample_lats.append(lats[i])
-    return sample_lons, sample_lats
+    points = [
+        Location(latitude=lat, longitude=lon)
+        for lat, lon in zip(sample_lats, sample_lons, strict=True)
+    ]
+    return points

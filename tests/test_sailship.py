@@ -8,13 +8,20 @@ from virtual_ship.virtual_ship_configuration import VirtualShipConfiguration
 
 
 def test_sailship() -> None:
+    adcp_fieldset = FieldSet.from_data(
+        {"U": 0, "V": 0},
+        {"lon": 0, "lat": 0},
+    )
+
+    ship_st_fieldset = FieldSet.from_data(
+        {"U": 0, "V": 0, "S": 0, "T": 0},
+        {"lon": 0, "lat": 0},
+    )
+
     ctd_fieldset = FieldSet.from_data(
         {"U": 0, "V": 0, "S": 0, "T": 0, "bathymetry": 0},
         {"lon": 0, "lat": 0},
     )
-    ctd_fieldset.add_constant("maxtime", ctd_fieldset.U.grid.time_full[-1])
-    ctd_fieldset.add_constant("mindepth", -ctd_fieldset.U.depth[0])
-    ctd_fieldset.add_constant("max_depth", -ctd_fieldset.U.depth[-1])
 
     drifter_fieldset = FieldSet.from_data(
         {"U": 0, "V": 0, "T": 0},
@@ -36,6 +43,8 @@ def test_sailship() -> None:
 
     config = VirtualShipConfiguration(
         "sailship_config.json",
+        adcp_fieldset=adcp_fieldset,
+        ship_st_fieldset=ship_st_fieldset,
         ctd_fieldset=ctd_fieldset,
         drifter_fieldset=drifter_fieldset,
         argo_float_fieldset=argo_float_fieldset,

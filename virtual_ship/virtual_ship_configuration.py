@@ -11,6 +11,10 @@ from shapely.geometry import Point, Polygon
 class VirtualShipConfiguration:
     """Configuration of the virtual ship, initialized from a json file."""
 
+    adcp_fieldset: FieldSet
+    ship_st_fieldset: FieldSet
+    argo_float_fieldset: FieldSet
+    drifter_fieldset: FieldSet
     ctd_fieldset: FieldSet
     drifter_fieldset: FieldSet
     argo_float_fieldset: FieldSet
@@ -18,6 +22,8 @@ class VirtualShipConfiguration:
     def __init__(
         self,
         json_file,
+        adcp_fieldset: FieldSet,
+        ship_st_fieldset: FieldSet,
         ctd_fieldset: FieldSet,
         drifter_fieldset: FieldSet,
         argo_float_fieldset: FieldSet,
@@ -26,11 +32,15 @@ class VirtualShipConfiguration:
         Initialize this object.
 
         :param json_file: Path to the JSON file to init from.
+        :param adcp_fieldset: Fieldset for ADCP measurements.
+        :param ship_st_fieldset: Fieldset for ship salinity temperature measurements.
         :param ctd_fieldset: Fieldset for CTD measurements.
         :param drifter_fieldset: Fieldset for CTD measurements.
-        :param argo_float_fieldset: FIeldset for argo float measurements.
+        :param argo_float_fieldset: Fieldset for argo float measurements.
         :raises ValueError: If JSON file not valid.
         """
+        self.adcp_fieldset = adcp_fieldset
+        self.ship_st_fieldset = ship_st_fieldset
         self.ctd_fieldset = ctd_fieldset
         self.drifter_fieldset = drifter_fieldset
         self.argo_float_fieldset = argo_float_fieldset
