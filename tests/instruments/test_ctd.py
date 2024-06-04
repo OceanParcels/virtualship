@@ -9,7 +9,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.ctd import CTD, simulate_ctd
 
 
-def test_simulate_drifters() -> None:
+def test_simulate_ctds() -> None:
     fieldset = FieldSet.from_data(
         {"U": 0, "V": 0, "T": 0, "S": 0, "bathymetry": 100},
         {

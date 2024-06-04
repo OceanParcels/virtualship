@@ -7,7 +7,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.adcp import simulate_adcp
 
 
-def test_simulate_argo_floats() -> None:
+def test_simulate_adcp() -> None:
     MAX_DEPTH = -1000
     MIN_DEPTH = -5
     BIN_SIZE = 24

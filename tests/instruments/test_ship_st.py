@@ -7,7 +7,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.ship_st import simulate_ship_st
 
 
-def test_simulate_argo_floats() -> None:
+def test_simulate_ship_st() -> None:
     DEPTH = -2
 
     fieldset = FieldSet.from_data(
