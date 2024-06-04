@@ -20,7 +20,7 @@ flake8 ./$PACKAGE ./$TESTS
 echo "--------------"
 echo "pydocstyle"
 echo "--------------"
-pydocstyle ./$PACKAGE
+pydocstyle ./$PACKAGE ./$TESTS
 
 echo "--------------"
 echo "sort-all"

@@ -1,4 +1,4 @@
-"""Test the simulation of Argo floats."""
+"""Test the simulation of ADCP instruments."""
 
 import numpy as np
 from parcels import FieldSet
