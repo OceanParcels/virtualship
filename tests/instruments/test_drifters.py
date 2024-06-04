@@ -5,7 +5,7 @@ from datetime import timedelta
 import numpy as np
 from parcels import FieldSet
 
-from virtual_ship.instruments import Location
+from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.drifter import Drifter, simulate_drifters
 
 
@@ -23,8 +23,7 @@ def test_simulate_drifters() -> None:
 
     drifters = [
         Drifter(
-            location=Location(latitude=0, longitude=0),
-            deployment_time=0,
+            spacetime=Spacetime(location=Location(latitude=0, longitude=0), time=0),
             min_depth=min_depth,
         )
     ]

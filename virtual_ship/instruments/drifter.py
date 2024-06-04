@@ -6,15 +6,14 @@ from datetime import timedelta
 import numpy as np
 from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, Variable
 
-from .location import Location
+from ..spacetime import Spacetime
 
 
 @dataclass
 class Drifter:
     """Configuration for a single Drifter."""
 
-    location: Location
-    deployment_time: float
+    spacetime: Spacetime
     min_depth: float
 
 
@@ -48,9 +47,9 @@ def simulate_drifters(
     :param out_file_name: The file to write the results to.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     """
-    lon = [drifter.location.lon for drifter in drifters]
-    lat = [drifter.location.lat for drifter in drifters]
-    time = [drifter.deployment_time for drifter in drifters]
+    lon = [drifter.spacetime.location.lon for drifter in drifters]
+    lat = [drifter.spacetime.location.lat for drifter in drifters]
+    time = [drifter.spacetime.time for drifter in drifters]
 
     # define parcel particles
     drifter_particleset = ParticleSet(

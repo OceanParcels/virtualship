@@ -3,7 +3,7 @@
 import numpy as np
 from parcels import FieldSet
 
-from virtual_ship.instruments import Location, Spacetime
+from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.ship_st import simulate_ship_st
 
 

@@ -3,7 +3,7 @@
 import numpy as np
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
-from .spacetime import Spacetime
+from ..spacetime import Spacetime
 
 _ShipSTParticle = JITParticle.add_variables(
     [

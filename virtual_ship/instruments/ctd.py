@@ -6,15 +6,14 @@ from datetime import timedelta
 import numpy as np
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
-from .location import Location
+from ..spacetime import Spacetime
 
 
 @dataclass
 class CTD:
     """Configuration for a single CTD."""
 
-    location: Location
-    deployment_time: float
+    spacetime: Spacetime
     min_depth: float
     max_depth: float
 
@@ -81,9 +80,9 @@ def simulate_ctd(
     :param out_file_name: The file to write the results to.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     """
-    lon = [ctd.location.lon for ctd in ctds]
-    lat = [ctd.location.lat for ctd in ctds]
-    time = [ctd.deployment_time for ctd in ctds]
+    lon = [ctd.spacetime.location.lon for ctd in ctds]
+    lat = [ctd.spacetime.location.lat for ctd in ctds]
+    time = [ctd.spacetime.time for ctd in ctds]
 
     # define parcel particles
     ctd_particleset = ParticleSet(

@@ -8,13 +8,14 @@ import pyproj
 from shapely.geometry import Point, Polygon
 
 from .costs import costs
-from .instruments import Location, Spacetime
 from .instruments.adcp import simulate_adcp
 from .instruments.argo_float import ArgoFloat, simulate_argo_floats
 from .instruments.ctd import CTD, simulate_ctd
 from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.ship_st import simulate_ship_st
+from .location import Location
 from .postprocess import postprocess
+from .spacetime import Spacetime
 from .virtual_ship_configuration import VirtualShipConfiguration
 
 
@@ -105,8 +106,9 @@ def sailship(config: VirtualShipConfiguration):
             )
         drifters.append(
             Drifter(
-                location=route_point,
-                deployment_time=time_past.total_seconds(),
+                spacetime=Spacetime(
+                    location=route_point, time=time_past.total_seconds()
+                ),
                 min_depth=-config.drifter_fieldset.U.depth[0],
             )
         )
@@ -128,8 +130,9 @@ def sailship(config: VirtualShipConfiguration):
             )
         argo_floats.append(
             ArgoFloat(
-                location=route_point,
-                deployment_time=time_past.total_seconds(),
+                spacetime=Spacetime(
+                    location=route_point, time=time_past.total_seconds()
+                ),
                 min_depth=-config.argo_float_fieldset.U.depth[0],
                 max_depth=config.argo_characteristics["maxdepth"],
                 drift_depth=config.argo_characteristics["driftdepth"],
@@ -156,8 +159,9 @@ def sailship(config: VirtualShipConfiguration):
             )
         ctds.append(
             CTD(
-                location=route_point,
-                deployment_time=time_past.total_seconds(),
+                spacetime=Spacetime(
+                    location=route_point, time=time_past.total_seconds()
+                ),
                 min_depth=-config.ctd_fieldset.U.depth[0],
                 max_depth=-config.ctd_fieldset.U.depth[-1],
             )

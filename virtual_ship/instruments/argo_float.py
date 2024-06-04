@@ -14,15 +14,14 @@ from parcels import (
     Variable,
 )
 
-from .location import Location
+from ..spacetime import Spacetime
 
 
 @dataclass
 class ArgoFloat:
     """Configuration for a single Argo float."""
 
-    location: Location
-    deployment_time: float
+    spacetime: Spacetime
     min_depth: float
     max_depth: float
     drift_depth: float
@@ -129,9 +128,9 @@ def simulate_argo_floats(
     :param out_file_name: The file to write the results to.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     """
-    lon = [argo.location.lon for argo in argo_floats]
-    lat = [argo.location.lat for argo in argo_floats]
-    time = [argo.deployment_time for argo in argo_floats]
+    lon = [argo.spacetime.location.lon for argo in argo_floats]
+    lat = [argo.spacetime.location.lat for argo in argo_floats]
+    time = [argo.spacetime.time for argo in argo_floats]
 
     # define parcel particles
     argo_float_particleset = ParticleSet(
