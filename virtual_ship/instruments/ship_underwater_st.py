@@ -15,12 +15,16 @@ _ShipSTParticle = JITParticle.add_variables(
 
 # define function sampling Salinity
 def _sample_salinity(particle, fieldset, time):
-    particle.salinity = fieldset.S[time, particle.depth, particle.lat, particle.lon]
+    particle.salinity = fieldset.salinity[
+        time, particle.depth, particle.lat, particle.lon
+    ]
 
 
 # define function sampling Temperature
 def _sample_temperature(particle, fieldset, time):
-    particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+    particle.temperature = fieldset.temperature[
+        time, particle.depth, particle.lat, particle.lon
+    ]
 
 
 def simulate_ship_underwater_st(
@@ -56,7 +60,7 @@ def simulate_ship_underwater_st(
     for point in sample_points:
         particleset.lon_nextloop[:] = point.location.lon
         particleset.lat_nextloop[:] = point.location.lat
-        particleset.time_nextloop[:] = point.time
+        particleset.time_nextloop[:] = fieldset.time_origin.reltime(point.time)
 
         particleset.execute(
             [_sample_salinity, _sample_temperature],
