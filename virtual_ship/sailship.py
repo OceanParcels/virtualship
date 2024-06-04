@@ -80,6 +80,7 @@ def sailship(config: VirtualShipConfiguration):
     ctds: list[CTD] = []
 
     # iterate over each discrete route point, find deployment and measurement locations and times, and measure how much time this took
+    # TODO between drifters, argo floats, ctd there is quite some repetition
     print("Traversing ship route.")
     time_past = timedelta()
     for i, route_point in enumerate(route_points):
