@@ -80,6 +80,7 @@ def sailship(config: VirtualShipConfiguration):
     ctds: list[CTD] = []
 
     # iterate over each discrete route point, find deployment and measurement locations and times, and measure how much time this took
+    print("Traversing ship route.")
     time_past = timedelta()
     for i, route_point in enumerate(route_points):
         if i % 96 == 0:
@@ -167,14 +168,24 @@ def sailship(config: VirtualShipConfiguration):
 
         # add time it takes to move to the next route point
         time_past += route_dt
+    # remove the last one, because no sailing to the next point was needed
     time_past -= route_dt
+
+    # check if all drifter, argo float, ctd locations were visited
+    if len(drifter_locations_visited) != len(drifter_locations):
+        print(
+            "WARN: some drifter deployments were not planned along the route and have not been performed."
+        )
+
+    if len(argo_locations_visited) != len(argo_locations):
+        print(
+            "WARN: some argo float deployments were not planned along the route and have not been performed."
+        )
 
     if len(ctd_locations_visited) != len(ctd_locations):
         print(
-            "WARN: some CTD casts were not along the route and have not been performed."
+            "WARN: some CTD casts were not planned along the route and have not been performed."
         )
-
-    print("Cruise has ended. Please wait for drifters and/or Argo floats to finish.")
 
     print("Simulating onboard salinity and temperature measurements.")
     simulate_ship_st(
