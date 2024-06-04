@@ -8,12 +8,12 @@ import pyproj
 from shapely.geometry import Point, Polygon
 
 from .costs import costs
+from .instruments import Location, Spacetime
+from .instruments.adcp import simulate_adcp
 from .instruments.argo_float import ArgoFloat, simulate_argo_floats
 from .instruments.ctd import CTD, simulate_ctd
 from .instruments.drifter import Drifter, simulate_drifters
-from .instruments.adcp import simulate_adcp, SamplePoint as ADCPSamplePoint
-from .instruments.ship_st import simulate_ship_st, SamplePoint as ShipSTSamplePoint
-from .instruments.location import Location
+from .instruments.ship_st import simulate_ship_st
 from .postprocess import postprocess
 from .virtual_ship_configuration import VirtualShipConfiguration
 
@@ -59,10 +59,10 @@ def sailship(config: VirtualShipConfiguration):
     route_points = shiproute(config=config, dt=route_dt)
 
     # adcp objects to be used in simulation
-    adcps: list[ADCPSamplePoint] = []
+    adcps: list[Spacetime] = []
 
     # ship st objects to be used in simulation
-    ship_sts: list[ShipSTSamplePoint] = []
+    ship_sts: list[Spacetime] = []
 
     # argo float deployment locations that have been visited
     argo_locations_visited: set[Location] = set()
@@ -314,6 +314,7 @@ def shiproute(config: VirtualShipConfiguration, dt: timedelta) -> list[Location]
     Take in route coordinates and return lat and lon points within region of interest to sample.
 
     :param config: The cruise configuration.
+    :param dt: Sailing time between each discrete route point.
     :returns: lat and lon points within region of interest to sample.
     """
     # Initialize lists to store intermediate points

@@ -3,8 +3,8 @@
 import numpy as np
 from parcels import FieldSet
 
-from virtual_ship.instruments import Location
-from virtual_ship.instruments.adcp import simulate_adcp, SamplePoint
+from virtual_ship.instruments import Location, Spacetime
+from virtual_ship.instruments.adcp import simulate_adcp
 
 
 def test_simulate_argo_floats() -> None:
@@ -21,7 +21,7 @@ def test_simulate_argo_floats() -> None:
         },
     )
 
-    sample_points = [SamplePoint(Location(0, 0), 0)]
+    sample_points = [Spacetime(Location(0, 0), 0)]
 
     simulate_adcp(
         fieldset=fieldset,

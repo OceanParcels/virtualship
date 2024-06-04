@@ -2,5 +2,6 @@
 
 from . import argo_float, ctd, drifter
 from .location import Location
+from .spacetime import Spacetime
 
-__all__ = ["Location", "argo_float", "ctd", "drifter"]
+__all__ = ["Location", "Spacetime", "argo_float", "ctd", "drifter"]

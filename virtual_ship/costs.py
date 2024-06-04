@@ -1,6 +1,7 @@
 """costs function."""
 
 from datetime import timedelta
+
 from .virtual_ship_configuration import VirtualShipConfiguration
 
 

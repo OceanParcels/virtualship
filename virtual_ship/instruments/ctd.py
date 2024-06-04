@@ -76,7 +76,7 @@ def simulate_ctd(
     """
     Use parcels to simulate a set of CTDs in a fieldset.
 
-    :param ctd: A list of CTDs to simulate.
+    :param ctds: A list of CTDs to simulate.
     :param fieldset: The fieldset to simulate the CTDs in.
     :param out_file_name: The file to write the results to.
     :param outputdt: Interval which dictates the update frequency of file output during simulation

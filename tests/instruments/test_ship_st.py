@@ -3,8 +3,8 @@
 import numpy as np
 from parcels import FieldSet
 
-from virtual_ship.instruments import Location
-from virtual_ship.instruments.ship_st import simulate_ship_st, SamplePoint
+from virtual_ship.instruments import Location, Spacetime
+from virtual_ship.instruments.ship_st import simulate_ship_st
 
 
 def test_simulate_argo_floats() -> None:
@@ -19,7 +19,7 @@ def test_simulate_argo_floats() -> None:
         },
     )
 
-    sample_points = [SamplePoint(Location(0, 0), 0)]
+    sample_points = [Spacetime(Location(0, 0), 0)]
 
     simulate_ship_st(
         fieldset=fieldset,

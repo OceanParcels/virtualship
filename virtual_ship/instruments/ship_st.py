@@ -1,18 +1,9 @@
 """Ship salinity and temperature."""
 
-from dataclasses import dataclass
-
 import numpy as np
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
-from .location import Location
-
-
-@dataclass
-class SamplePoint:
-    location: Location
-    time: float
-
+from .spacetime import Spacetime
 
 _ShipSTParticle = JITParticle.add_variables(
     [
@@ -36,8 +27,16 @@ def simulate_ship_st(
     fieldset: FieldSet,
     out_file_name: str,
     depth: float,
-    sample_points: list[SamplePoint],
+    sample_points: list[Spacetime],
 ) -> None:
+    """
+    Use parcels to simulate the measurement of salinity and temperature aboard a ship in a fieldset.
+
+    :param fieldset: The fieldset to simulate the Argo floats in.
+    :param out_file_name: The file to write the results to.
+    :param depth: The depth at which to measure. 0 is water surface, negative is into the water.
+    :param sample_points: The places and times to sample at.
+    """
     sample_points.sort(key=lambda p: p.time)
 
     particleset = ParticleSet.from_list(

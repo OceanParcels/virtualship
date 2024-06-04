@@ -1,18 +1,9 @@
 """ADCP instrument."""
 
-from dataclasses import dataclass
-
 import numpy as np
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
-from .location import Location
-
-
-@dataclass
-class SamplePoint:
-    location: Location
-    time: float
-
+from .spacetime import Spacetime
 
 _ADCPParticle = JITParticle.add_variables(
     [
@@ -34,8 +25,18 @@ def simulate_adcp(
     max_depth: float,
     min_depth: float,
     bin_size: float,
-    sample_points: list[SamplePoint],
+    sample_points: list[Spacetime],
 ) -> None:
+    """
+    Use parcels to simulate an ADCP in a fieldset.
+
+    :param fieldset: The fieldset to simulate the ADCP in.
+    :param out_file_name: The file to write the results to.
+    :param max_depth: Maximum depth the ADCP can measure.
+    :param min_depth: Minimum depth the ADCP can measure.
+    :param bin_size: How many samples to take in the complete range between max_depth and min_depth.
+    :param sample_points: The places and times to sample at.
+    """
     sample_points.sort(key=lambda p: p.time)
 
     bins = np.arange(max_depth, min_depth, bin_size)
