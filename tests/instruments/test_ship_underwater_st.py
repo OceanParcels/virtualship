@@ -64,12 +64,13 @@ def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> N
     results = xr.open_zarr(out_file_name)
 
     assert len(results.trajectory) == 1
-    assert len(results.sel(trajectory=0).obs) == len(sample_points)
+    traj = results.trajectory.item()
+    assert len(results.sel(trajectory=traj).obs) == len(sample_points)
 
     for i, (obs_i, exp) in enumerate(
-        zip(results.sel(trajectory=0).obs, expected_obs, strict=True)
+        zip(results.sel(trajectory=traj).obs, expected_obs, strict=True)
     ):
-        obs = results.sel(trajectory=0, obs=obs_i)
+        obs = results.sel(trajectory=traj, obs=obs_i)
         for var in variables:
             obs_value = obs[var].values.item()
             exp_value = exp[var]
