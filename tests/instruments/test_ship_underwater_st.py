@@ -20,7 +20,7 @@ def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> N
     # variabes we are going to compare between expected and actual observations
     variables = ["salinity", "temperature", "lat", "lon"]
 
-    # were to sample
+    # where to sample
     sample_points = [
         Spacetime(Location(3, 0), base_time + np.timedelta64(0, "s")),
         Spacetime(Location(7, 0), base_time + np.timedelta64(1, "s")),
