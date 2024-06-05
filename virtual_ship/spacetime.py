@@ -2,8 +2,9 @@
 
 from dataclasses import dataclass
 
-from .location import Location
 import numpy as np
+
+from .location import Location
 
 
 @dataclass

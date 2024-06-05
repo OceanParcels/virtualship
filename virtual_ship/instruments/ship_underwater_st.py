@@ -1,7 +1,7 @@
 """Ship salinity and temperature."""
 
 import numpy as np
-from parcels import FieldSet, ScipyParticle, ParticleSet, Variable
+from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 
 from ..spacetime import Spacetime
 
@@ -43,8 +43,6 @@ def simulate_ship_underwater_st(
     :param out_file_name: The file to write the results to.
     :param depth: The depth at which to measure. 0 is water surface, negative is into the water.
     :param sample_points: The places and times to sample at.
-    :param sample_dt: Time between each sample point.
-    :param output_dt: Period of writing to output file.
     """
     sample_points.sort(key=lambda p: p.time)
 

@@ -1,9 +1,10 @@
 """Test configuration that is ran for every test."""
 
-import pytest
-import tempfile
 import shutil
-from typing import Generator, Callable
+import tempfile
+from typing import Callable, Generator
+
+import pytest
 
 
 @pytest.fixture(autouse=True)
@@ -20,9 +21,11 @@ def change_test_dir(request, monkeypatch):
 @pytest.fixture
 def tmp_dir_factory() -> Generator[Callable[[str], str], None, None]:
     """
-    Returns a functions that can generate a random directory and returns its path.
+    Return a function that can generate a random directory and returns its path.
 
     Created directories are automatically deleted after the rest.
+
+    :yields: A generator for temporary directories that will be automatically removed.
     """
     created_dirs = []
 

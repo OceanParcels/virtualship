@@ -1,12 +1,13 @@
 """Test the simulation of ship salinity temperature measurements."""
 
+from typing import Callable
+
 import numpy as np
+import xarray as xr
 from parcels import FieldSet
 
 from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.ship_underwater_st import simulate_ship_underwater_st
-import xarray as xr
-from typing import Callable
 
 
 def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> None:
