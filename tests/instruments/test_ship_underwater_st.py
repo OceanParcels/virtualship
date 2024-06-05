@@ -7,6 +7,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.ship_underwater_st import simulate_ship_underwater_st
 import xarray as xr
 from typing import Callable
+from datetime import timedelta
 
 
 def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> None:
@@ -21,8 +22,14 @@ def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> N
         Spacetime(Location(7, 0), base_time + np.timedelta64(1, "s")),
     ]
     expected_obs = [
-        {"salinity": 1, "temperature": 2, "lat": 3, "lon": 0},
-        {"salinity": 5, "temperature": 6, "lat": 7, "lon": 0},
+        {"salinity": 1, "temperature": 2, "lat": 3, "lon": 0, "time": base_time},
+        {
+            "salinity": 5,
+            "temperature": 6,
+            "lat": 7,
+            "lon": 0,
+            "time": base_time + np.timedelta64(1, "s"),
+        },
     ]
 
     fieldset = FieldSet.from_data(
@@ -41,7 +48,7 @@ def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> N
         {
             "lon": 0,
             "lat": np.array([expected_obs[0]["lat"], expected_obs[1]["lat"]]),
-            "time": np.array([base_time, base_time + np.timedelta64(1, "s")]),
+            "time": np.array([expected_obs[0]["time"], expected_obs[1]["time"]]),
         },
     )
 
@@ -57,7 +64,7 @@ def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> N
     results = xr.open_zarr(out_file_name)
 
     assert len(results.trajectory) == 1
-    assert len(results.sel(trajectory=0).obs == len(sample_points))
+    assert len(results.sel(trajectory=0).obs) == len(sample_points)
 
     for i, (obs_i, exp) in enumerate(
         zip(results.sel(trajectory=0).obs, expected_obs, strict=True)

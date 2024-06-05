@@ -1,11 +1,14 @@
 """Ship salinity and temperature."""
 
 import numpy as np
-from parcels import FieldSet, JITParticle, ParticleSet, Variable
+from parcels import FieldSet, ScipyParticle, ParticleSet, Variable
 
 from ..spacetime import Spacetime
 
-_ShipSTParticle = JITParticle.add_variables(
+# we specifically use ScipyParticle because we have many small calls to execute
+# JITParticle would require compilation every time
+# this ends up being faster
+_ShipSTParticle = ScipyParticle.add_variables(
     [
         Variable("salinity", dtype=np.float32, initial=np.nan),
         Variable("temperature", dtype=np.float32, initial=np.nan),
@@ -40,32 +43,37 @@ def simulate_ship_underwater_st(
     :param out_file_name: The file to write the results to.
     :param depth: The depth at which to measure. 0 is water surface, negative is into the water.
     :param sample_points: The places and times to sample at.
+    :param sample_dt: Time between each sample point.
+    :param output_dt: Period of writing to output file.
     """
     sample_points.sort(key=lambda p: p.time)
 
     particleset = ParticleSet.from_list(
         fieldset=fieldset,
         pclass=_ShipSTParticle,
-        lon=0.0,  # initial lat/lon are irrelevant and will be overruled later.
+        lon=0.0,  # initial lat/lon are irrelevant and will be overruled later
         lat=0.0,
         depth=depth,
         time=0,  # same for time
     )
 
     # define output file for the simulation
-    out_file = particleset.ParticleFile(
-        name=out_file_name,
-    )
+    # the default outputdt is good(infinite), as we want to just want to write at the end of every call to 'execute'
+    out_file = particleset.ParticleFile(name=out_file_name)
 
+    # iterate over each points, manually set lat lon time, then
+    # execute the particle set for one step, performing one set of measurement
     for point in sample_points:
         particleset.lon_nextloop[:] = point.location.lon
         particleset.lat_nextloop[:] = point.location.lat
         particleset.time_nextloop[:] = fieldset.time_origin.reltime(point.time)
 
+        # perform one step using the particleset
+        # dt and runtime are set so exactly one step is made.
         particleset.execute(
             [_sample_salinity, _sample_temperature],
             dt=1,
             runtime=1,
             verbose_progress=False,
+            output_file=out_file,
         )
-        out_file.write(particleset, time=particleset[0].time)
