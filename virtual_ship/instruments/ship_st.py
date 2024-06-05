@@ -32,7 +32,7 @@ def simulate_ship_st(
     """
     Use parcels to simulate the measurement of salinity and temperature aboard a ship in a fieldset.
 
-    :param fieldset: The fieldset to simulate the Argo floats in.
+    :param fieldset: The fieldset to simulate the sampling in.
     :param out_file_name: The file to write the results to.
     :param depth: The depth at which to measure. 0 is water surface, negative is into the water.
     :param sample_points: The places and times to sample at.
