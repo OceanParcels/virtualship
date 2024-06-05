@@ -38,7 +38,6 @@ def _sample_salinity(particle, fieldset, time):
 
 def _ctd_cast(particle, fieldset, time):
     # Lowering and raising CTD
-    # TODO question: if is executed every time... move outside function? Not if "drifting" now possible
     if (
         -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon]
         > particle.max_depth
