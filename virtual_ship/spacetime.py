@@ -1,8 +1,7 @@
 """Location class. See class description."""
 
 from dataclasses import dataclass
-
-import numpy as np
+from datetime import datetime
 
 from .location import Location
 
@@ -13,4 +12,4 @@ class Spacetime:
     """A location and time."""
 
     location: Location
-    time: np.datetime64
+    time: datetime

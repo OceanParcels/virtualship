@@ -1,5 +1,6 @@
 """Test the simulation of ship salinity temperature measurements."""
 
+import datetime
 from typing import Callable
 
 import numpy as np
@@ -15,26 +16,32 @@ def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> N
     DEPTH = -2
 
     # arbitrary time offset for the dummy fieldset
-    base_time = np.datetime64("1950-01-01")
+    base_time = datetime.datetime.strptime("1950-01-01", "%Y-%m-%d")
 
     # variabes we are going to compare between expected and actual observations
     variables = ["salinity", "temperature", "lat", "lon"]
 
     # where to sample
     sample_points = [
-        Spacetime(Location(3, 0), base_time + np.timedelta64(0, "s")),
-        Spacetime(Location(7, 0), base_time + np.timedelta64(1, "s")),
+        Spacetime(Location(3, 0), base_time + datetime.timedelta(seconds=0)),
+        Spacetime(Location(7, 0), base_time + datetime.timedelta(seconds=1)),
     ]
 
     # expected observations at sample points
     expected_obs = [
-        {"salinity": 1, "temperature": 2, "lat": 3, "lon": 0, "time": base_time},
+        {
+            "salinity": 1,
+            "temperature": 2,
+            "lat": 3,
+            "lon": 0,
+            "time": base_time + datetime.timedelta(seconds=0),
+        },
         {
             "salinity": 5,
             "temperature": 6,
             "lat": 7,
             "lon": 0,
-            "time": base_time + np.timedelta64(1, "s"),
+            "time": base_time + datetime.timedelta(seconds=1),
         },
     ]
 
@@ -55,7 +62,12 @@ def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> N
         {
             "lon": 0,
             "lat": np.array([expected_obs[0]["lat"], expected_obs[1]["lat"]]),
-            "time": np.array([expected_obs[0]["time"], expected_obs[1]["time"]]),
+            "time": np.array(
+                [
+                    np.datetime64(expected_obs[0]["time"]),
+                    np.datetime64(expected_obs[1]["time"]),
+                ]
+            ),
         },
     )
 

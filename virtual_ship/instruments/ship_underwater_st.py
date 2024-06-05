@@ -64,7 +64,9 @@ def simulate_ship_underwater_st(
     for point in sample_points:
         particleset.lon_nextloop[:] = point.location.lon
         particleset.lat_nextloop[:] = point.location.lat
-        particleset.time_nextloop[:] = fieldset.time_origin.reltime(point.time)
+        particleset.time_nextloop[:] = fieldset.time_origin.reltime(
+            np.datetime64(point.time)
+        )
 
         # perform one step using the particleset
         # dt and runtime are set so exactly one step is made.
