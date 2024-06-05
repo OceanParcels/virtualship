@@ -14,15 +14,14 @@ from parcels import (
     Variable,
 )
 
-from .location import Location
+from ..spacetime import Spacetime
 
 
 @dataclass
 class ArgoFloat:
     """Configuration for a single Argo float."""
 
-    location: Location
-    deployment_time: float
+    spacetime: Spacetime
     min_depth: float
     max_depth: float
     drift_depth: float
@@ -36,8 +35,8 @@ _ArgoParticle = JITParticle.add_variables(
         Variable("cycle_phase", dtype=np.int32, initial=0.0),
         Variable("cycle_age", dtype=np.float32, initial=0.0),
         Variable("drift_age", dtype=np.float32, initial=0.0),
-        Variable("salinity", initial=np.nan),
-        Variable("temperature", initial=np.nan),
+        Variable("salinity", dtype=np.float32, initial=np.nan),
+        Variable("temperature", dtype=np.float32, initial=np.nan),
         Variable("min_depth", dtype=np.float32),
         Variable("max_depth", dtype=np.float32),
         Variable("drift_depth", dtype=np.float32),
@@ -129,11 +128,11 @@ def simulate_argo_floats(
     :param out_file_name: The file to write the results to.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     """
-    lon = [argo.location.lon for argo in argo_floats]
-    lat = [argo.location.lat for argo in argo_floats]
-    time = [argo.deployment_time for argo in argo_floats]
+    lon = [argo.spacetime.location.lon for argo in argo_floats]
+    lat = [argo.spacetime.location.lat for argo in argo_floats]
+    time = [argo.spacetime.time for argo in argo_floats]
 
-    # define the parcels simulation
+    # define parcel particles
     argo_float_particleset = ParticleSet(
         fieldset=fieldset,
         pclass=_ArgoParticle,
@@ -152,7 +151,7 @@ def simulate_argo_floats(
     # define output file for the simulation
     out_file = argo_float_particleset.ParticleFile(
         name=out_file_name,
-        outputdt=timedelta(minutes=5),
+        outputdt=outputdt,
         chunks=(1, 500),
     )
 
