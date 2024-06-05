@@ -12,7 +12,7 @@ class VirtualShipConfiguration:
     """Configuration of the virtual ship, initialized from a json file."""
 
     adcp_fieldset: FieldSet
-    ship_st_fieldset: FieldSet
+    ship_underwater_st_fieldset: FieldSet
     argo_float_fieldset: FieldSet
     drifter_fieldset: FieldSet
     ctd_fieldset: FieldSet
@@ -23,7 +23,7 @@ class VirtualShipConfiguration:
         self,
         json_file,
         adcp_fieldset: FieldSet,
-        ship_st_fieldset: FieldSet,
+        ship_underwater_st_fieldset: FieldSet,
         ctd_fieldset: FieldSet,
         drifter_fieldset: FieldSet,
         argo_float_fieldset: FieldSet,
@@ -33,14 +33,14 @@ class VirtualShipConfiguration:
 
         :param json_file: Path to the JSON file to init from.
         :param adcp_fieldset: Fieldset for ADCP measurements.
-        :param ship_st_fieldset: Fieldset for ship salinity temperature measurements.
+        :param ship_underwater_st_fieldset: Fieldset for ship salinity temperature measurements.
         :param ctd_fieldset: Fieldset for CTD measurements.
         :param drifter_fieldset: Fieldset for CTD measurements.
         :param argo_float_fieldset: Fieldset for argo float measurements.
         :raises ValueError: If JSON file not valid.
         """
         self.adcp_fieldset = adcp_fieldset
-        self.ship_st_fieldset = ship_st_fieldset
+        self.ship_underwater_st_fieldset = ship_underwater_st_fieldset
         self.ctd_fieldset = ctd_fieldset
         self.drifter_fieldset = drifter_fieldset
         self.argo_float_fieldset = argo_float_fieldset

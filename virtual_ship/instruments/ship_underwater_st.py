@@ -23,7 +23,7 @@ def _sample_temperature(particle, fieldset, time):
     particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
 
 
-def simulate_ship_st(
+def simulate_ship_underwater_st(
     fieldset: FieldSet,
     out_file_name: str,
     depth: float,

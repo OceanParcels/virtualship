@@ -12,7 +12,7 @@ from .instruments.adcp import simulate_adcp
 from .instruments.argo_float import ArgoFloat, simulate_argo_floats
 from .instruments.ctd import CTD, simulate_ctd
 from .instruments.drifter import Drifter, simulate_drifters
-from .instruments.ship_st import simulate_ship_st
+from .instruments.ship_underwater_st import simulate_ship_underwater_st
 from .location import Location
 from .postprocess import postprocess
 from .spacetime import Spacetime
@@ -63,7 +63,7 @@ def sailship(config: VirtualShipConfiguration):
     adcps: list[Spacetime] = []
 
     # ship st objects to be used in simulation
-    ship_sts: list[Spacetime] = []
+    ship_underwater_sts: list[Spacetime] = []
 
     # argo float deployment locations that have been visited
     argo_locations_visited: set[Location] = set()
@@ -193,11 +193,11 @@ def sailship(config: VirtualShipConfiguration):
         )
 
     print("Simulating onboard salinity and temperature measurements.")
-    simulate_ship_st(
-        fieldset=config.ship_st_fieldset,
-        out_file_name=os.path.join("results", "ship_st.zarr"),
+    simulate_ship_underwater_st(
+        fieldset=config.ship_underwater_st_fieldset,
+        out_file_name=os.path.join("results", "ship_underwater_st.zarr"),
         depth=-2,
-        sample_points=ship_sts,
+        sample_points=ship_underwater_sts,
     )
 
     print("Simulating onboard ADCP.")

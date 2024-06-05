@@ -4,10 +4,10 @@ import numpy as np
 from parcels import FieldSet
 
 from virtual_ship import Location, Spacetime
-from virtual_ship.instruments.ship_st import simulate_ship_st
+from virtual_ship.instruments.ship_underwater_st import simulate_ship_underwater_st
 
 
-def test_simulate_ship_st() -> None:
+def test_simulate_ship_underwater_st() -> None:
     DEPTH = -2
 
     fieldset = FieldSet.from_data(
@@ -21,7 +21,7 @@ def test_simulate_ship_st() -> None:
 
     sample_points = [Spacetime(Location(0, 0), 0)]
 
-    simulate_ship_st(
+    simulate_ship_underwater_st(
         fieldset=fieldset,
         out_file_name="test",
         depth=DEPTH,

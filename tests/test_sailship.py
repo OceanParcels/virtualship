@@ -13,7 +13,7 @@ def test_sailship() -> None:
         {"lon": 0, "lat": 0},
     )
 
-    ship_st_fieldset = FieldSet.from_data(
+    ship_underwater_st_fieldset = FieldSet.from_data(
         {"U": 0, "V": 0, "S": 0, "T": 0},
         {"lon": 0, "lat": 0},
     )
@@ -44,7 +44,7 @@ def test_sailship() -> None:
     config = VirtualShipConfiguration(
         "sailship_config.json",
         adcp_fieldset=adcp_fieldset,
-        ship_st_fieldset=ship_st_fieldset,
+        ship_underwater_st_fieldset=ship_underwater_st_fieldset,
         ctd_fieldset=ctd_fieldset,
         drifter_fieldset=drifter_fieldset,
         argo_float_fieldset=argo_float_fieldset,
