@@ -21,7 +21,7 @@ def change_test_dir(request, monkeypatch):
 @pytest.fixture
 def tmp_dir_factory() -> Generator[Callable[[str], str], None, None]:
     """
-    Return a function that can generate a random directory and returns its path.
+    Yields a function that can generate a random directory and returns its path.
 
     Created directories are automatically deleted after the test.
 
