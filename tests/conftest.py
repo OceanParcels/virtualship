@@ -23,7 +23,7 @@ def tmp_dir_factory() -> Generator[Callable[[str], str], None, None]:
     """
     Return a function that can generate a random directory and returns its path.
 
-    Created directories are automatically deleted after the rest.
+    Created directories are automatically deleted after the test.
 
     :yields: A generator for temporary directories that will be automatically removed.
     """
