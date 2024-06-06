@@ -1,9 +1,9 @@
 """Test the simulation of ship salinity temperature measurements."""
 
 import datetime
-from typing import Callable
 
 import numpy as np
+import py
 import xarray as xr
 from parcels import FieldSet
 
@@ -11,7 +11,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.ship_underwater_st import simulate_ship_underwater_st
 
 
-def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> None:
+def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
     # depth at which the sampling will be done
     DEPTH = -2
 
@@ -71,16 +71,16 @@ def test_simulate_ship_underwater_st(tmp_dir_factory: Callable[[str], str]) -> N
         },
     )
 
-    out_file_name = tmp_dir_factory(suffix=".zarr")
+    out_path = tmpdir.join("out.zarr")
 
     simulate_ship_underwater_st(
         fieldset=fieldset,
-        out_file_name=out_file_name,
+        out_path=out_path,
         depth=DEPTH,
         sample_points=sample_points,
     )
 
-    results = xr.open_zarr(out_file_name)
+    results = xr.open_zarr(out_path)
 
     # below we assert if output makes sense
     assert len(results.trajectory) == 1  # expect a singe trajectory

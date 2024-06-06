@@ -1,6 +1,7 @@
 """Ship salinity and temperature."""
 
 import numpy as np
+import py
 from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 
 from ..spacetime import Spacetime
@@ -32,7 +33,7 @@ def _sample_temperature(particle, fieldset, time):
 
 def simulate_ship_underwater_st(
     fieldset: FieldSet,
-    out_file_name: str,
+    out_path: str | py.path.LocalPath,
     depth: float,
     sample_points: list[Spacetime],
 ) -> None:
@@ -40,7 +41,7 @@ def simulate_ship_underwater_st(
     Use parcels to simulate underway data, measuring salinity and temperature at the given depth along the ship track in a fieldset.
 
     :param fieldset: The fieldset to simulate the sampling in.
-    :param out_file_name: The file to write the results to.
+    :param out_path: The path to write the results to.
     :param depth: The depth at which to measure. 0 is water surface, negative is into the water.
     :param sample_points: The places and times to sample at.
     """
@@ -57,7 +58,7 @@ def simulate_ship_underwater_st(
 
     # define output file for the simulation
     # the default outputdt is good(infinite), as we want to just want to write at the end of every call to 'execute'
-    out_file = particleset.ParticleFile(name=out_file_name)
+    out_file = particleset.ParticleFile(name=out_path)
 
     # iterate over each points, manually set lat lon time, then
     # execute the particle set for one step, performing one set of measurement
