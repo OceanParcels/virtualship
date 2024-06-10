@@ -7,8 +7,7 @@ from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 from ..spacetime import Spacetime
 
 # we specifically use ScipyParticle because we have many small calls to execute
-# JITParticle would require compilation every time
-# this ends up being faster
+# there is some overhead with JITParticle and this ends up being significantly faster
 _ShipSTParticle = ScipyParticle.add_variables(
     [
         Variable("salinity", dtype=np.float32, initial=np.nan),
