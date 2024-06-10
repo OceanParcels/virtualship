@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def change_test_dir(request, monkeypatch):
+def test_in_working_dir(request, monkeypatch):
     """
     Set the working directory for each test to the directory of that test.
 
