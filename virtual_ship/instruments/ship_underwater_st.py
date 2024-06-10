@@ -60,7 +60,7 @@ def simulate_ship_underwater_st(
     # outputdt set to infinie as we want to just want to write at the end of every call to 'execute'
     out_file = particleset.ParticleFile(name=out_path, outputdt=np.inf)
 
-    # iterate over each points, manually set lat lon time, then
+    # iterate over each point, manually set lat lon time, then
     # execute the particle set for one step, performing one set of measurement
     for point in sample_points:
         particleset.lon_nextloop[:] = point.location.lon
