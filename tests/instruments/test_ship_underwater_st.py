@@ -90,13 +90,11 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
     )  # expect as many obs as sample points
 
     # for every obs, check if the variables match the expected observations
-    for i, (obs_i, exp) in enumerate(
-        zip(results.sel(trajectory=traj).obs, expected_obs, strict=True)
-    ):
+    for obs_i, exp in zip(results.sel(trajectory=traj).obs, expected_obs, strict=True):
         obs = results.sel(trajectory=traj, obs=obs_i)
         for var in variables:
             obs_value = obs[var].values.item()
             exp_value = exp[var]
             assert np.isclose(
                 obs_value, exp_value
-            ), f"Observation incorrect {i=} {var=} {obs_value=} {exp_value=}."
+            ), f"Observation incorrect {obs_i=} {var=} {obs_value=} {exp_value=}."

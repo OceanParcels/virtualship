@@ -195,7 +195,7 @@ def sailship(config: VirtualShipConfiguration):
     print("Simulating onboard salinity and temperature measurements.")
     simulate_ship_underwater_st(
         fieldset=config.ship_underwater_st_fieldset,
-        out_file_name=os.path.join("results", "ship_underwater_st.zarr"),
+        out_path=os.path.join("results", "ship_underwater_st.zarr"),
         depth=-2,
         sample_points=ship_underwater_sts,
     )
