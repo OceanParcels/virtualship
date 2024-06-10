@@ -1,11 +1,14 @@
 """Ship salinity and temperature."""
 
 import numpy as np
-from parcels import FieldSet, JITParticle, ParticleSet, Variable
+import py
+from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 
 from ..spacetime import Spacetime
 
-_ShipSTParticle = JITParticle.add_variables(
+# we specifically use ScipyParticle because we have many small calls to execute
+# there is some overhead with JITParticle and this ends up being significantly faster
+_ShipSTParticle = ScipyParticle.add_variables(
     [
         Variable("salinity", dtype=np.float32, initial=np.nan),
         Variable("temperature", dtype=np.float32, initial=np.nan),
@@ -15,17 +18,21 @@ _ShipSTParticle = JITParticle.add_variables(
 
 # define function sampling Salinity
 def _sample_salinity(particle, fieldset, time):
-    particle.salinity = fieldset.S[time, particle.depth, particle.lat, particle.lon]
+    particle.salinity = fieldset.salinity[
+        time, particle.depth, particle.lat, particle.lon
+    ]
 
 
 # define function sampling Temperature
 def _sample_temperature(particle, fieldset, time):
-    particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
+    particle.temperature = fieldset.temperature[
+        time, particle.depth, particle.lat, particle.lon
+    ]
 
 
 def simulate_ship_underwater_st(
     fieldset: FieldSet,
-    out_file_name: str,
+    out_path: str | py.path.LocalPath,
     depth: float,
     sample_points: list[Spacetime],
 ) -> None:
@@ -33,7 +40,7 @@ def simulate_ship_underwater_st(
     Use parcels to simulate underway data, measuring salinity and temperature at the given depth along the ship track in a fieldset.
 
     :param fieldset: The fieldset to simulate the sampling in.
-    :param out_file_name: The file to write the results to.
+    :param out_path: The path to write the results to.
     :param depth: The depth at which to measure. 0 is water surface, negative is into the water.
     :param sample_points: The places and times to sample at.
     """
@@ -42,26 +49,31 @@ def simulate_ship_underwater_st(
     particleset = ParticleSet.from_list(
         fieldset=fieldset,
         pclass=_ShipSTParticle,
-        lon=0.0,  # initial lat/lon are irrelevant and will be overruled later.
+        lon=0.0,  # initial lat/lon are irrelevant and will be overruled later
         lat=0.0,
         depth=depth,
         time=0,  # same for time
     )
 
     # define output file for the simulation
-    out_file = particleset.ParticleFile(
-        name=out_file_name,
-    )
+    # outputdt set to infinie as we want to just want to write at the end of every call to 'execute'
+    out_file = particleset.ParticleFile(name=out_path, outputdt=np.inf)
 
+    # iterate over each point, manually set lat lon time, then
+    # execute the particle set for one step, performing one set of measurement
     for point in sample_points:
         particleset.lon_nextloop[:] = point.location.lon
         particleset.lat_nextloop[:] = point.location.lat
-        particleset.time_nextloop[:] = point.time
+        particleset.time_nextloop[:] = fieldset.time_origin.reltime(
+            np.datetime64(point.time)
+        )
 
+        # perform one step using the particleset
+        # dt and runtime are set so exactly one step is made.
         particleset.execute(
             [_sample_salinity, _sample_temperature],
             dt=1,
             runtime=1,
             verbose_progress=False,
+            output_file=out_file,
         )
-        out_file.write(particleset, time=particleset[0].time)
