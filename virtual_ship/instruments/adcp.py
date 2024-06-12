@@ -1,6 +1,7 @@
 """ADCP instrument."""
 
 import numpy as np
+import py
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
 from ..spacetime import Spacetime
@@ -21,7 +22,7 @@ def _sample_velocity(particle, fieldset, time):
 
 def simulate_adcp(
     fieldset: FieldSet,
-    out_file_name: str,
+    out_path: str | py.path.LocalPath,
     max_depth: float,
     min_depth: float,
     bin_size: float,
@@ -31,7 +32,7 @@ def simulate_adcp(
     Use parcels to simulate an ADCP in a fieldset.
 
     :param fieldset: The fieldset to simulate the ADCP in.
-    :param out_file_name: The file to write the results to.
+    :param out_path: The path to write the results to.
     :param max_depth: Maximum depth the ADCP can measure.
     :param min_depth: Minimum depth the ADCP can measure.
     :param bin_size: How many samples to take in the complete range between max_depth and min_depth.
@@ -53,9 +54,8 @@ def simulate_adcp(
     )
 
     # define output file for the simulation
-    out_file = particleset.ParticleFile(
-        name=out_file_name,
-    )
+    # outputdt set to infinie as we want to just want to write at the end of every call to 'execute'
+    out_file = particleset.ParticleFile(name=out_path, outputdt=np.inf)
 
     for point in sample_points:
         particleset.lon_nextloop[:] = point.location.lon

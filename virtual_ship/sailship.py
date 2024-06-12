@@ -203,7 +203,7 @@ def sailship(config: VirtualShipConfiguration):
     print("Simulating onboard ADCP.")
     simulate_adcp(
         fieldset=config.adcp_fieldset,
-        out_file_name=os.path.join("results", "adcp.zarr"),
+        out_path=os.path.join("results", "adcp.zarr"),
         max_depth=config.ADCP_settings["max_depth"],
         min_depth=-5,
         bin_size=config.ADCP_settings["bin_size_m"],
