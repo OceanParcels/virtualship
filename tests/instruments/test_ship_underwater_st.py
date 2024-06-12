@@ -83,7 +83,7 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
     results = xr.open_zarr(out_path)
 
     # below we assert if output makes sense
-    assert len(results.trajectory) == 1  # expect a singe trajectory
+    assert len(results.trajectory) == 1  # expect a single trajectory
     traj = results.trajectory.item()
     assert len(results.sel(trajectory=traj).obs) == len(
         sample_points
