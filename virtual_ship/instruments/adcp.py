@@ -60,7 +60,16 @@ def simulate_adcp(
     for point in sample_points:
         particleset.lon_nextloop[:] = point.location.lon
         particleset.lat_nextloop[:] = point.location.lat
-        particleset.time_nextloop[:] = point.time
+        particleset.time_nextloop[:] = fieldset.time_origin.reltime(
+            np.datetime64(point.time)
+        )
 
-        particleset.execute([_sample_velocity], dt=1, runtime=1, verbose_progress=False)
-        out_file.write(particleset, time=particleset[0].time)
+        # perform one step using the particleset
+        # dt and runtime are set so exactly one step is made.
+        particleset.execute(
+            [_sample_velocity],
+            dt=1,
+            runtime=1,
+            verbose_progress=False,
+            output_file=out_file,
+        )
