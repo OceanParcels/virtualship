@@ -21,29 +21,26 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
     # arbitrary time offset for the dummy fieldset
     base_time = datetime.datetime.strptime("1950-01-01", "%Y-%m-%d")
 
-    # variabes we are going to compare between expected and actual observations
-    variables = ["U", "V", "lat", "lon"]
-
     # where to sample
     sample_points = [
-        Spacetime(Location(3, 0), base_time + datetime.timedelta(seconds=0)),
-        Spacetime(Location(7, 0), base_time + datetime.timedelta(seconds=1)),
+        Spacetime(Location(0, 0), base_time + datetime.timedelta(seconds=0)),
+        Spacetime(Location(1, 0), base_time + datetime.timedelta(seconds=1)),
     ]
 
     # expected observations at sample points
     expected_obs = [
         {
-            "U": 1,
-            "V": 2,
-            "lat": 3,
-            "lon": 0,
+            "U": {"surface": 2, "max_depth": 3},
+            "V": {"surface": 4, "max_depth": 5},
+            "lat": sample_points[0].location.lat,
+            "lon": sample_points[0].location.lon,
             "time": base_time + datetime.timedelta(seconds=0),
         },
         {
-            "U": 5,
-            "V": 6,
-            "lat": 7,
-            "lon": 0,
+            "U": {"surface": 6, "max_depth": 7},
+            "V": {"surface": 8, "max_depth": 9},
+            "lat": sample_points[1].location.lat,
+            "lon": sample_points[1].location.lon,
             "time": base_time + datetime.timedelta(seconds=1),
         },
     ]
@@ -52,12 +49,12 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
     fieldset = FieldSet.from_data(
         {
             "U": [
-                [expected_obs[0]["U"], 0],
-                [0, expected_obs[1]["U"]],
+                [expected_obs[0]["U"]["surface"], 0],
+                [0, expected_obs[1]["U"]["surface"]],
             ],
             "V": [
-                [expected_obs[0]["V"], 0],
-                [0, expected_obs[1]["V"]],
+                [expected_obs[0]["V"]["surface"], 0],
+                [0, expected_obs[1]["V"]["surface"]],
             ],
         },
         {
@@ -89,15 +86,25 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
     EXPECTED_NUM_BINS = len(np.arange(MAX_DEPTH, MIN_DEPTH, BIN_SIZE))
     assert len(results.trajectory) == EXPECTED_NUM_BINS  # expect a single trajectory
 
-    # TODO test depth sampling
-    for traj in results.trajectory:
+    # for every obs, check if the variables match the expected observations
+    # we only verify at the surface and max depth of the adcp, because the other locations are tricky
+    for traj, vert_loc in [
+        (results.trajectory[0], "surface"),
+        (results.trajectory[-1], "max_depth"),
+    ]:
         obs_all = results.sel(trajectory=traj).obs
         assert len(obs_all) == len(sample_points)
         for obs_i, exp in zip(obs_all, expected_obs, strict=True):
             obs = results.sel(trajectory=traj, obs=obs_i)
-            for var in variables:
+            for var in ["lat", "lon"]:
                 obs_value = obs[var].values.item()
                 exp_value = exp[var]
+                assert np.isclose(
+                    obs_value, exp_value
+                ), f"Observation incorrect {obs_i=} {var=} {obs_value=} {exp_value=}."
+            for var in ["U", "V"]:
+                obs_value = obs[var].values.item()
+                exp_value = exp[var][vert_loc]
                 assert np.isclose(
                     obs_value, exp_value
                 ), f"Observation incorrect {obs_i=} {var=} {obs_value=} {exp_value=}."
