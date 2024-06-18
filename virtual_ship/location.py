@@ -7,17 +7,8 @@ from dataclasses import dataclass
 class Location:
     """A location on a sphere."""
 
-    latitude: float
     longitude: float
-
-    @property
-    def lat(self) -> float:
-        """
-        Shorthand for latitude variable.
-
-        :returns: Latitude variable.
-        """
-        return self.latitude
+    latitude: float
 
     @property
     def lon(self) -> float:
@@ -27,3 +18,12 @@ class Location:
         :returns: Longitude variable.
         """
         return self.longitude
+
+    @property
+    def lat(self) -> float:
+        """
+        Shorthand for latitude variable.
+
+        :returns: Latitude variable.
+        """
+        return self.latitude

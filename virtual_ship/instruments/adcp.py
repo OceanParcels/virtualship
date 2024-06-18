@@ -2,11 +2,11 @@
 
 import numpy as np
 import py
-from parcels import FieldSet, JITParticle, ParticleSet, Variable
+from parcels import FieldSet, JITParticle, ScipyParticle, ParticleSet, Variable
 
 from ..spacetime import Spacetime
 
-_ADCPParticle = JITParticle.add_variables(
+_ADCPParticle = ScipyParticle.add_variables(
     [
         Variable("U", dtype=np.float32, initial=np.nan),
         Variable("V", dtype=np.float32, initial=np.nan),
@@ -25,7 +25,7 @@ def simulate_adcp(
     out_path: str | py.path.LocalPath,
     max_depth: float,
     min_depth: float,
-    bin_size: float,
+    num_bins: float,
     sample_points: list[Spacetime],
 ) -> None:
     """
@@ -35,12 +35,12 @@ def simulate_adcp(
     :param out_path: The path to write the results to.
     :param max_depth: Maximum depth the ADCP can measure.
     :param min_depth: Minimum depth the ADCP can measure.
-    :param bin_size: How many samples to take in the complete range between max_depth and min_depth.
+    :param num_bins: How many samples to take in the complete range between max_depth and min_depth.
     :param sample_points: The places and times to sample at.
     """
     sample_points.sort(key=lambda p: p.time)
 
-    bins = np.arange(max_depth, min_depth, bin_size)
+    bins = np.linspace(max_depth, min_depth, num_bins)
     num_particles = len(bins)
     particleset = ParticleSet.from_list(
         fieldset=fieldset,
