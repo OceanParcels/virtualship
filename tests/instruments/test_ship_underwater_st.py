@@ -18,9 +18,6 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
     # arbitrary time offset for the dummy fieldset
     base_time = datetime.datetime.strptime("1950-01-01", "%Y-%m-%d")
 
-    # variabes we are going to compare between expected and actual observations
-    variables = ["salinity", "temperature", "lat", "lon"]
-
     # where to sample
     sample_points = [
         Spacetime(Location(0, 1), base_time + datetime.timedelta(seconds=0)),
@@ -46,21 +43,23 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
     ]
 
     # create fieldset based on the expected observations
+    salinity = np.zeros((2, 2, 2))
+    salinity[0, 0, 0] = expected_obs[0]["salinity"]
+    salinity[1, 1, 1] = expected_obs[1]["salinity"]
+
+    temperature = np.zeros((2, 2, 2))
+    temperature[0, 0, 0] = expected_obs[0]["temperature"]
+    temperature[1, 1, 1] = expected_obs[1]["temperature"]
+
     fieldset = FieldSet.from_data(
         {
-            "U": np.zeros((2, 2)),
-            "V": np.zeros((2, 2)),
-            "salinity": [
-                [expected_obs[0]["salinity"], 0],
-                [0, expected_obs[1]["salinity"]],
-            ],
-            "temperature": [
-                [expected_obs[0]["temperature"], 0],
-                [0, expected_obs[1]["temperature"]],
-            ],
+            "U": np.zeros((2, 2, 2)),
+            "V": np.zeros((2, 2, 2)),
+            "salinity": salinity,
+            "temperature": temperature,
         },
         {
-            "lon": 0,
+            "lon": np.array([expected_obs[0]["lon"], expected_obs[1]["lon"]]),
             "lat": np.array([expected_obs[0]["lat"], expected_obs[1]["lat"]]),
             "time": np.array(
                 [
@@ -71,6 +70,7 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
         },
     )
 
+    # perform simulation
     out_path = tmpdir.join("out.zarr")
 
     simulate_ship_underwater_st(
@@ -80,9 +80,9 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
         sample_points=sample_points,
     )
 
+    # test if output is as expected
     results = xr.open_zarr(out_path)
 
-    # below we assert if output makes sense
     assert len(results.trajectory) == 1  # expect a single trajectory
     traj = results.trajectory.item()
     assert len(results.sel(trajectory=traj).obs) == len(
@@ -94,7 +94,7 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
         zip(results.sel(trajectory=traj).obs, expected_obs, strict=True)
     ):
         obs = results.sel(trajectory=traj, obs=obs_i)
-        for var in variables:
+        for var in ["salinity", "temperature", "lat", "lon"]:
             obs_value = obs[var].values.item()
             exp_value = exp[var]
             assert np.isclose(
