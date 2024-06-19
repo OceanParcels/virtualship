@@ -16,7 +16,7 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
     # minimum depth the ADCP can measure
     MIN_DEPTH = -5  # -5
     # How many samples to take in the complete range between max_depth and min_depth.
-    NUM_BINS = 24
+    NUM_BINS = 40
 
     # arbitrary time offset for the dummy fieldset
     base_time = datetime.datetime.strptime("1950-01-01", "%Y-%m-%d")

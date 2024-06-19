@@ -25,7 +25,7 @@ def simulate_adcp(
     out_path: str | py.path.LocalPath,
     max_depth: float,
     min_depth: float,
-    num_bins: float,
+    num_bins: int,
     sample_points: list[Spacetime],
 ) -> None:
     """
