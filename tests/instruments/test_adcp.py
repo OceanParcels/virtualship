@@ -46,28 +46,22 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
     ]
 
     # create fieldset based on the expected observations
+    u = np.zeros((2, 2, 2, 2))
+    u[0, 0, 0, 0] = expected_obs[0]["U"]["max_depth"]
+    u[0, 1, 0, 0] = expected_obs[0]["U"]["surface"]
+    u[1, 0, 1, 1] = expected_obs[1]["U"]["max_depth"]
+    u[1, 1, 1, 1] = expected_obs[1]["U"]["surface"]
+
+    v = np.zeros((2, 2, 2, 2))
+    v[0, 0, 0, 0] = expected_obs[0]["V"]["max_depth"]
+    v[0, 1, 0, 0] = expected_obs[0]["V"]["surface"]
+    v[1, 0, 1, 1] = expected_obs[1]["V"]["max_depth"]
+    v[1, 1, 1, 1] = expected_obs[1]["V"]["surface"]
+
     fieldset = FieldSet.from_data(
         {
-            "U": [
-                [
-                    [[expected_obs[0]["U"]["max_depth"], 0], [0, 0]],
-                    [[expected_obs[0]["U"]["surface"], 0], [0, 0]],
-                ],
-                [
-                    [[0, 0], [0, expected_obs[1]["U"]["max_depth"]]],
-                    [[0, 0], [0, expected_obs[1]["U"]["surface"]]],
-                ],
-            ],
-            "V": [
-                [
-                    [[expected_obs[0]["V"]["max_depth"], 0], [0, 0]],
-                    [[expected_obs[0]["V"]["surface"], 0], [0, 0]],
-                ],
-                [
-                    [[0, 0], [0, expected_obs[1]["V"]["max_depth"]]],
-                    [[0, 0], [0, expected_obs[1]["V"]["surface"]]],
-                ],
-            ],
+            "U": u,
+            "V": v,
         },
         {
             "lon": np.array([expected_obs[0]["lon"], expected_obs[1]["lon"]]),
@@ -82,6 +76,7 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
         },
     )
 
+    # perform simulation
     out_path = tmpdir.join("out.zarr")
 
     simulate_adcp(
@@ -95,7 +90,7 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
 
     results = xr.open_zarr(out_path)
 
-    # below we assert if output makes sense
+    # test if output is as expected
     assert len(results.trajectory) == NUM_BINS
 
     # for every obs, check if the variables match the expected observations
