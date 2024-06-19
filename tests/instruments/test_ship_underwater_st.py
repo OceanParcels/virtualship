@@ -43,6 +43,7 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
     ]
 
     # create fieldset based on the expected observations
+    # indices are time, latitude, longitude
     salinity = np.zeros((2, 2, 2))
     salinity[0, 0, 0] = expected_obs[0]["salinity"]
     salinity[1, 1, 1] = expected_obs[1]["salinity"]

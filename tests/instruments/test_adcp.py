@@ -46,6 +46,7 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
     ]
 
     # create fieldset based on the expected observations
+    # indices are time, depth, latitude, longitude
     u = np.zeros((2, 2, 2, 2))
     u[0, 0, 0, 0] = expected_obs[0]["U"]["max_depth"]
     u[0, 1, 0, 0] = expected_obs[0]["U"]["surface"]
