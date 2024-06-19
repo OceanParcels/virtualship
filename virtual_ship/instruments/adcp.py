@@ -2,10 +2,12 @@
 
 import numpy as np
 import py
-from parcels import FieldSet, JITParticle, ScipyParticle, ParticleSet, Variable
+from parcels import FieldSet, ScipyParticle, ParticleSet, Variable
 
 from ..spacetime import Spacetime
 
+# we specifically use ScipyParticle because we have many small calls to execute
+# there is some overhead with JITParticle and this ends up being significantly faster
 _ADCPParticle = ScipyParticle.add_variables(
     [
         Variable("U", dtype=np.float32, initial=np.nan),
