@@ -1,13 +1,14 @@
 """Test the simulation of ADCP instruments."""
 
+import datetime
+
 import numpy as np
 import py
+import xarray as xr
 from parcels import FieldSet
 
 from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.adcp import simulate_adcp
-import datetime
-import xarray as xr
 
 
 def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:

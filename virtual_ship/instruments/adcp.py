@@ -2,7 +2,7 @@
 
 import numpy as np
 import py
-from parcels import FieldSet, ScipyParticle, ParticleSet, Variable
+from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 
 from ..spacetime import Spacetime
 
