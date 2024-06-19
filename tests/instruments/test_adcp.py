@@ -24,22 +24,22 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
 
     # where to sample
     sample_points = [
-        Spacetime(Location(0, 1), base_time + datetime.timedelta(seconds=0)),
-        Spacetime(Location(2, 3), base_time + datetime.timedelta(seconds=1)),
+        Spacetime(Location(1, 2), base_time + datetime.timedelta(seconds=0)),
+        Spacetime(Location(3, 4), base_time + datetime.timedelta(seconds=1)),
     ]
 
     # expected observations at sample points
     expected_obs = [
         {
-            "U": {"surface": 4, "max_depth": 5},
-            "V": {"surface": 6, "max_depth": 7},
+            "U": {"surface": 5, "max_depth": 6},
+            "V": {"surface": 7, "max_depth": 8},
             "lon": sample_points[0].location.lon,
             "lat": sample_points[0].location.lat,
             "time": base_time + datetime.timedelta(seconds=0),
         },
         {
-            "U": {"surface": 8, "max_depth": 9},
-            "V": {"surface": 10, "max_depth": 11},
+            "U": {"surface": 9, "max_depth": 10},
+            "V": {"surface": 11, "max_depth": 12},
             "lon": sample_points[1].location.lon,
             "lat": sample_points[1].location.lat,
             "time": base_time + datetime.timedelta(seconds=1),

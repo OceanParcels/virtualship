@@ -20,22 +20,22 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
 
     # where to sample
     sample_points = [
-        Spacetime(Location(0, 1), base_time + datetime.timedelta(seconds=0)),
-        Spacetime(Location(2, 3), base_time + datetime.timedelta(seconds=1)),
+        Spacetime(Location(1, 2), base_time + datetime.timedelta(seconds=0)),
+        Spacetime(Location(3, 4), base_time + datetime.timedelta(seconds=1)),
     ]
 
     # expected observations at sample points
     expected_obs = [
         {
-            "salinity": 2,
-            "temperature": 3,
+            "salinity": 5,
+            "temperature": 6,
             "lat": sample_points[0].location.lat,
             "lon": sample_points[0].location.lon,
             "time": base_time + datetime.timedelta(seconds=0),
         },
         {
-            "salinity": 4,
-            "temperature": 5,
+            "salinity": 7,
+            "temperature": 8,
             "lat": sample_points[1].location.lat,
             "lon": sample_points[1].location.lon,
             "time": base_time + datetime.timedelta(seconds=1),
