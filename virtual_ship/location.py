@@ -7,8 +7,8 @@ from dataclasses import dataclass
 class Location:
     """A location on a sphere."""
 
-    longitude: float
     latitude: float
+    longitude: float
 
     @property
     def lat(self) -> float:
