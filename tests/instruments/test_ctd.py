@@ -3,10 +3,10 @@
 from datetime import timedelta
 
 import numpy as np
+import py
 from parcels import FieldSet
 
 from virtual_ship import Location, Spacetime
-import py
 from virtual_ship.instruments.ctd import CTD, simulate_ctd
 
 

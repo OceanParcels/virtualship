@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 import numpy as np
+import py
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
 from ..spacetime import Spacetime
-import py
 
 
 @dataclass
@@ -75,9 +75,9 @@ def simulate_ctd(
     """
     Use parcels to simulate a set of CTDs in a fieldset.
 
-    :param ctds: A list of CTDs to simulate.
     :param fieldset: The fieldset to simulate the CTDs in.
-    :param out_file_name: The file to write the results to.
+    :param out_path: The path to write the results to.
+    :param ctds: A list of CTDs to simulate.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     """
     lon = [ctd.spacetime.location.lon for ctd in ctds]
