@@ -6,10 +6,11 @@ import numpy as np
 from parcels import FieldSet
 
 from virtual_ship import Location, Spacetime
+import py
 from virtual_ship.instruments.ctd import CTD, simulate_ctd
 
 
-def test_simulate_ctds() -> None:
+def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
     fieldset = FieldSet.from_data(
         {"U": 0, "V": 0, "T": 0, "S": 0, "bathymetry": 100},
         {
@@ -30,9 +31,11 @@ def test_simulate_ctds() -> None:
         )
     ]
 
+    out_path = tmpdir.join("out.zarr")
+
     simulate_ctd(
         ctds=ctds,
         fieldset=fieldset,
-        out_file_name="test",
+        out_path=out_path,
         outputdt=timedelta(seconds=10),
     )

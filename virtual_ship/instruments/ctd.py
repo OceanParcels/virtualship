@@ -7,6 +7,7 @@ import numpy as np
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
 from ..spacetime import Spacetime
+import py
 
 
 @dataclass
@@ -66,9 +67,9 @@ def _ctd_cast(particle, fieldset, time):
 
 
 def simulate_ctd(
-    ctds: list[CTD],
     fieldset: FieldSet,
-    out_file_name: str,
+    out_path: str | py.path.LocalPath,
+    ctds: list[CTD],
     outputdt: timedelta,
 ) -> None:
     """
@@ -96,7 +97,7 @@ def simulate_ctd(
 
     # define output file for the simulation
     out_file = ctd_particleset.ParticleFile(
-        name=out_file_name,
+        name=out_path,
         outputdt=outputdt,
         chunks=(1, 500),
     )
