@@ -213,9 +213,9 @@ def sailship(config: VirtualShipConfiguration):
 
     print("Simulating CTD casts.")
     simulate_ctd(
-        ctds=ctds,
+        out_path=os.path.join("results", "ctd.zarr"),
         fieldset=config.ctd_fieldset,
-        out_file_name=os.path.join("results", "ctd.zarr"),
+        ctds=ctds,
         outputdt=timedelta(seconds=10),
     )
 
