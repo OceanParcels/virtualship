@@ -56,7 +56,7 @@ def simulate_adcp(
     )
 
     # define output file for the simulation
-    # outputdt set to infinie as we want to just want to write at the end of every call to 'execute'
+    # outputdt set to infinite as we just want to write at the end of every call to 'execute'
     out_file = particleset.ParticleFile(name=out_path, outputdt=np.inf)
 
     for point in sample_points:
