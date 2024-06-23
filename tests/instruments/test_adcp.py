@@ -31,43 +31,43 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
     # expected observations at sample points
     expected_obs = [
         {
-            "U": {"surface": 5, "max_depth": 6},
-            "V": {"surface": 7, "max_depth": 8},
-            "lon": sample_points[0].location.lon,
+            "V": {"surface": 5, "max_depth": 6},
+            "U": {"surface": 7, "max_depth": 8},
             "lat": sample_points[0].location.lat,
+            "lon": sample_points[0].location.lon,
             "time": base_time + datetime.timedelta(seconds=0),
         },
         {
-            "U": {"surface": 9, "max_depth": 10},
-            "V": {"surface": 11, "max_depth": 12},
-            "lon": sample_points[1].location.lon,
+            "V": {"surface": 9, "max_depth": 10},
+            "U": {"surface": 11, "max_depth": 12},
             "lat": sample_points[1].location.lat,
+            "lon": sample_points[1].location.lon,
             "time": base_time + datetime.timedelta(seconds=1),
         },
     ]
 
     # create fieldset based on the expected observations
     # indices are time, depth, latitude, longitude
-    u = np.zeros((2, 2, 2, 2))
-    u[0, 0, 0, 0] = expected_obs[0]["U"]["max_depth"]
-    u[0, 1, 0, 0] = expected_obs[0]["U"]["surface"]
-    u[1, 0, 1, 1] = expected_obs[1]["U"]["max_depth"]
-    u[1, 1, 1, 1] = expected_obs[1]["U"]["surface"]
-
     v = np.zeros((2, 2, 2, 2))
     v[0, 0, 0, 0] = expected_obs[0]["V"]["max_depth"]
     v[0, 1, 0, 0] = expected_obs[0]["V"]["surface"]
     v[1, 0, 1, 1] = expected_obs[1]["V"]["max_depth"]
     v[1, 1, 1, 1] = expected_obs[1]["V"]["surface"]
 
+    u = np.zeros((2, 2, 2, 2))
+    u[0, 0, 0, 0] = expected_obs[0]["U"]["max_depth"]
+    u[0, 1, 0, 0] = expected_obs[0]["U"]["surface"]
+    u[1, 0, 1, 1] = expected_obs[1]["U"]["max_depth"]
+    u[1, 1, 1, 1] = expected_obs[1]["U"]["surface"]
+
     fieldset = FieldSet.from_data(
         {
-            "U": u,
             "V": v,
+            "U": u,
         },
         {
-            "lon": np.array([expected_obs[0]["lon"], expected_obs[1]["lon"]]),
             "lat": np.array([expected_obs[0]["lat"], expected_obs[1]["lat"]]),
+            "lon": np.array([expected_obs[0]["lon"], expected_obs[1]["lon"]]),
             "depth": np.array([MAX_DEPTH, MIN_DEPTH]),
             "time": np.array(
                 [
@@ -111,7 +111,7 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
                 assert np.isclose(
                     obs_value, exp_value
                 ), f"Observation incorrect {vert_loc=} {obs_i=} {var=} {obs_value=} {exp_value=}."
-            for var in ["U", "V"]:
+            for var in ["V", "U"]:
                 obs_value = obs[var].values.item()
                 exp_value = exp[var][vert_loc]
                 assert np.isclose(

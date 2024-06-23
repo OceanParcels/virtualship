@@ -54,14 +54,14 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
 
     fieldset = FieldSet.from_data(
         {
-            "U": np.zeros((2, 2, 2)),
             "V": np.zeros((2, 2, 2)),
+            "U": np.zeros((2, 2, 2)),
             "salinity": salinity,
             "temperature": temperature,
         },
         {
-            "lon": np.array([expected_obs[0]["lon"], expected_obs[1]["lon"]]),
             "lat": np.array([expected_obs[0]["lat"], expected_obs[1]["lat"]]),
+            "lon": np.array([expected_obs[0]["lon"], expected_obs[1]["lon"]]),
             "time": np.array(
                 [
                     np.datetime64(expected_obs[0]["time"]),

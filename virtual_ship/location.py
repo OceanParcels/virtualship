@@ -11,15 +11,6 @@ class Location:
     latitude: float
 
     @property
-    def lon(self) -> float:
-        """
-        Shorthand for longitude variable.
-
-        :returns: Longitude variable.
-        """
-        return self.longitude
-
-    @property
     def lat(self) -> float:
         """
         Shorthand for latitude variable.
@@ -27,3 +18,12 @@ class Location:
         :returns: Latitude variable.
         """
         return self.latitude
+
+    @property
+    def lon(self) -> float:
+        """
+        Shorthand for longitude variable.
+
+        :returns: Longitude variable.
+        """
+        return self.longitude
