@@ -75,7 +75,7 @@ def simulate_ctd(
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
 
     # deploy time for all ctds should be later than fieldset start time
-    if not all([ctd.spacetime.time <= fieldset_starttime for ctd in ctds]):
+    if not all([ctd.spacetime.time >= fieldset_starttime for ctd in ctds]):
         raise ValueError("CTD deployed before fieldset starts.")
 
     # CTD depth can not be too shallow, because kernel would break.
@@ -104,7 +104,7 @@ def simulate_ctd(
         time=[ctd.spacetime.time for ctd in ctds],
         max_depth=max_depths,
         min_depth=[ctd.min_depth for ctd in ctds],
-        winch_speed=[WINCH_SPEED],
+        winch_speed=[WINCH_SPEED for _ in ctds],
     )
 
     # define output file for the simulation

@@ -16,6 +16,7 @@ from .instruments.ship_underwater_st import simulate_ship_underwater_st
 from .location import Location
 from .postprocess import postprocess
 from .spacetime import Spacetime
+import datetime
 from .virtual_ship_configuration import VirtualShipConfiguration
 
 
@@ -53,6 +54,10 @@ def sailship(config: VirtualShipConfiguration):
     ctd_locations = set(ctd_locations_list)
     if len(ctd_locations) != len(ctd_locations_list):
         print("WARN: Some CTD locations are identical and have been combined.")
+
+    start_time = datetime.datetime.strptime(
+        config.requested_ship_time["start"], "%Y-%m-%dT%H:%M:%S"
+    )
     # until here ----
 
     # get discrete points along the ships route were sampling and deployments will be performed
@@ -160,7 +165,8 @@ def sailship(config: VirtualShipConfiguration):
         ctds.append(
             CTD(
                 spacetime=Spacetime(
-                    location=route_point, time=time_past.total_seconds()
+                    location=route_point,
+                    time=start_time + time_past,
                 ),
                 min_depth=-config.ctd_fieldset.U.depth[0],
                 max_depth=-config.ctd_fieldset.U.depth[-1],
