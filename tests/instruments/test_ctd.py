@@ -1,15 +1,15 @@
 """Test the simulation of CTD instruments."""
 
+import datetime
 from datetime import timedelta
 
 import numpy as np
 import py
-from parcels import FieldSet, Field
+import xarray as xr
+from parcels import Field, FieldSet
 
 from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.ctd import CTD, simulate_ctd
-import datetime
-import xarray as xr
 
 
 def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
@@ -23,7 +23,7 @@ def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
                 time=base_time + datetime.timedelta(seconds=0),
             ),
             min_depth=0,
-            max_depth=-500,
+            max_depth=-10,
         )
     ]
 
@@ -37,7 +37,7 @@ def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
         {
             "time": [
                 np.datetime64(base_time + datetime.timedelta(seconds=0)),
-                np.datetime64(base_time + datetime.timedelta(minutes=60)),
+                np.datetime64(base_time + datetime.timedelta(minutes=20)),
             ],
             "depth": [0, -1000],
             "lat": [0, 1],
@@ -57,9 +57,9 @@ def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
 
     # test if output is as expected
     results = xr.open_zarr(out_path)
-    x = 3
 
-    # assert len(results.trajectory) == 1  # expect a single trajectory
+    # test if output is as expected
+    assert len(results.trajectory) == len(ctds)
     # traj = results.trajectory.item()
     # assert len(results.sel(trajectory=traj).obs) == len(
     #     sample_points

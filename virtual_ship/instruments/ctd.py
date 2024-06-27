@@ -5,14 +5,7 @@ from datetime import timedelta
 
 import numpy as np
 import py
-from parcels import (
-    FieldSet,
-    ScipyParticle,
-    JITParticle,
-    ParticleSet,
-    Variable,
-    StatusCode,
-)
+from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
 from ..spacetime import Spacetime
 
@@ -26,11 +19,11 @@ class CTD:
     max_depth: float
 
 
-_CTDParticle = ScipyParticle.add_variables(
+_CTDParticle = JITParticle.add_variables(
     [
         Variable("salinity", dtype=np.float32, initial=np.nan),
         Variable("temperature", dtype=np.float32, initial=np.nan),
-        Variable("raising", dtype=np.bool_, initial=False),
+        Variable("raising", dtype=np.int8, initial=0.0),  # bool. 0 is False, 1 is True.
         Variable("max_depth", dtype=np.float32),
         Variable("min_depth", dtype=np.float32),
         Variable("winch_speed", dtype=np.float32),
@@ -47,11 +40,13 @@ def _sample_salinity(particle, fieldset, time):
 
 
 def _ctd_cast(particle, fieldset, time):
-    if not particle.raising:
+    # lowering
+    if particle.raising == 0:
         particle_ddepth = -particle.winch_speed * particle.dt
         if particle.depth + particle_ddepth < particle.max_depth:
             particle.raising = True
             particle_ddepth = -particle_ddepth
+    # raising
     else:
         particle_ddepth = particle.winch_speed * particle.dt
         if particle.depth + particle_ddepth > -particle.min_depth:
@@ -71,19 +66,26 @@ def simulate_ctd(
     :param out_path: The path to write the results to.
     :param ctds: A list of CTDs to simulate.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
+    :raises ValueError: Whenever provided CTDs, fieldset, are not compatible with this function.
     """
     WINCH_SPEED = 1.0  # sink and rise speed in m/s
+    DT = 10.0
 
     fieldset_starttime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[0])
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
 
     # deploy time for all ctds should be later than fieldset start time
     if not all([ctd.spacetime.time <= fieldset_starttime for ctd in ctds]):
-        raise RuntimeError("CTD deployed before fieldset starts.")
+        raise ValueError("CTD deployed before fieldset starts.")
+
+    # CTD depth can not be too shallow, because kernel would break.
+    # This shallow is not useful anyway, no need to support.
+    if not all([ctd.max_depth >= -DT * WINCH_SPEED for ctd in ctds]):
+        raise ValueError(f"CTD max_depth shallower than maximum {-DT * WINCH_SPEED}")
 
     # depth the ctd will go to. deepest between ctd max depth and bathymetry.
     max_depths = [
-        min(
+        max(
             ctd.max_depth,
             fieldset.bathymetry.eval(
                 z=0, y=ctd.spacetime.location.lat, x=ctd.spacetime.location.lon, time=0
@@ -112,13 +114,13 @@ def simulate_ctd(
     ctd_particleset.execute(
         [_sample_salinity, _sample_temperature, _ctd_cast],
         endtime=fieldset_endtime,
-        dt=outputdt,
+        dt=DT,
         verbose_progress=False,
         output_file=out_file,
     )
 
     # there should be no particles left, as they delete themselves when they resurface
     if len(ctd_particleset.particledata) != 0:
-        raise RuntimeError(
+        raise ValueError(
             "Simulation ended before CTD resurfaced. This most likely means the field time dimension did not match the simulation time span."
         )
