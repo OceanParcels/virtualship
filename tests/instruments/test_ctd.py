@@ -37,7 +37,7 @@ def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
         {
             "time": [
                 np.datetime64(base_time + datetime.timedelta(seconds=0)),
-                np.datetime64(base_time + datetime.timedelta(minutes=30)),
+                np.datetime64(base_time + datetime.timedelta(minutes=60)),
             ],
             "depth": [0, -1000],
             "lat": [0, 1],
@@ -57,7 +57,7 @@ def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
 
     # test if output is as expected
     results = xr.open_zarr(out_path)
-    e = 3
+    x = 3
 
     # assert len(results.trajectory) == 1  # expect a single trajectory
     # traj = results.trajectory.item()

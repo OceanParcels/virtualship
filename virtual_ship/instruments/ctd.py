@@ -30,8 +30,9 @@ _CTDParticle = ScipyParticle.add_variables(
     [
         Variable("salinity", dtype=np.float32, initial=np.nan),
         Variable("temperature", dtype=np.float32, initial=np.nan),
-        Variable("raising", dtype=np.int32, initial=0),
+        Variable("raising", dtype=np.bool_, initial=False),
         Variable("max_depth", dtype=np.float32),
+        Variable("min_depth", dtype=np.float32),
         Variable("winch_speed", dtype=np.float32),
     ]
 )
@@ -46,19 +47,15 @@ def _sample_salinity(particle, fieldset, time):
 
 
 def _ctd_cast(particle, fieldset, time):
-    if particle.raising == 0:
-        # Sinking with winch_speed until near seafloor
+    if not particle.raising:
         particle_ddepth = -particle.winch_speed * particle.dt
-        if particle.depth <= particle.max_depth:
-            particle.raising = 1
-
-    if particle.raising == 1:
-        # Rising with winch_speed until depth is -2 m
-        if particle.depth < -2:
-            particle_ddepth = particle.winch_speed * particle.dt
-            if particle.depth + particle_ddepth >= -2:
-                # to break the loop ...
-                particle.state = StatusCode.StopAllExecution
+        if particle.depth + particle_ddepth < particle.max_depth:
+            particle.raising = True
+            particle_ddepth = -particle_ddepth
+    else:
+        particle_ddepth = particle.winch_speed * particle.dt
+        if particle.depth + particle_ddepth > -particle.min_depth:
+            particle.delete()
 
 
 def simulate_ctd(
@@ -80,45 +77,48 @@ def simulate_ctd(
     fieldset_starttime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[0])
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
 
-    for ctd in ctds:
-        if ctd.spacetime.time < fieldset_starttime:
-            raise RuntimeError("CTD deployed before fieldset starts.")
+    # deploy time for all ctds should be later than fieldset start time
+    if not all([ctd.spacetime.time <= fieldset_starttime for ctd in ctds]):
+        raise RuntimeError("CTD deployed before fieldset starts.")
 
-        # depth the ctd will go to. deepest between ctd max depth and bathymetry.
-        max_depth = min(
+    # depth the ctd will go to. deepest between ctd max depth and bathymetry.
+    max_depths = [
+        min(
             ctd.max_depth,
             fieldset.bathymetry.eval(
                 z=0, y=ctd.spacetime.location.lat, x=ctd.spacetime.location.lon, time=0
             ),
         )
+        for ctd in ctds
+    ]
 
-        # define parcel particles
-        ctd_particleset = ParticleSet(
-            fieldset=fieldset,
-            pclass=_CTDParticle,
-            lon=[ctd.spacetime.location.lon],
-            lat=[ctd.spacetime.location.lat],
-            depth=[ctd.min_depth],
-            time=[ctd.spacetime.time],
-            max_depth=[max_depth],
-            winch_speed=[WINCH_SPEED],
+    # define parcel particles
+    ctd_particleset = ParticleSet(
+        fieldset=fieldset,
+        pclass=_CTDParticle,
+        lon=[ctd.spacetime.location.lon for ctd in ctds],
+        lat=[ctd.spacetime.location.lat for ctd in ctds],
+        depth=[ctd.min_depth for ctd in ctds],
+        time=[ctd.spacetime.time for ctd in ctds],
+        max_depth=max_depths,
+        min_depth=[ctd.min_depth for ctd in ctds],
+        winch_speed=[WINCH_SPEED],
+    )
+
+    # define output file for the simulation
+    out_file = ctd_particleset.ParticleFile(name=out_path, outputdt=outputdt)
+
+    # execute simulation
+    ctd_particleset.execute(
+        [_sample_salinity, _sample_temperature, _ctd_cast],
+        endtime=fieldset_endtime,
+        dt=outputdt,
+        verbose_progress=False,
+        output_file=out_file,
+    )
+
+    # there should be no particles left, as they delete themselves when they resurface
+    if len(ctd_particleset.particledata) != 0:
+        raise RuntimeError(
+            "Simulation ended before CTD resurfaced. This most likely means the field time dimension did not match the simulation time span."
         )
-
-        # define output file for the simulation
-        out_file = ctd_particleset.ParticleFile(name=out_path, outputdt=outputdt)
-
-        # execute simulation
-        ctd_particleset.execute(
-            [_sample_salinity],  # , _sample_temperature, _ctd_cast],
-            endtime=fieldset_endtime,
-            dt=outputdt,
-            verbose_progress=False,
-            output_file=out_file,
-        )
-
-        if ctd_particleset.raising[0] == 0 or not np.isclose(
-            ctd_particleset.particledata.depth[0], ctd.min_depth
-        ):
-            raise RuntimeError(
-                "Simulation ended before CTD resurfaced. This most likely means the field time dimension did not match the simulation time span."
-            )
