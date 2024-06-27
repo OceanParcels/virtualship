@@ -1,5 +1,6 @@
 """sailship function."""
 
+import datetime
 import os
 from datetime import timedelta
 
@@ -16,7 +17,6 @@ from .instruments.ship_underwater_st import simulate_ship_underwater_st
 from .location import Location
 from .postprocess import postprocess
 from .spacetime import Spacetime
-import datetime
 from .virtual_ship_configuration import VirtualShipConfiguration
 
 

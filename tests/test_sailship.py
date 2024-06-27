@@ -1,8 +1,9 @@
 """Performs a complete cruise with virtual ship."""
 
-import numpy as np
-from parcels import FieldSet, Field
 import datetime
+
+import numpy as np
+from parcels import Field, FieldSet
 
 from virtual_ship.sailship import sailship
 from virtual_ship.virtual_ship_configuration import VirtualShipConfiguration

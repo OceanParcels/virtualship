@@ -44,7 +44,7 @@ def _ctd_cast(particle, fieldset, time):
     if particle.raising == 0:
         particle_ddepth = -particle.winch_speed * particle.dt
         if particle.depth + particle_ddepth < particle.max_depth:
-            particle.raising = True
+            particle.raising = 1
             particle_ddepth = -particle_ddepth
     # raising
     else:

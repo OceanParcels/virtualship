@@ -60,6 +60,8 @@ def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
 
     # test if output is as expected
     assert len(results.trajectory) == len(ctds)
+
+    # TODO
     # traj = results.trajectory.item()
     # assert len(results.sel(trajectory=traj).obs) == len(
     #     sample_points
