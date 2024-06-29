@@ -16,15 +16,56 @@ def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
     # arbitrary time offset for the dummy fieldset
     base_time = datetime.datetime.strptime("1950-01-01", "%Y-%m-%d")
 
+    # where to cast CTDs
     ctds = [
         CTD(
             spacetime=Spacetime(
-                location=Location(latitude=0, longitude=0),
-                time=base_time + datetime.timedelta(seconds=0),
+                location=Location(latitude=0, longitude=1),
+                time=base_time + datetime.timedelta(hours=0),
             ),
             min_depth=0,
-            max_depth=-10,
-        )
+            max_depth=float("-inf"),
+        ),
+        CTD(
+            spacetime=Spacetime(
+                location=Location(latitude=1, longitude=0),
+                time=base_time + datetime.timedelta(hours=5),
+            ),
+            min_depth=0,
+            max_depth=float("-inf"),
+        ),
+    ]
+
+    # expected observations for ctds at surface and at maximum depth
+    ctds_obs = [
+        {
+            "surface": {
+                "salinity": 5,
+                "temperature": 6,
+                "lat": ctds[0].spacetime.location.lat,
+                "lon": ctds[0].spacetime.location.lon,
+            },
+            "maxdepth": {
+                "salinity": 7,
+                "temperature": 8,
+                "lat": ctds[0].spacetime.location.lat,
+                "lon": ctds[0].spacetime.location.lon,
+            },
+        },
+        {
+            "surface": {
+                "salinity": 9,
+                "temperature": 10,
+                "lat": ctds[0].spacetime.location.lat,
+                "lon": ctds[0].spacetime.location.lon,
+            },
+            "maxdepth": {
+                "salinity": 11,
+                "temperature": 12,
+                "lat": ctds[0].spacetime.location.lat,
+                "lon": ctds[0].spacetime.location.lon,
+            },
+        },
     ]
 
     u = np.zeros((2, 2, 2, 2))
@@ -32,12 +73,17 @@ def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
     t = np.zeros((2, 2, 2, 2))
     s = np.zeros((2, 2, 2, 2))
 
+    t[0, 0, 0, 1] = ctds_obs[0]["surface"]["temperature"]
+    t[0, 1, 0, 1] = ctds_obs[0]["maxdepth"]["temperature"]
+    t[1, 0, 1, 0] = ctds_obs[1]["surface"]["temperature"]
+    t[1, 1, 1, 0] = ctds_obs[1]["maxdepth"]["temperature"]
+
     fieldset = FieldSet.from_data(
         {"V": v, "U": u, "T": t, "S": s},
         {
             "time": [
-                np.datetime64(base_time + datetime.timedelta(seconds=0)),
-                np.datetime64(base_time + datetime.timedelta(minutes=20)),
+                np.datetime64(base_time + datetime.timedelta(hours=0)),
+                np.datetime64(base_time + datetime.timedelta(days=1)),
             ],
             "depth": [0, -1000],
             "lat": [0, 1],

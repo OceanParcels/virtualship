@@ -78,12 +78,7 @@ def simulate_ctd(
     if not all([ctd.spacetime.time >= fieldset_starttime for ctd in ctds]):
         raise ValueError("CTD deployed before fieldset starts.")
 
-    # CTD depth can not be too shallow, because kernel would break.
-    # This shallow is not useful anyway, no need to support.
-    if not all([ctd.max_depth >= -DT * WINCH_SPEED for ctd in ctds]):
-        raise ValueError(f"CTD max_depth shallower than maximum {-DT * WINCH_SPEED}")
-
-    # depth the ctd will go to. deepest between ctd max depth and bathymetry.
+    # depth the ctd will go to. shallowest between ctd max depth and bathymetry.
     max_depths = [
         max(
             ctd.max_depth,
@@ -93,6 +88,13 @@ def simulate_ctd(
         )
         for ctd in ctds
     ]
+
+    # CTD depth can not be too shallow, because kernel would break.
+    # This shallow is not useful anyway, no need to support.
+    if not all([max_depth <= -DT * WINCH_SPEED for max_depth in max_depths]):
+        raise ValueError(
+            f"CTD max_depth or bathymetry shallower than maximum {-DT * WINCH_SPEED}"
+        )
 
     # define parcel particles
     ctd_particleset = ParticleSet(
