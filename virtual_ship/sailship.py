@@ -162,14 +162,15 @@ def sailship(config: VirtualShipConfiguration):
             print(
                 "WARN: Multiple CTD casts match the current location. Only a single cast will be performed."
             )
+
         ctds.append(
             CTD(
                 spacetime=Spacetime(
                     location=route_point,
                     time=start_time + time_past,
                 ),
-                min_depth=-config.ctd_fieldset.U.depth[0],
-                max_depth=-config.ctd_fieldset.U.depth[-1],
+                min_depth=config.ctd_fieldset.U.depth[0],
+                max_depth=config.ctd_fieldset.U.depth[-1],
             )
         )
         ctd_locations_visited = ctd_locations_visited.union(ctds_here)

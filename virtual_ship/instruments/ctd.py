@@ -69,7 +69,7 @@ def simulate_ctd(
     :raises ValueError: Whenever provided CTDs, fieldset, are not compatible with this function.
     """
     WINCH_SPEED = 1.0  # sink and rise speed in m/s
-    DT = 10.0
+    DT = 10.0  # dt of CTD simulation integrator
 
     fieldset_starttime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[0])
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
