@@ -114,7 +114,8 @@ def sailship(config: VirtualShipConfiguration):
                 spacetime=Spacetime(
                     location=route_point, time=time_past.total_seconds()
                 ),
-                min_depth=-config.drifter_fieldset.U.depth[0],
+                depth=-config.drifter_fieldset.U.depth[0],
+                lifetime=timedelta(weeks=4),
             )
         )
         drifter_locations_visited = drifter_locations_visited.union(drifters_here)
@@ -228,10 +229,12 @@ def sailship(config: VirtualShipConfiguration):
 
     print("Simulating drifters")
     simulate_drifters(
-        drifters=drifters,
+        out_path=os.path.join("results", "drifters.zarr"),
         fieldset=config.drifter_fieldset,
-        out_file_name=os.path.join("results", "drifters.zarr"),
-        outputdt=timedelta(minutes=5),
+        drifters=drifters,
+        outputdt=timedelta(hours=5),
+        dt=timedelta(minutes=5),
+        endtime=None,
     )
 
     print("Simulating argo floats")

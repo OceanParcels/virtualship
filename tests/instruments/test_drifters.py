@@ -26,7 +26,7 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
             "lat": np.array([0.0, 10.0]),
             "time": [
                 np.datetime64(base_time + datetime.timedelta(seconds=0)),
-                np.datetime64(base_time + datetime.timedelta(weeks=10)),
+                np.datetime64(base_time + datetime.timedelta(hours=4)),
             ],
         },
     )
@@ -39,12 +39,25 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
                 time=base_time + datetime.timedelta(days=0),
             ),
             depth=0.0,
-            lifetime=datetime.timedelta(hours=2),  # TODO choose this
-            asd
-        )
+            lifetime=datetime.timedelta(hours=2),
+        ),
+        Drifter(
+            spacetime=Spacetime(
+                location=Location(latitude=1, longitude=1),
+                time=base_time + datetime.timedelta(hours=1),
+            ),
+            depth=0.0,
+            lifetime=None,
+        ),
+        Drifter(
+            spacetime=Spacetime(
+                location=Location(latitude=2, longitude=2),
+                time=base_time + datetime.timedelta(hours=2),
+            ),
+            depth=0.0,
+            lifetime=datetime.timedelta(hours=200),
+        ),
     ]
-    # TODO more drifters?
-    asdas
 
     # perform simulation
     out_path = tmpdir.join("out.zarr")
@@ -53,9 +66,10 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
         fieldset=fieldset,
         out_path=out_path,
         drifters=drifters,
-        outputdt=timedelta(minutes=5),
+        outputdt=timedelta(hours=1),
+        dt=timedelta(minutes=5),
         endtime=None,
     )
 
-    asdasd
-    # test ouput
+    # asdasd
+    # test ouput TODO
