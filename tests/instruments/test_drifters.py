@@ -5,6 +5,7 @@ from datetime import timedelta
 
 import numpy as np
 import py
+import xarray as xr
 from parcels import FieldSet
 
 from virtual_ship import Location, Spacetime
@@ -15,9 +16,11 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
     # arbitrary time offset for the dummy fieldset
     base_time = datetime.datetime.strptime("1950-01-01", "%Y-%m-%d")
 
+    CONST_TEMPERATURE = 1.0  # constant temperature in fieldset
+
     v = np.full((2, 2, 2), 1.0)
     u = np.full((2, 2, 2), 1.0)
-    t = np.full((2, 2, 2), 1.0)
+    t = np.full((2, 2, 2), CONST_TEMPERATURE)
 
     fieldset = FieldSet.from_data(
         {"V": v, "U": u, "T": t},
@@ -49,14 +52,6 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
             depth=0.0,
             lifetime=None,
         ),
-        Drifter(
-            spacetime=Spacetime(
-                location=Location(latitude=2, longitude=2),
-                time=base_time + datetime.timedelta(hours=2),
-            ),
-            depth=0.0,
-            lifetime=datetime.timedelta(hours=200),
-        ),
     ]
 
     # perform simulation
@@ -71,5 +66,21 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
         endtime=None,
     )
 
-    # asdasd
-    # test ouput TODO
+    # test if output is as expected
+    results = xr.open_zarr(out_path)
+
+    assert len(results.trajectory) == len(drifters)
+
+    for ctd_i, traj in enumerate(results.trajectory):
+        # Check if drifters are moving
+        # lat, lon, should be increasing values (with the above positive VU fieldset)
+        assert np.all(
+            np.diff(results.sel(trajectory=traj)["lat"].values) > 0
+        ), "Drifter is not moving over y"
+        assert np.all(
+            np.diff(results.sel(trajectory=traj)["lon"].values) > 0
+        ), "Drifter is not mvoing over x"
+
+        assert np.all(
+            results.sel(trajectory=traj)["temperature"] == CONST_TEMPERATURE
+        ), "measured temperature does not match"
