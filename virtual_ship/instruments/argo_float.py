@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 import numpy as np
+import py
 from parcels import (
     AdvectionRK4,
     FieldSet,
@@ -115,19 +116,21 @@ def _check_error(particle, fieldset, time):
 
 
 def simulate_argo_floats(
-    argo_floats: list[ArgoFloat],
     fieldset: FieldSet,
-    out_file_name: str,
+    out_path: str | py.path.LocalPath,
+    argo_floats: list[ArgoFloat],
     outputdt: timedelta,
 ) -> None:
     """
     Use parcels to simulate a set of Argo floats in a fieldset.
 
-    :param argo_floats: A list of Argo floats to simulate.
     :param fieldset: The fieldset to simulate the Argo floats in.
-    :param out_file_name: The file to write the results to.
+    :param out_path: The path to write the results to.
+    :param argo_floats: A list of Argo floats to simulate.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     """
+    DT = 10.0  # dt of Argo float simulation integrator
+
     lon = [argo.spacetime.location.lon for argo in argo_floats]
     lat = [argo.spacetime.location.lat for argo in argo_floats]
     time = [argo.spacetime.time for argo in argo_floats]
@@ -149,11 +152,7 @@ def simulate_argo_floats(
     )
 
     # define output file for the simulation
-    out_file = argo_float_particleset.ParticleFile(
-        name=out_file_name,
-        outputdt=outputdt,
-        chunks=(1, 500),
-    )
+    out_file = argo_float_particleset.ParticleFile(name=out_path, outputdt=outputdt)
 
     # get time when the fieldset ends
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
@@ -167,6 +166,6 @@ def simulate_argo_floats(
             _check_error,
         ],
         endtime=fieldset_endtime,
-        dt=outputdt,
+        dt=DT,
         output_file=out_file,
     )

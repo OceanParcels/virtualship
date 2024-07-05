@@ -3,13 +3,14 @@
 from datetime import timedelta
 
 import numpy as np
+import py
 from parcels import FieldSet
 
 from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.argo_float import ArgoFloat, simulate_argo_floats
 
 
-def test_simulate_argo_floats() -> None:
+def test_simulate_argo_floats(tmpdir: py.path.LocalPath) -> None:
     DRIFT_DEPTH = -1000
     MAX_DEPTH = -2000
     VERTICAL_SPEED = -0.10
@@ -39,9 +40,12 @@ def test_simulate_argo_floats() -> None:
         )
     ]
 
+    # perform simulation
+    out_path = tmpdir.join("out.zarr")
+
     simulate_argo_floats(
-        argo_floats=argo_floats,
         fieldset=fieldset,
-        out_file_name="test",
+        out_path=out_path,
+        argo_floats=argo_floats,
         outputdt=timedelta(minutes=5),
     )

@@ -239,9 +239,9 @@ def sailship(config: VirtualShipConfiguration):
 
     print("Simulating argo floats")
     simulate_argo_floats(
+        out_path=os.path.join("results", "argo_floats.zarr"),
         argo_floats=argo_floats,
         fieldset=config.argo_float_fieldset,
-        out_file_name=os.path.join("results", "argo_floats.zarr"),
         outputdt=timedelta(minutes=5),
     )
 
