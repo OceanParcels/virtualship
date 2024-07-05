@@ -76,6 +76,7 @@ def simulate_drifters(
     # define output file for the simulation
     out_file = drifter_particleset.ParticleFile(name=out_path, outputdt=outputdt)
 
+    # get earliest between fieldset end time and provide end time
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
     if endtime is None:
         actual_endtime = fieldset_endtime
