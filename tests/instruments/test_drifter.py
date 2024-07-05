@@ -71,16 +71,16 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
 
     assert len(results.trajectory) == len(drifters)
 
-    for ctd_i, traj in enumerate(results.trajectory):
+    for drifter_i, traj in enumerate(results.trajectory):
         # Check if drifters are moving
         # lat, lon, should be increasing values (with the above positive VU fieldset)
         assert np.all(
             np.diff(results.sel(trajectory=traj)["lat"].values) > 0
-        ), "Drifter is not moving over y"
+        ), f"Drifter is not moving over y {drifter_i=}"
         assert np.all(
             np.diff(results.sel(trajectory=traj)["lon"].values) > 0
-        ), "Drifter is not mvoing over x"
+        ), f"Drifter is not mvoing over x {drifter_i=}"
 
         assert np.all(
             results.sel(trajectory=traj)["temperature"] == CONST_TEMPERATURE
-        ), "measured temperature does not match"
+        ), f"measured temperature does not match {drifter_i=}"
