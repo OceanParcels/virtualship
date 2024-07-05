@@ -48,4 +48,5 @@ def test_simulate_argo_floats(tmpdir: py.path.LocalPath) -> None:
         out_path=out_path,
         argo_floats=argo_floats,
         outputdt=timedelta(minutes=5),
+        endtime=None,
     )

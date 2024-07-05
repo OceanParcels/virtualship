@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import numpy as np
 import py
@@ -120,6 +120,7 @@ def simulate_argo_floats(
     out_path: str | py.path.LocalPath,
     argo_floats: list[ArgoFloat],
     outputdt: timedelta,
+    endtime: datetime | None,
 ) -> None:
     """
     Use parcels to simulate a set of Argo floats in a fieldset.
@@ -128,21 +129,18 @@ def simulate_argo_floats(
     :param out_path: The path to write the results to.
     :param argo_floats: A list of Argo floats to simulate.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
+    :param endtime: Stop at this time, or if None, continue until the end of the fieldset.
     """
     DT = 10.0  # dt of Argo float simulation integrator
-
-    lon = [argo.spacetime.location.lon for argo in argo_floats]
-    lat = [argo.spacetime.location.lat for argo in argo_floats]
-    time = [argo.spacetime.time for argo in argo_floats]
 
     # define parcel particles
     argo_float_particleset = ParticleSet(
         fieldset=fieldset,
         pclass=_ArgoParticle,
-        lon=lon,
-        lat=lat,
+        lat=[argo.spacetime.location.lat for argo in argo_floats],
+        lon=[argo.spacetime.location.lon for argo in argo_floats],
         depth=[argo.min_depth for argo in argo_floats],
-        time=time,
+        time=[argo.spacetime.time for argo in argo_floats],
         min_depth=[argo.min_depth for argo in argo_floats],
         max_depth=[argo.max_depth for argo in argo_floats],
         drift_depth=[argo.drift_depth for argo in argo_floats],
@@ -154,8 +152,15 @@ def simulate_argo_floats(
     # define output file for the simulation
     out_file = argo_float_particleset.ParticleFile(name=out_path, outputdt=outputdt)
 
-    # get time when the fieldset ends
+    # get earliest between fieldset end time and provide end time
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
+    if endtime is None:
+        actual_endtime = fieldset_endtime
+    elif endtime > fieldset_endtime:
+        print("WARN: Requested end time later than fieldset end time.")
+        actual_endtime = fieldset_endtime
+    else:
+        actual_endtime = np.timedelta64(endtime)
 
     # execute simulation
     argo_float_particleset.execute(
@@ -165,7 +170,7 @@ def simulate_argo_floats(
             _keep_at_surface,
             _check_error,
         ],
-        endtime=fieldset_endtime,
+        endtime=actual_endtime,
         dt=DT,
         output_file=out_file,
     )

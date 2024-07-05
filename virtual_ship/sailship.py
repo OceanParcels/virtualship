@@ -243,6 +243,7 @@ def sailship(config: VirtualShipConfiguration):
         argo_floats=argo_floats,
         fieldset=config.argo_float_fieldset,
         outputdt=timedelta(minutes=5),
+        endtime=None,
     )
 
     # convert CTD data to CSV
