@@ -51,7 +51,7 @@ _ArgoParticle = JITParticle.add_variables(
 def _argo_float_vertical_movement(particle, fieldset, time):
     if particle.cycle_phase == 0:
         # Phase 0: Sinking with vertical_speed until depth is drift_depth
-        particle_ddepth += (  # noqa See comment above about particle_* variables.
+        particle_ddepth += (  # noqa Parcels defines particle_* variables, which code checkers cannot know.
             particle.vertical_speed * particle.dt
         )
         if particle.depth + particle_ddepth <= particle.drift_depth:
