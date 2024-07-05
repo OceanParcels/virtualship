@@ -7,7 +7,6 @@ from .location import Location
 
 
 @dataclass
-# TODO I take suggestions for a better name
 class Spacetime:
     """A location and time."""
 

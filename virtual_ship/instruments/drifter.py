@@ -51,7 +51,7 @@ def simulate_drifters(
     """
     Use parcels to simulate a set of drifters in a fieldset.
 
-    :param fieldset: The fieldset to simulate the CTDs in.
+    :param fieldset: The fieldset to simulate the Drifters in.
     :param out_path: The path to write the results to.
     :param drifters: A list of drifters to simulate.
     :param outputdt: Interval which dictates the update frequency of file output during simulation.
@@ -84,7 +84,6 @@ def simulate_drifters(
         actual_endtime = fieldset_endtime
     else:
         actual_endtime = np.timedelta64(endtime)
-    # asdasd  # test time offset for particles TODO
 
     # execute simulation
     drifter_particleset.execute(
