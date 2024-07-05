@@ -1,14 +1,14 @@
 """Test the simulation of Argo floats."""
 
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 import py
+import xarray as xr
 from parcels import FieldSet
 
 from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.argo_float import ArgoFloat, simulate_argo_floats
-import xarray as xr
 
 
 def test_simulate_argo_floats(tmpdir: py.path.LocalPath) -> None:
