@@ -1,5 +1,6 @@
 """sailship function."""
 
+import datetime
 import os
 from datetime import timedelta
 
@@ -53,6 +54,10 @@ def sailship(config: VirtualShipConfiguration):
     ctd_locations = set(ctd_locations_list)
     if len(ctd_locations) != len(ctd_locations_list):
         print("WARN: Some CTD locations are identical and have been combined.")
+
+    start_time = datetime.datetime.strptime(
+        config.requested_ship_time["start"], "%Y-%m-%dT%H:%M:%S"
+    )
     # until here ----
 
     # get discrete points along the ships route were sampling and deployments will be performed
@@ -157,13 +162,15 @@ def sailship(config: VirtualShipConfiguration):
             print(
                 "WARN: Multiple CTD casts match the current location. Only a single cast will be performed."
             )
+
         ctds.append(
             CTD(
                 spacetime=Spacetime(
-                    location=route_point, time=time_past.total_seconds()
+                    location=route_point,
+                    time=start_time + time_past,
                 ),
-                min_depth=-config.ctd_fieldset.U.depth[0],
-                max_depth=-config.ctd_fieldset.U.depth[-1],
+                min_depth=config.ctd_fieldset.U.depth[0],
+                max_depth=config.ctd_fieldset.U.depth[-1],
             )
         )
         ctd_locations_visited = ctd_locations_visited.union(ctds_here)
@@ -213,9 +220,9 @@ def sailship(config: VirtualShipConfiguration):
 
     print("Simulating CTD casts.")
     simulate_ctd(
-        ctds=ctds,
+        out_path=os.path.join("results", "ctd.zarr"),
         fieldset=config.ctd_fieldset,
-        out_file_name=os.path.join("results", "ctd.zarr"),
+        ctds=ctds,
         outputdt=timedelta(seconds=10),
     )
 
