@@ -7,6 +7,7 @@ from parcels import Field, FieldSet
 
 from virtual_ship.sailship import sailship
 from virtual_ship.virtual_ship_configuration import VirtualShipConfiguration
+from virtual_ship import Location
 
 
 def _make_ctd_fieldset(base_time: datetime) -> FieldSet:
@@ -78,12 +79,22 @@ def test_sailship() -> None:
     )
 
     config = VirtualShipConfiguration(
-        "sailship_config.json",
+        start_time=datetime.datetime.strptime(
+            "2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"
+        ),
+        route_coordinates=[
+            Location(latitude=-23.071289, longitude=63.743631),
+            # Location(latitude=-23.081289, longitude=63.743631),
+            Location(latitude=-23.191289, longitude=63.743631),
+        ],
         adcp_fieldset=adcp_fieldset,
         ship_underwater_st_fieldset=ship_underwater_st_fieldset,
         ctd_fieldset=ctd_fieldset,
         drifter_fieldset=drifter_fieldset,
         argo_float_fieldset=argo_float_fieldset,
+        argo_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
+        drifter_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
+        ctd_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
     )
 
     sailship(config)

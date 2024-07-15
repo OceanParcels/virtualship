@@ -26,39 +26,22 @@ def sailship(config: VirtualShipConfiguration):
 
     :param config: The cruise configuration.
     """
-    # TODO this will be in the config later, but for now we don't change the config structure
-    # from here -----
-    argo_locations_list = [
-        Location(latitude=argo[1], longitude=argo[0])
-        for argo in config.argo_deploylocations
-    ]
-    argo_locations = set(argo_locations_list)
-    if len(argo_locations) != len(argo_locations_list):
+    # combine identical instrument deploy location
+    argo_locations = set(config.argo_deploy_locations)
+    if len(argo_locations) != len(config.argo_deploy_locations):
         print(
             "WARN: Some argo float deployment locations are identical and have been combined."
         )
 
-    drifter_locations_list = [
-        Location(latitude=drifter[1], longitude=drifter[0])
-        for drifter in config.drifter_deploylocations
-    ]
-    drifter_locations = set(drifter_locations_list)
-    if len(drifter_locations) != len(drifter_locations_list):
+    drifter_locations = set(config.drifter_deploy_locations)
+    if len(drifter_locations) != len(config.drifter_deploy_locations):
         print(
             "WARN: Some drifter deployment locations are identical and have been combined."
         )
 
-    ctd_locations_list = [
-        Location(latitude=ctd[1], longitude=ctd[0]) for ctd in config.CTD_locations
-    ]
-    ctd_locations = set(ctd_locations_list)
-    if len(ctd_locations) != len(ctd_locations_list):
+    ctd_locations = set(config.ctd_deploy_locations)
+    if len(drifter_locations) != len(config.ctd_deploy_locations):
         print("WARN: Some CTD locations are identical and have been combined.")
-
-    start_time = datetime.datetime.strptime(
-        config.requested_ship_time["start"], "%Y-%m-%dT%H:%M:%S"
-    )
-    # until here ----
 
     # get discrete points along the ships route were sampling and deployments will be performed
     route_dt = timedelta(minutes=5)
@@ -264,57 +247,44 @@ def shiproute(config: VirtualShipConfiguration, dt: timedelta) -> list[Location]
     :param dt: Sailing time between each discrete route point.
     :returns: lat and lon points within region of interest to sample.
     """
-    # Initialize lists to store intermediate points
-    lons = []
-    lats = []
+    CRUISE_SPEED = 5.14
 
-    # Loop over station coordinates and calculate intermediate points along great circle path
-    for i in range(len(config.route_coordinates) - 1):
-        startlong = config.route_coordinates[i][0]
-        startlat = config.route_coordinates[i][1]
-        endlong = config.route_coordinates[i + 1][0]
-        endlat = config.route_coordinates[i + 1][1]
+    # discrete points the ship will pass
+    sample_points: list[Location] = []
 
-        # calculate line string along path with segments every 5 min for ADCP measurements
-        # current cruise speed is 10knots = 5.14 m/s * 60*5 = 1542 m every 5 min
-        # Realistic time between measurements is 2 min on Pelagia according to Floran
-        cruise_speed = 5.14
-        geod = pyproj.Geod(ellps="WGS84")
-        azimuth1, azimuth2, distance = geod.inv(startlong, startlat, endlong, endlat)
-        if distance > (cruise_speed * dt.total_seconds()):
-            r = geod.inv_intermediate(
-                startlong,
-                startlat,
-                endlong,
-                endlat,
-                del_s=1545,
-                initial_idx=0,
-                return_back_azimuth=False,
-            )
-            lons = np.append(lons, r.lons)  # stored as a list of arrays
-            lats = np.append(lats, r.lats)
-        else:
-            lons = np.append(lons, endlong)
-            lats = np.append(lats, endlat)
+    # projection used to get discrete locations
+    geod = pyproj.Geod(ellps="WGS84")
 
-    # initial_idx will add begin point to each list (but not end point to avoid doubling) so add final endpoint manually
-    lons = np.append(np.hstack(lons), endlong)
-    lats = np.append(np.hstack(lats), endlat)
+    # loop over station coordinates and calculate intermediate points along great circle path
+    for startloc, endloc in zip(config.route_coordinates, config.route_coordinates[1:]):
+        # iterate over each coordinate and the next coordinate
+        # last coordinate has no next coordinate and is skipped
 
-    # check if input sample locations are within data availability area, only save if so
-    north = config.region_of_interest["North"]
-    east = config.region_of_interest["East"]
-    south = config.region_of_interest["South"]
-    west = config.region_of_interest["West"]
-    poly = Polygon([(west, north), (west, south), (east, south), (east, north)])
-    sample_lons = []
-    sample_lats = []
-    for i in range(len(lons)):
-        if poly.contains(Point(lons[i], lats[i])):
-            sample_lons.append(lons[i])
-            sample_lats.append(lats[i])
-    points = [
-        Location(latitude=lat, longitude=lon)
-        for lat, lon in zip(sample_lats, sample_lons, strict=True)
-    ]
-    return points
+        # get locations between start and end, seperate by 5 minutes of cruising
+        # excludes final point, but this is added explicitly after this loop
+        int_points = geod.inv_intermediate(
+            startloc.lon,
+            startloc.lat,
+            endloc.lon,
+            endloc.lat,
+            del_s=CRUISE_SPEED * dt.total_seconds(),
+            initial_idx=0,
+            return_back_azimuth=False,
+        )
+
+        sample_points.extend(
+            [
+                Location(latitude=lat, longitude=lon)
+                for lat, lon in zip(int_points.lats, int_points.lons, strict=True)
+            ]
+        )
+
+    # explitly include final points which is not added by the previous loop
+    sample_points.append(
+        Location(
+            latitude=config.route_coordinates[-1].lat,
+            longitude=config.route_coordinates[-1].lon,
+        )
+    )
+
+    return sample_points

@@ -9,27 +9,15 @@
         "start": "2022-01-01T00:00:00",
         "end": "2022-01-2T00:00:00"
       },
-    "route_coordinates": [
-      [-23.071289, 63.743631], [-23.081289, 63.743631], [-23.091289, 63.743631]
-    ],
     "underway_data": true,
     "ADCP_data": false,
     "ADCP_settings": {
         "max_depth": -1000,
         "bin_size_m": 24
       },
-    "CTD_locations": [
-      [-23.081289, 63.743631]
-    ],
     "CTD_settings": {
         "max_depth": "max"
       },
-    "drifter_deploylocations": [
-      [-23.081289, 63.743631]
-    ],
-    "argo_deploylocations": [
-      [-23.081289, 63.743631]
-    ],
     "argo_characteristics": {
       "driftdepth": -1000,
       "maxdepth": -2000,

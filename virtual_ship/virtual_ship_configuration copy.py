@@ -6,29 +6,20 @@ from datetime import timedelta
 
 from parcels import FieldSet
 from shapely.geometry import Point, Polygon
-from dataclasses import dataclass
-from .location import Location
-from datetime import datetime
 
 
-@dataclass
 class VirtualShipConfiguration:
-    """Configuration of the virtual ship."""
-
-    start_time: datetime
-    route_coordinates: list[Location]
+    """Configuration of the virtual ship, initialized from a json file."""
 
     adcp_fieldset: FieldSet
     ship_underwater_st_fieldset: FieldSet
+    argo_float_fieldset: FieldSet
+    drifter_fieldset: FieldSet
     ctd_fieldset: FieldSet
     drifter_fieldset: FieldSet
     argo_float_fieldset: FieldSet
 
-    argo_deploy_locations: list[Location]
-    drifter_deploy_locations: list[Location]
-    ctd_deploy_locations: list[Location]
-
-    def _initold(
+    def __init__(
         self,
         json_file,
         adcp_fieldset: FieldSet,
