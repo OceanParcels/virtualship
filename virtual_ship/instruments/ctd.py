@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 import numpy as np
+import py
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
 from ..spacetime import Spacetime
@@ -22,8 +23,10 @@ _CTDParticle = JITParticle.add_variables(
     [
         Variable("salinity", dtype=np.float32, initial=np.nan),
         Variable("temperature", dtype=np.float32, initial=np.nan),
-        Variable("raising", dtype=np.int32, initial=0),
+        Variable("raising", dtype=np.int8, initial=0.0),  # bool. 0 is False, 1 is True.
         Variable("max_depth", dtype=np.float32),
+        Variable("min_depth", dtype=np.float32),
+        Variable("winch_speed", dtype=np.float32),
     ]
 )
 
@@ -37,77 +40,89 @@ def _sample_salinity(particle, fieldset, time):
 
 
 def _ctd_cast(particle, fieldset, time):
-    # Lowering and raising CTD
-    if (
-        -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon]
-        > particle.max_depth
-    ):
-        maxdepth = (
-            -fieldset.bathymetry[time, particle.depth, particle.lat, particle.lon] + 20
-        )
-    else:
-        maxdepth = particle.max_depth
-    winch_speed = -1.0  # sink and rise speed in m/s
-
+    # lowering
     if particle.raising == 0:
-        # Sinking with winch_speed until near seafloor
-        particle_ddepth = winch_speed * particle.dt
-        if particle.depth <= maxdepth:
+        particle_ddepth = -particle.winch_speed * particle.dt
+        if particle.depth + particle_ddepth < particle.max_depth:
             particle.raising = 1
-
-    if particle.raising == 1:
-        # Rising with winch_speed until depth is -2 m
-        if particle.depth < -2:
-            particle_ddepth = -winch_speed * particle.dt
-            if particle.depth + particle_ddepth >= -2:
-                # to break the loop ...
-                particle.state = 41
-                print("CTD cast finished.")
+            particle_ddepth = -particle_ddepth
+    # raising
+    else:
+        particle_ddepth = particle.winch_speed * particle.dt
+        if particle.depth + particle_ddepth > -particle.min_depth:
+            particle.delete()
 
 
 def simulate_ctd(
-    ctds: list[CTD],
     fieldset: FieldSet,
-    out_file_name: str,
+    out_path: str | py.path.LocalPath,
+    ctds: list[CTD],
     outputdt: timedelta,
 ) -> None:
     """
     Use parcels to simulate a set of CTDs in a fieldset.
 
-    :param ctds: A list of CTDs to simulate.
     :param fieldset: The fieldset to simulate the CTDs in.
-    :param out_file_name: The file to write the results to.
+    :param out_path: The path to write the results to.
+    :param ctds: A list of CTDs to simulate.
     :param outputdt: Interval which dictates the update frequency of file output during simulation
+    :raises ValueError: Whenever provided CTDs, fieldset, are not compatible with this function.
     """
-    lon = [ctd.spacetime.location.lon for ctd in ctds]
-    lat = [ctd.spacetime.location.lat for ctd in ctds]
-    time = [ctd.spacetime.time for ctd in ctds]
+    WINCH_SPEED = 1.0  # sink and rise speed in m/s
+    DT = 10.0  # dt of CTD simulation integrator
+
+    fieldset_starttime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[0])
+    fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
+
+    # deploy time for all ctds should be later than fieldset start time
+    if not all([ctd.spacetime.time >= fieldset_starttime for ctd in ctds]):
+        raise ValueError("CTD deployed before fieldset starts.")
+
+    # depth the ctd will go to. shallowest between ctd max depth and bathymetry.
+    max_depths = [
+        max(
+            ctd.max_depth,
+            fieldset.bathymetry.eval(
+                z=0, y=ctd.spacetime.location.lat, x=ctd.spacetime.location.lon, time=0
+            ),
+        )
+        for ctd in ctds
+    ]
+
+    # CTD depth can not be too shallow, because kernel would break.
+    # This shallow is not useful anyway, no need to support.
+    if not all([max_depth <= -DT * WINCH_SPEED for max_depth in max_depths]):
+        raise ValueError(
+            f"CTD max_depth or bathymetry shallower than maximum {-DT * WINCH_SPEED}"
+        )
 
     # define parcel particles
     ctd_particleset = ParticleSet(
         fieldset=fieldset,
         pclass=_CTDParticle,
-        lon=lon,
-        lat=lat,
+        lon=[ctd.spacetime.location.lon for ctd in ctds],
+        lat=[ctd.spacetime.location.lat for ctd in ctds],
         depth=[ctd.min_depth for ctd in ctds],
-        time=time,
-        max_depth=[ctd.max_depth for ctd in ctds],
+        time=[ctd.spacetime.time for ctd in ctds],
+        max_depth=max_depths,
+        min_depth=[ctd.min_depth for ctd in ctds],
+        winch_speed=[WINCH_SPEED for _ in ctds],
     )
 
     # define output file for the simulation
-    out_file = ctd_particleset.ParticleFile(
-        name=out_file_name,
-        outputdt=outputdt,
-        chunks=(1, 500),
-    )
-
-    # get time when the fieldset ends
-    fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
+    out_file = ctd_particleset.ParticleFile(name=out_path, outputdt=outputdt)
 
     # execute simulation
     ctd_particleset.execute(
         [_sample_salinity, _sample_temperature, _ctd_cast],
         endtime=fieldset_endtime,
-        dt=outputdt,
+        dt=DT,
+        verbose_progress=False,
         output_file=out_file,
     )
+
+    # there should be no particles left, as they delete themselves when they resurface
+    if len(ctd_particleset.particledata) != 0:
+        raise ValueError(
+            "Simulation ended before CTD resurfaced. This most likely means the field time dimension did not match the simulation time span."
+        )
