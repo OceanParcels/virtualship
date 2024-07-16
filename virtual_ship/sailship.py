@@ -24,9 +24,11 @@ def sailship(config: VirtualShipConfiguration):
 
     :param config: The cruise configuration.
     """
+    config.verify()
+
     # combine identical instrument deploy location
-    argo_locations = set(config.argo_deploy_locations)
-    if len(argo_locations) != len(config.argo_deploy_locations):
+    argo_locations = set(config.argo_float_deploy_locations)
+    if len(argo_locations) != len(config.argo_float_deploy_locations):
         print(
             "WARN: Some argo float deployment locations are identical and have been combined."
         )
