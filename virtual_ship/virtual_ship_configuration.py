@@ -6,6 +6,7 @@ from datetime import datetime
 from parcels import FieldSet
 
 from .location import Location
+import numpy as np
 
 
 @dataclass
@@ -67,17 +68,65 @@ class VirtualShipConfiguration:
                 for coord in self.argo_float_deploy_locations
             ]
         ):
-            raise ValueError("Argo float deploy locations are not valid.")
+            raise ValueError("Argo float deploy locations are not valid coordinates.")
+
+        if not all(
+            [
+                any(
+                    [
+                        np.isclose(deploy.lat, coord.lat)
+                        and np.isclose(deploy.lon, coord.lon)
+                        for coord in self.route_coordinates
+                    ]
+                )
+                for deploy in self.argo_float_deploy_locations
+            ]
+        ):
+            raise ValueError(
+                "Argo float deploy locations are not exactly on route coordinates."
+            )
 
         if not all(
             [self._is_valid_location(coord) for coord in self.drifter_deploy_locations]
         ):
-            raise ValueError("Drifter deploy locations are not valid.")
+            raise ValueError("Drifter deploy locations are not valid coordinates.")
+
+        if not all(
+            [
+                any(
+                    [
+                        np.isclose(deploy.lat, coord.lat)
+                        and np.isclose(deploy.lon, coord.lon)
+                        for coord in self.route_coordinates
+                    ]
+                )
+                for deploy in self.drifter_deploy_locations
+            ]
+        ):
+            raise ValueError(
+                "Drifter deploy locations are not exactly on route coordinates."
+            )
 
         if not all(
             [self._is_valid_location(coord) for coord in self.ctd_deploy_locations]
         ):
-            raise ValueError("CTD deploy locations are not valid.")
+            raise ValueError("CTD deploy locations are not valid coordinates.")
+
+        if not all(
+            [
+                any(
+                    [
+                        np.isclose(deploy.lat, coord.lat)
+                        and np.isclose(deploy.lon, coord.lon)
+                        for coord in self.route_coordinates
+                    ]
+                )
+                for deploy in self.ctd_deploy_locations
+            ]
+        ):
+            raise ValueError(
+                "CTD deploy locations are not exactly on route coordinates."
+            )
 
         if self.argo_float_config.max_depth > 0:
             raise ValueError("Argo float max depth must be negative or zero.")

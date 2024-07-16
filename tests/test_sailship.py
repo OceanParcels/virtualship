@@ -99,7 +99,7 @@ def test_sailship() -> None:
         ),
         route_coordinates=[
             Location(latitude=-23.071289, longitude=63.743631),
-            # Location(latitude=-23.081289, longitude=63.743631),
+            Location(latitude=-23.081289, longitude=63.743631),
             Location(latitude=-23.191289, longitude=63.743631),
         ],
         adcp_fieldset=adcp_fieldset,
