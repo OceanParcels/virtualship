@@ -1,14 +1,33 @@
 """VirtualShipConfiguration class."""
 
-import datetime
 import json
-from datetime import timedelta
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 from parcels import FieldSet
 from shapely.geometry import Point, Polygon
-from dataclasses import dataclass
+
 from .location import Location
-from datetime import datetime
+
+
+@dataclass
+class ArgoFloatConfig:
+    """Configuration for argos floats."""
+
+    fieldset: FieldSet
+    max_depth: float
+    drift_depth: float
+    vertical_speed: float
+    cycle_days: int
+    drift_days: int
+
+
+@dataclass
+class ADCPConfig:
+    """Configuration for ADCP instrument."""
+
+    max_depth: float
+    bin_size_m: int
 
 
 @dataclass
@@ -22,11 +41,21 @@ class VirtualShipConfiguration:
     ship_underwater_st_fieldset: FieldSet
     ctd_fieldset: FieldSet
     drifter_fieldset: FieldSet
-    argo_float_fieldset: FieldSet
 
     argo_deploy_locations: list[Location]
     drifter_deploy_locations: list[Location]
     ctd_deploy_locations: list[Location]
+
+    argo_float_config: ArgoFloatConfig
+    adcp_config: ADCPConfig
+
+    def verify() -> None:
+        """
+        Verify this configuration is valid.
+
+        :raises ValueError: If not valid.
+        """
+        raise ValueError("")
 
     def _initold(
         self,

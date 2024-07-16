@@ -1,12 +1,10 @@
 """sailship function."""
 
-import datetime
 import os
 from datetime import timedelta
 
 import numpy as np
 import pyproj
-from shapely.geometry import Point, Polygon
 
 from .costs import costs
 from .instruments.adcp import simulate_adcp
@@ -122,12 +120,12 @@ def sailship(config: VirtualShipConfiguration):
                 spacetime=Spacetime(
                     location=route_point, time=time_past.total_seconds()
                 ),
-                min_depth=-config.argo_float_fieldset.U.depth[0],
-                max_depth=config.argo_characteristics["maxdepth"],
-                drift_depth=config.argo_characteristics["driftdepth"],
-                vertical_speed=config.argo_characteristics["vertical_speed"],
-                cycle_days=config.argo_characteristics["cycle_days"],
-                drift_days=config.argo_characteristics["drift_days"],
+                min_depth=-config.argo_float_config.fieldset.U.depth[0],
+                max_depth=config.argo_float_config.max_depth,
+                drift_depth=config.argo_float_config.drift_depth,
+                vertical_speed=config.argo_float_config.vertical_speed,
+                cycle_days=config.argo_float_config.cycle_days,
+                drift_days=config.argo_float_config.drift_days,
             )
         )
         argo_locations_visited = argo_locations_visited.union(argos_here)
@@ -151,7 +149,7 @@ def sailship(config: VirtualShipConfiguration):
             CTD(
                 spacetime=Spacetime(
                     location=route_point,
-                    time=start_time + time_past,
+                    time=config.start_time + time_past,
                 ),
                 min_depth=config.ctd_fieldset.U.depth[0],
                 max_depth=config.ctd_fieldset.U.depth[-1],
@@ -195,10 +193,9 @@ def sailship(config: VirtualShipConfiguration):
     simulate_adcp(
         fieldset=config.adcp_fieldset,
         out_path=os.path.join("results", "adcp.zarr"),
-        max_depth=config.ADCP_settings["max_depth"],
+        max_depth=config.adcp_config.max_depth,
         min_depth=-5,
-        num_bins=(-5 - config.ADCP_settings["max_depth"])
-        // config.ADCP_settings["bin_size_m"],
+        num_bins=(-5 - config.adcp_config.max_depth) // config.adcp_config.bin_size_m,
         sample_points=adcps,
     )
 
@@ -224,7 +221,7 @@ def sailship(config: VirtualShipConfiguration):
     simulate_argo_floats(
         out_path=os.path.join("results", "argo_floats.zarr"),
         argo_floats=argo_floats,
-        fieldset=config.argo_float_fieldset,
+        fieldset=config.argo_float_config.fieldset,
         outputdt=timedelta(minutes=5),
         endtime=None,
     )

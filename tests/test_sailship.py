@@ -5,9 +5,13 @@ import datetime
 import numpy as np
 from parcels import Field, FieldSet
 
-from virtual_ship.sailship import sailship
-from virtual_ship.virtual_ship_configuration import VirtualShipConfiguration
 from virtual_ship import Location
+from virtual_ship.sailship import sailship
+from virtual_ship.virtual_ship_configuration import (
+    ADCPConfig,
+    ArgoFloatConfig,
+    VirtualShipConfiguration,
+)
 
 
 def _make_ctd_fieldset(base_time: datetime) -> FieldSet:
@@ -78,6 +82,17 @@ def test_sailship() -> None:
         },
     )
 
+    argo_float_config = ArgoFloatConfig(
+        fieldset=argo_float_fieldset,
+        max_depth=-2000,
+        drift_depth=-1000,
+        vertical_speed=-0.10,
+        cycle_days=10,
+        drift_days=9,
+    )
+
+    adcp_config = ADCPConfig(max_depth=-1000, bin_size_m=24)
+
     config = VirtualShipConfiguration(
         start_time=datetime.datetime.strptime(
             "2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"
@@ -91,10 +106,11 @@ def test_sailship() -> None:
         ship_underwater_st_fieldset=ship_underwater_st_fieldset,
         ctd_fieldset=ctd_fieldset,
         drifter_fieldset=drifter_fieldset,
-        argo_float_fieldset=argo_float_fieldset,
         argo_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
         drifter_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
         ctd_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
+        argo_float_config=argo_float_config,
+        adcp_config=adcp_config,
     )
 
     sailship(config)
