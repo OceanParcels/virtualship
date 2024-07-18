@@ -17,8 +17,8 @@ class ArgoFloatConfig:
     max_depth: float
     drift_depth: float
     vertical_speed: float
-    cycle_days: int
-    drift_days: int
+    cycle_days: float
+    drift_days: float
 
 
 @dataclass
@@ -115,10 +115,10 @@ class VirtualShipConfig:
             raise ValueError("Argo float vertical speed must be negative.")
 
         if self.argo_float_config.cycle_days <= 0:
-            raise ValueError("Argo float cycle days must be large than one.")
+            raise ValueError("Argo float cycle days must be larger than one.")
 
         if self.argo_float_config.drift_days <= 0:
-            raise ValueError("Argo drift cycle days must be large than one.")
+            raise ValueError("Argo drift cycle days must be larger than one.")
 
         if self.adcp_config.max_depth > 0:
             raise ValueError("ADCP max depth must be negative.")
