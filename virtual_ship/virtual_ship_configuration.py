@@ -1,4 +1,4 @@
-"""VirtualShipConfiguration class."""
+"""VirtualShipConfig class."""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -30,7 +30,7 @@ class ADCPConfig:
 
 
 @dataclass
-class VirtualShipConfiguration:
+class VirtualShipConfig:
     """Configuration of the virtual ship."""
 
     start_time: datetime

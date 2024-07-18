@@ -10,7 +10,7 @@ from virtual_ship.sailship import sailship
 from virtual_ship.virtual_ship_configuration import (
     ADCPConfig,
     ArgoFloatConfig,
-    VirtualShipConfiguration,
+    VirtualShipConfig,
 )
 
 
@@ -93,7 +93,7 @@ def test_sailship() -> None:
 
     adcp_config = ADCPConfig(max_depth=-1000, bin_size_m=24)
 
-    config = VirtualShipConfiguration(
+    config = VirtualShipConfig(
         start_time=datetime.datetime.strptime(
             "2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"
         ),

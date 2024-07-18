@@ -15,10 +15,10 @@ from .instruments.ship_underwater_st import simulate_ship_underwater_st
 from .location import Location
 from .postprocess import postprocess
 from .spacetime import Spacetime
-from .virtual_ship_configuration import VirtualShipConfiguration
+from .virtual_ship_configuration import VirtualShipConfig
 
 
-def sailship(config: VirtualShipConfiguration):
+def sailship(config: VirtualShipConfig):
     """
     Use parcels to simulate the ship, take ctd_instruments and measure ADCP and underwaydata.
 
@@ -238,7 +238,7 @@ def sailship(config: VirtualShipConfiguration):
     print(f"This cruise took {time_past} and would have cost {cost:,.0f} euros.")
 
 
-def shiproute(config: VirtualShipConfiguration, dt: timedelta) -> list[Location]:
+def shiproute(config: VirtualShipConfig, dt: timedelta) -> list[Location]:
     """
     Take in route coordinates and return lat and lon points within region of interest to sample.
 

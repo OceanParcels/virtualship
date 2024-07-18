@@ -2,10 +2,10 @@
 
 from datetime import timedelta
 
-from .virtual_ship_configuration import VirtualShipConfiguration
+from .virtual_ship_configuration import VirtualShipConfig
 
 
-def costs(config: VirtualShipConfiguration, total_time: timedelta):
+def costs(config: VirtualShipConfig, total_time: timedelta):
     """
     Calculate the cost of the virtual ship (in US$).
 
