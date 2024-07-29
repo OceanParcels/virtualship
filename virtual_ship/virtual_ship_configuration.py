@@ -115,7 +115,7 @@ class VirtualShipConfig:
             raise ValueError("Argo float vertical speed must be negative.")
 
         if self.argo_float_config.cycle_days <= 0:
-            raise ValueError("Argo float cycle days must be larger than one.")
+            raise ValueError("Argo float cycle days must be larger than zero.")
 
         if self.argo_float_config.drift_days <= 0:
             raise ValueError("Argo drift cycle days must be larger than zero.")
