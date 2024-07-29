@@ -278,7 +278,7 @@ def shiproute(config: VirtualShipConfig, dt: timedelta) -> list[Location]:
             ]
         )
 
-    # explitly include final points which is not added by the previous loop
+    # explitly include final point which is not added by the previous loop
     sample_points.append(
         Location(
             latitude=config.route_coordinates[-1].lat,
