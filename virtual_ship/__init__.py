@@ -3,5 +3,14 @@
 from . import instruments, sailship
 from .location import Location
 from .spacetime import Spacetime
+from .waypoint import Waypoint
+from .instrument_deployment import InstrumentDeployment
 
-__all__ = ["Location", "Spacetime", "instruments", "sailship"]
+__all__ = [
+    "Location",
+    "Spacetime",
+    "instruments",
+    "sailship",
+    "InstrumentDeployment",
+    "Waypoint",
+]

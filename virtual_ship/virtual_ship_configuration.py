@@ -7,6 +7,7 @@ import numpy as np
 from parcels import FieldSet
 
 from .location import Location
+from .waypoint import Waypoint
 
 
 @dataclass
@@ -33,17 +34,14 @@ class ADCPConfig:
 class VirtualShipConfig:
     """Configuration of the virtual ship."""
 
-    start_time: datetime
-    route_coordinates: list[Location]
+    ship_speed: float  # m/s
+
+    waypoints: list[Waypoint]
 
     adcp_fieldset: FieldSet
     ship_underwater_st_fieldset: FieldSet
     ctd_fieldset: FieldSet
     drifter_fieldset: FieldSet
-
-    argo_float_deploy_locations: list[Location]
-    drifter_deploy_locations: list[Location]
-    ctd_deploy_locations: list[Location]
 
     argo_float_config: ArgoFloatConfig
     adcp_config: ADCPConfig
@@ -54,79 +52,13 @@ class VirtualShipConfig:
 
         :raises ValueError: If not valid.
         """
-        if len(self.route_coordinates) < 2:
-            raise ValueError("Route needs to consist of at least locations.")
+        if len(self.waypoints) < 2:
+            raise ValueError("Waypoints require at least a start and an end.")
 
         if not all(
-            [self._is_valid_location(coord) for coord in self.route_coordinates]
+            [self._is_valid_location(waypoint.location) for waypoint in self.waypoints]
         ):
-            raise ValueError("Invalid coordinates in route.")
-
-        if not all(
-            [
-                self._is_valid_location(coord)
-                for coord in self.argo_float_deploy_locations
-            ]
-        ):
-            raise ValueError("Argo float deploy locations are not valid coordinates.")
-
-        if not all(
-            [
-                any(
-                    [
-                        np.isclose(deploy.lat, coord.lat)
-                        and np.isclose(deploy.lon, coord.lon)
-                        for coord in self.route_coordinates
-                    ]
-                )
-                for deploy in self.argo_float_deploy_locations
-            ]
-        ):
-            raise ValueError(
-                "Argo float deploy locations are not exactly on route coordinates."
-            )
-
-        if not all(
-            [self._is_valid_location(coord) for coord in self.drifter_deploy_locations]
-        ):
-            raise ValueError("Drifter deploy locations are not valid coordinates.")
-
-        if not all(
-            [
-                any(
-                    [
-                        np.isclose(deploy.lat, coord.lat)
-                        and np.isclose(deploy.lon, coord.lon)
-                        for coord in self.route_coordinates
-                    ]
-                )
-                for deploy in self.drifter_deploy_locations
-            ]
-        ):
-            raise ValueError(
-                "Drifter deploy locations are not exactly on route coordinates."
-            )
-
-        if not all(
-            [self._is_valid_location(coord) for coord in self.ctd_deploy_locations]
-        ):
-            raise ValueError("CTD deploy locations are not valid coordinates.")
-
-        if not all(
-            [
-                any(
-                    [
-                        np.isclose(deploy.lat, coord.lat)
-                        and np.isclose(deploy.lon, coord.lon)
-                        for coord in self.route_coordinates
-                    ]
-                )
-                for deploy in self.ctd_deploy_locations
-            ]
-        ):
-            raise ValueError(
-                "CTD deploy locations are not exactly on route coordinates."
-            )
+            raise ValueError("Invalid location for waypoint.")
 
         if self.argo_float_config.max_depth > 0:
             raise ValueError("Argo float max depth must be negative or zero.")

@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 from parcels import Field, FieldSet
 
-from virtual_ship import Location
+from virtual_ship import Location, Waypoint, InstrumentDeployment
 from virtual_ship.sailship import sailship
 from virtual_ship.virtual_ship_configuration import (
     ADCPConfig,
@@ -93,26 +93,32 @@ def test_sailship() -> None:
 
     adcp_config = ADCPConfig(max_depth=-1000, bin_size_m=24)
 
-    config = VirtualShipConfig(
-        start_time=datetime.datetime.strptime(
-            "2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"
+    waypoints = [
+        Waypoint(
+            location=Location(latitude=-23.071289, longitude=63.743631),
+            time=datetime.datetime.strptime("2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"),
         ),
-        route_coordinates=[
-            Location(latitude=-23.071289, longitude=63.743631),
-            Location(latitude=-23.081289, longitude=63.743631),
-            Location(latitude=-23.191289, longitude=63.743631),
-        ],
+        Waypoint(location=Location(latitude=-23.081289, longitude=63.743631)),
+    ]
+
+    config = VirtualShipConfig(
+        ship_speed=5.14,
+        waypoints=waypoints,
         adcp_fieldset=adcp_fieldset,
         ship_underwater_st_fieldset=ship_underwater_st_fieldset,
         ctd_fieldset=ctd_fieldset,
         drifter_fieldset=drifter_fieldset,
-        argo_float_deploy_locations=[
-            Location(latitude=-23.081289, longitude=63.743631)
-        ],
-        drifter_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
-        ctd_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
         argo_float_config=argo_float_config,
         adcp_config=adcp_config,
     )
 
     sailship(config)
+
+    # start_time=datetime.datetime.strptime(
+    #     "2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"
+    # ),
+    # route_coordinates=[
+    #     Location(latitude=-23.071289, longitude=63.743631),
+    #     Location(latitude=-23.081289, longitude=63.743631),
+    #     Location(latitude=-23.191289, longitude=63.743631),
+    # ],
