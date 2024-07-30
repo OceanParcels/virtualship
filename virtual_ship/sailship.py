@@ -27,7 +27,10 @@ def sailship(config: VirtualShipConfig):
     """
     config.verify()
 
-    _verify_waypoints(config.waypoints, config.ship_speed)
+    # projection used to sail between waypoints
+    projection = pyproj.Geod(ellps="WGS84")
+
+    _verify_waypoints(config.waypoints, config.ship_speed, projection=projection)
 
     # lists of instrument deployments to be simulated
     adcps: list[Spacetime] = []
@@ -35,9 +38,6 @@ def sailship(config: VirtualShipConfig):
     argo_floats: list[ArgoFloat] = []
     drifters: list[Drifter] = []
     ctds: list[CTD] = []
-
-    # projection used to sail between waypoints
-    geod = pyproj.Geod(ellps="WGS84")
 
     assert (
         config.waypoints[0].time is not None
@@ -86,10 +86,10 @@ def sailship(config: VirtualShipConfig):
         if wp_next is None:
             break
 
-        geodinv: tuple[float, float, float] = geod.inv(
+        projection_inv: tuple[float, float, float] = projection.inv(
             wp.location.lon, wp.location.lat, wp_next.location.lon, wp_next.location.lat
         )
-        distance = geodinv[2]
+        distance = projection_inv[2]
 
         time_to_reach = timedelta(seconds=distance / config.ship_speed)
         arrival_time = time + time_to_reach
@@ -159,7 +159,9 @@ def sailship(config: VirtualShipConfig):
     # print(f"This cruise took {time_past} and would have cost {cost:,.0f} euros.")
 
 
-def _verify_waypoints(waypoints: list[Waypoint], ship_speed: float) -> None:
+def _verify_waypoints(
+    waypoints: list[Waypoint], ship_speed: float, projection: pyproj.Geod
+) -> None:
     # check first waypoint has a time
     if waypoints[0].time is None:
         raise PlanningError("First waypoint must have a specified time.")
@@ -176,9 +178,6 @@ def _verify_waypoints(waypoints: list[Waypoint], ship_speed: float) -> None:
             "Each waypoint should be timed after all previous waypoints"
         )
 
-    # projection used to sail between waypoints
-    geod = pyproj.Geod(ellps="WGS84")
-
     # check that ship will arrive on time at each waypoint (in case nothing goes wrong)
     time = waypoints[0].time
     for wp, wp_next in zip(waypoints, waypoints[1:]):
@@ -186,7 +185,7 @@ def _verify_waypoints(waypoints: list[Waypoint], ship_speed: float) -> None:
             case InstrumentType.CTD:
                 time += timedelta(minutes=20)
 
-        geodinv: tuple[float, float, float] = geod.inv(
+        geodinv: tuple[float, float, float] = projection.inv(
             wp.location.lon, wp.location.lat, wp_next.location.lon, wp_next.location.lat
         )
         distance = geodinv[2]
