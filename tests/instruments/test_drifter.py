@@ -75,8 +75,14 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
         # Check if drifters are moving
         # lat, lon, should be increasing values (with the above positive VU fieldset)
         dlat = np.diff(results.sel(trajectory=traj)["lat"].values)
-        assert np.all(dlat[np.isfinite(dlat)] > 0), f"Drifter is not moving over y {drifter_i=}"
+        assert np.all(
+            dlat[np.isfinite(dlat)] > 0
+        ), f"Drifter is not moving over y {drifter_i=}"
         dlon = np.diff(results.sel(trajectory=traj)["lon"].values)
-        assert np.all(dlon[np.isfinite(dlon)] > 0), f"Drifter is not moving over x {drifter_i=}"
+        assert np.all(
+            dlon[np.isfinite(dlon)] > 0
+        ), f"Drifter is not moving over x {drifter_i=}"
         temp = results.sel(trajectory=traj)["temperature"].values
-        assert np.all(temp[np.isfinite(temp)] == CONST_TEMPERATURE), f"measured temperature does not match {drifter_i=}"
+        assert np.all(
+            temp[np.isfinite(temp)] == CONST_TEMPERATURE
+        ), f"measured temperature does not match {drifter_i=}"
