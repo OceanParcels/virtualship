@@ -1,2 +1,0 @@
-class InstrumentDeployment:
-    pass

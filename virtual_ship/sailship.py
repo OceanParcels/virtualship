@@ -17,6 +17,7 @@ from .postprocess import postprocess
 from .spacetime import Spacetime
 from .virtual_ship_configuration import VirtualShipConfig
 from .waypoint import Waypoint
+from .instrument_type import InstrumentType
 
 
 def sailship(config: VirtualShipConfig):
@@ -27,7 +28,7 @@ def sailship(config: VirtualShipConfig):
     """
     config.verify()
 
-    verify_waypoints(config.waypoints)
+    verify_waypoints(config.waypoints, config.ship_speed)
 
     # lists of instrument deployments to be simulated
     adcps: list[Spacetime] = []
@@ -43,8 +44,43 @@ def sailship(config: VirtualShipConfig):
     assert time is not None  # cannot happen as verify_waypoints checks this
 
     for wp, wp_next in zip(config.waypoints, config.waypoints[1:] + [None]):
-        if wp.instrument is not None:
-            pass  # TODO
+        spacetime = Spacetime(location=wp.location, time=time)
+
+        match wp.instrument:
+            case None:
+                pass
+            case InstrumentType.CTD:
+                ctds.append(
+                    CTD(
+                        spacetime=spacetime,
+                        min_depth=config.ctd_fieldset.U.depth[0],
+                        max_depth=config.ctd_fieldset.U.depth[-1],
+                    )
+                )
+                # use 20 minutes to case the CTD
+                time += timedelta(minutes=20)
+            case InstrumentType.DRIFTER:
+                drifters.append(
+                    Drifter(
+                        spacetime=spacetime,
+                        depth=-config.drifter_fieldset.U.depth[0],
+                        lifetime=timedelta(weeks=4),
+                    )
+                )
+            case InstrumentType.ARGO_FLOAT:
+                argo_floats.append(
+                    ArgoFloat(
+                        spacetime=spacetime,
+                        min_depth=-config.argo_float_config.fieldset.U.depth[0],
+                        max_depth=config.argo_float_config.max_depth,
+                        drift_depth=config.argo_float_config.drift_depth,
+                        vertical_speed=config.argo_float_config.vertical_speed,
+                        cycle_days=config.argo_float_config.cycle_days,
+                        drift_days=config.argo_float_config.drift_days,
+                    )
+                )
+            case _:
+                raise NotImplementedError()
 
         if wp_next is None:
             break
@@ -119,112 +155,8 @@ def sailship(config: VirtualShipConfig):
     #     if i % 96 == 0:
     #         print(f"Gathered data {time_past} hours since start.")
 
-    #     # find drifter deployments to be done at this location
-    #     drifters_here = set(
-    #         [
-    #             drifter
-    #             for drifter in drifter_locations - drifter_locations_visited
-    #             if all(
-    #                 np.isclose(
-    #                     [drifter.lat, drifter.lon], [route_point.lat, route_point.lon]
-    #                 )
-    #             )
-    #         ]
-    #     )
-    #     if len(drifters_here) > 1:
-    #         print(
-    #             "WARN: Multiple drifter deployments match the current location. Only a single deployment will be performed."
-    #         )
-    #     drifters.append(
-    #         Drifter(
-    #             spacetime=Spacetime(
-    #                 location=route_point, time=time_past.total_seconds()
-    #             ),
-    #             depth=-config.drifter_fieldset.U.depth[0],
-    #             lifetime=timedelta(weeks=4),
-    #         )
-    #     )
-    #     drifter_locations_visited = drifter_locations_visited.union(drifters_here)
-
-    #     # find argo float deployments to be done at this location
-    #     argos_here = set(
-    #         [
-    #             argo
-    #             for argo in argo_locations - argo_locations_visited
-    #             if all(
-    #                 np.isclose([argo.lat, argo.lon], [route_point.lat, route_point.lon])
-    #             )
-    #         ]
-    #     )
-    #     if len(argos_here) > 1:
-    #         print(
-    #             "WARN: Multiple argo float deployments match the current location. Only a single deployment will be performed."
-    #         )
-    #     argo_floats.append(
-    #         ArgoFloat(
-    #             spacetime=Spacetime(
-    #                 location=route_point, time=time_past.total_seconds()
-    #             ),
-    #             min_depth=-config.argo_float_config.fieldset.U.depth[0],
-    #             max_depth=config.argo_float_config.max_depth,
-    #             drift_depth=config.argo_float_config.drift_depth,
-    #             vertical_speed=config.argo_float_config.vertical_speed,
-    #             cycle_days=config.argo_float_config.cycle_days,
-    #             drift_days=config.argo_float_config.drift_days,
-    #         )
-    #     )
-    #     argo_locations_visited = argo_locations_visited.union(argos_here)
-
-    #     # find CTD casts to be done at this location
-    #     ctds_here = set(
-    #         [
-    #             ctd
-    #             for ctd in ctd_locations - ctd_locations_visited
-    #             if all(
-    #                 np.isclose([ctd.lat, ctd.lon], [route_point.lat, route_point.lon])
-    #             )
-    #         ]
-    #     )
-    #     if len(ctds_here) > 1:
-    #         print(
-    #             "WARN: Multiple CTD casts match the current location. Only a single cast will be performed."
-    #         )
-
-    #     ctds.append(
-    #         CTD(
-    #             spacetime=Spacetime(
-    #                 location=route_point,
-    #                 time=config.start_time + time_past,
-    #             ),
-    #             min_depth=config.ctd_fieldset.U.depth[0],
-    #             max_depth=config.ctd_fieldset.U.depth[-1],
-    #         )
-    #     )
-    #     ctd_locations_visited = ctd_locations_visited.union(ctds_here)
-    #     # add 20 minutes to sailing time for deployment
-    #     if len(ctds_here) != 0:
-    #         time_past += timedelta(minutes=20)
-
-    #     # add time it takes to move to the next route point
-    #     time_past += route_dt
     # # remove the last one, because no sailing to the next point was needed
     # time_past -= route_dt
-
-    # # check if all drifter, argo float, ctd locations were visited
-    # if len(drifter_locations_visited) != len(drifter_locations):
-    #     print(
-    #         "WARN: some drifter deployments were not planned along the route and have not been performed."
-    #     )
-
-    # if len(argo_locations_visited) != len(argo_locations):
-    #     print(
-    #         "WARN: some argo float deployments were not planned along the route and have not been performed."
-    #     )
-
-    # if len(ctd_locations_visited) != len(ctd_locations):
-    #     print(
-    #         "WARN: some CTD casts were not planned along the route and have not been performed."
-    #     )
 
     # print("Simulating onboard salinity and temperature measurements.")
     # simulate_ship_underwater_st(
@@ -244,33 +176,6 @@ def sailship(config: VirtualShipConfig):
     #     sample_points=adcps,
     # )
 
-    # print("Simulating CTD casts.")
-    # simulate_ctd(
-    #     out_path=os.path.join("results", "ctd.zarr"),
-    #     fieldset=config.ctd_fieldset,
-    #     ctds=ctds,
-    #     outputdt=timedelta(seconds=10),
-    # )
-
-    # print("Simulating drifters")
-    # simulate_drifters(
-    #     out_path=os.path.join("results", "drifters.zarr"),
-    #     fieldset=config.drifter_fieldset,
-    #     drifters=drifters,
-    #     outputdt=timedelta(hours=5),
-    #     dt=timedelta(minutes=5),
-    #     endtime=None,
-    # )
-
-    # print("Simulating argo floats")
-    # simulate_argo_floats(
-    #     out_path=os.path.join("results", "argo_floats.zarr"),
-    #     argo_floats=argo_floats,
-    #     fieldset=config.argo_float_config.fieldset,
-    #     outputdt=timedelta(minutes=5),
-    #     endtime=None,
-    # )
-
     # # convert CTD data to CSV
     # print("Postprocessing..")
     # postprocess()
@@ -281,7 +186,7 @@ def sailship(config: VirtualShipConfig):
     # print(f"This cruise took {time_past} and would have cost {cost:,.0f} euros.")
 
 
-def verify_waypoints(waypoints: list[Waypoint]) -> None:
+def verify_waypoints(waypoints: list[Waypoint], ship_speed: float) -> None:
     # check first waypoint has a time
     if waypoints[0].time is None:
         raise ValueError("First waypoint must have a specified time.")
@@ -296,55 +201,29 @@ def verify_waypoints(waypoints: list[Waypoint]) -> None:
     ):
         raise ValueError("Each waypoint should be timed after all previous waypoints")
 
-    # TODO more
-
-
-def shiproute(config: VirtualShipConfig, dt: timedelta) -> list[Location]:
-    """
-    Take in route coordinates and return lat and lon points within region of interest to sample.
-
-    :param config: The cruise configuration.
-    :param dt: Sailing time between each discrete route point.
-    :returns: lat and lon points within region of interest to sample.
-    """
-    CRUISE_SPEED = 5.14
-
-    # discrete points the ship will pass
-    sample_points: list[Location] = []
-
-    # projection used to get discrete locations
+    # projection used to sail between waypoints
     geod = pyproj.Geod(ellps="WGS84")
 
-    # loop over station coordinates and calculate intermediate points along great circle path
-    for startloc, endloc in zip(config.route_coordinates, config.route_coordinates[1:]):
-        # iterate over each coordinate and the next coordinate
-        # last coordinate has no next coordinate and is skipped
+    # check that ship will arrive on time at each waypoint (in case nothing goes wrong)
+    time = waypoints[0].time
+    for wp, wp_next in zip(waypoints, waypoints[1:]):
+        match wp.instrument:
+            case InstrumentType.CTD:
+                time += timedelta(minutes=20)
 
-        # get locations between start and end, seperate by 5 minutes of cruising
-        # excludes final point, but this is added explicitly after this loop
-        int_points = geod.inv_intermediate(
-            startloc.lon,
-            startloc.lat,
-            endloc.lon,
-            endloc.lat,
-            del_s=CRUISE_SPEED * dt.total_seconds(),
-            initial_idx=0,
-            return_back_azimuth=False,
+        geodinv: tuple[float, float, float] = geod.inv(
+            wp.location.lon, wp.location.lat, wp_next.location.lon, wp_next.location.lat
         )
+        distance = geodinv[2]
 
-        sample_points.extend(
-            [
-                Location(latitude=lat, longitude=lon)
-                for lat, lon in zip(int_points.lats, int_points.lons, strict=True)
-            ]
-        )
+        time_to_reach = timedelta(seconds=distance / ship_speed)
+        arrival_time = time + time_to_reach
 
-    # explitly include final point which is not added by the previous loop
-    sample_points.append(
-        Location(
-            latitude=config.route_coordinates[-1].lat,
-            longitude=config.route_coordinates[-1].lon,
-        )
-    )
-
-    return sample_points
+        if wp_next.time is None:
+            time = arrival_time
+        elif arrival_time > wp_next.time:
+            raise RuntimeError(
+                "Waypoint planning is not valid: would arrive too late a waypoint."
+            )
+        else:
+            time = wp_next.time

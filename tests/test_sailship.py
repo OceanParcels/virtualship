@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 from parcels import Field, FieldSet
 
-from virtual_ship import Location, Waypoint, InstrumentDeployment
+from virtual_ship import Location, Waypoint, InstrumentType
 from virtual_ship.sailship import sailship
 from virtual_ship.virtual_ship_configuration import (
     ADCPConfig,
@@ -96,9 +96,17 @@ def test_sailship() -> None:
     waypoints = [
         Waypoint(
             location=Location(latitude=-23.071289, longitude=63.743631),
-            time=datetime.datetime.strptime("2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"),
+            time=base_time,
         ),
-        Waypoint(location=Location(latitude=-23.081289, longitude=63.743631)),
+        Waypoint(
+            location=Location(latitude=-23.081289, longitude=63.743631),
+            instrument=InstrumentType.CTD,
+        ),
+        Waypoint(
+            location=Location(latitude=-23.181289, longitude=63.743631),
+            time=base_time + datetime.timedelta(hours=1),
+            instrument=InstrumentType.CTD,
+        ),
     ]
 
     config = VirtualShipConfig(
