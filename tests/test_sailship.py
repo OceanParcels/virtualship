@@ -5,9 +5,9 @@ import datetime
 import numpy as np
 from parcels import Field, FieldSet
 
-from virtual_ship import Location, Waypoint, InstrumentType
+from virtual_ship import InstrumentType, Location, Waypoint
 from virtual_ship.sailship import sailship
-from virtual_ship.virtual_ship_configuration import (
+from virtual_ship.virtual_ship_config import (
     ADCPConfig,
     ArgoFloatConfig,
     VirtualShipConfig,

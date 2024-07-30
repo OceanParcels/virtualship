@@ -1,9 +1,7 @@
 """VirtualShipConfig class."""
 
 from dataclasses import dataclass
-from datetime import datetime
 
-import numpy as np
 from parcels import FieldSet
 
 from .location import Location

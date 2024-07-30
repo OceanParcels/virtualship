@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from .virtual_ship_configuration import VirtualShipConfig
+from .virtual_ship_config import VirtualShipConfig
 
 
 def costs(config: VirtualShipConfig, total_time: timedelta):
