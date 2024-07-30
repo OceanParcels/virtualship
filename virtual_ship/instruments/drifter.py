@@ -58,6 +58,13 @@ def simulate_drifters(
     :param dt: Dt for integration.
     :param endtime: Stop at this time, or if None, continue until the end of the fieldset or until all drifters ended. If this is earlier than the last drifter ended or later than the end of the fieldset, a warning will be printed.
     """
+    if len(drifters) == 0:
+        print(
+            "No drifters provided. Parcels currently crashes when providing an empty particle set, so no drifter simulation will be done and no files will be created."
+        )
+        # TODO when parcels supports it this check can be removed.
+        return
+
     # define parcel particles
     drifter_particleset = ParticleSet(
         fieldset=fieldset,

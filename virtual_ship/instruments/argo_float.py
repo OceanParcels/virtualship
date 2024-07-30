@@ -133,6 +133,13 @@ def simulate_argo_floats(
     """
     DT = 10.0  # dt of Argo float simulation integrator
 
+    if len(argo_floats) == 0:
+        print(
+            "No Argo floats provided. Parcels currently crashes when providing an empty particle set, so no argo floats simulation will be done and no files will be created."
+        )
+        # TODO when parcels supports it this check can be removed.
+        return
+
     # define parcel particles
     argo_float_particleset = ParticleSet(
         fieldset=fieldset,
