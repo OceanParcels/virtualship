@@ -1,173 +1,156 @@
-"""VirtualShipConfiguration class."""
+"""VirtualShipConfig class."""
 
-import datetime
-import json
-from datetime import timedelta
+from dataclasses import dataclass
+from datetime import datetime
 
+import numpy as np
 from parcels import FieldSet
-from shapely.geometry import Point, Polygon
+
+from .location import Location
 
 
-class VirtualShipConfiguration:
-    """Configuration of the virtual ship, initialized from a json file."""
+@dataclass
+class ArgoFloatConfig:
+    """Configuration for argos floats."""
+
+    fieldset: FieldSet
+    max_depth: float
+    drift_depth: float
+    vertical_speed: float
+    cycle_days: float
+    drift_days: float
+
+
+@dataclass
+class ADCPConfig:
+    """Configuration for ADCP instrument."""
+
+    max_depth: float
+    bin_size_m: int
+
+
+@dataclass
+class VirtualShipConfig:
+    """Configuration of the virtual ship."""
+
+    start_time: datetime
+    route_coordinates: list[Location]
 
     adcp_fieldset: FieldSet
     ship_underwater_st_fieldset: FieldSet
-    argo_float_fieldset: FieldSet
-    drifter_fieldset: FieldSet
     ctd_fieldset: FieldSet
     drifter_fieldset: FieldSet
-    argo_float_fieldset: FieldSet
 
-    def __init__(
-        self,
-        json_file,
-        adcp_fieldset: FieldSet,
-        ship_underwater_st_fieldset: FieldSet,
-        ctd_fieldset: FieldSet,
-        drifter_fieldset: FieldSet,
-        argo_float_fieldset: FieldSet,
-    ):
+    argo_float_deploy_locations: list[Location]
+    drifter_deploy_locations: list[Location]
+    ctd_deploy_locations: list[Location]
+
+    argo_float_config: ArgoFloatConfig
+    adcp_config: ADCPConfig
+
+    def verify(self) -> None:
         """
-        Initialize this object.
+        Verify this configuration is valid.
 
-        :param json_file: Path to the JSON file to init from.
-        :param adcp_fieldset: Fieldset for ADCP measurements.
-        :param ship_underwater_st_fieldset: Fieldset for ship salinity temperature measurements.
-        :param ctd_fieldset: Fieldset for CTD measurements.
-        :param drifter_fieldset: Fieldset for CTD measurements.
-        :param argo_float_fieldset: Fieldset for argo float measurements.
-        :raises ValueError: If JSON file not valid.
+        :raises ValueError: If not valid.
         """
-        self.adcp_fieldset = adcp_fieldset
-        self.ship_underwater_st_fieldset = ship_underwater_st_fieldset
-        self.ctd_fieldset = ctd_fieldset
-        self.drifter_fieldset = drifter_fieldset
-        self.argo_float_fieldset = argo_float_fieldset
-
-        with open(json_file, "r") as file:
-            json_input = json.loads(file.read())
-            for key in json_input:
-                setattr(self, key, json_input[key])
-
-        # Create a polygon from the region of interest to check coordinates
-        north = self.region_of_interest["North"]
-        east = self.region_of_interest["East"]
-        south = self.region_of_interest["South"]
-        west = self.region_of_interest["West"]
-        poly = Polygon([(west, north), (west, south), (east, south), (east, north)])
-        # validate input, raise ValueErrors if invalid
-        if (
-            self.region_of_interest["North"] > 90
-            or self.region_of_interest["South"] < -90
-            or self.region_of_interest["East"] > 180
-            or self.region_of_interest["West"] < -180
-        ):
-            raise ValueError("Invalid coordinates in region of interest")
-        if self.requested_ship_time["start"] > self.requested_ship_time["end"]:
-            raise ValueError("Start time should be before end time")
-        if datetime.datetime.strptime(
-            self.requested_ship_time["end"], "%Y-%m-%dT%H:%M:%S"
-        ) > datetime.datetime.now() + timedelta(days=2):
-            raise ValueError("End time cannot be more then 2 days into the future")
-        if datetime.datetime.strptime(
-            self.requested_ship_time["end"], "%Y-%m-%dT%H:%M:%S"
-        ) - datetime.datetime.strptime(
-            self.requested_ship_time["start"], "%Y-%m-%dT%H:%M:%S"
-        ) > timedelta(
-            days=21
-        ):
-            raise ValueError("The time period is too long, maximum is 21 days")
         if len(self.route_coordinates) < 2:
-            raise ValueError(
-                "Route needs to consist of at least 2 longitude-latitude coordinate sets"
-            )
-        for coord in self.route_coordinates:
-            if coord[1] > 90 or coord[1] < -90 or coord[0] > 180 or coord[0] < -180:
-                raise ValueError("Invalid coordinates in route")
-            # if not poly.contains(Point(coord)):
-            #     raise ValueError("Route coordinates need to be within the region of interest")
-        if not len(self.CTD_locations) == 0:
-            for coord in self.CTD_locations:
-                if coord not in self.route_coordinates:
-                    raise ValueError("CTD coordinates should be on the route")
-                if coord[1] > 90 or coord[1] < -90 or coord[0] > 180 or coord[0] < -180:
-                    raise ValueError("Invalid coordinates in route")
-                if not poly.contains(Point(coord)):
-                    raise ValueError(
-                        "CTD coordinates need to be within the region of interest"
-                    )
-        if type(self.CTD_settings["max_depth"]) is not int:
-            if self.CTD_settings["max_depth"] != "max":
-                raise ValueError(
-                    'Specify "max" for maximum depth or a negative integer for max_depth in CTD_settings'
-                )
-        if type(self.CTD_settings["max_depth"]) is int:
-            if self.CTD_settings["max_depth"] > 0:
-                raise ValueError("Invalid depth for CTD")
-        if len(self.drifter_deploylocations) > 30:
-            raise ValueError("Too many drifter deployment locations, maximum is 30")
-        if not len(self.drifter_deploylocations) == 0:
-            for coord in self.drifter_deploylocations:
-                if coord not in self.route_coordinates:
-                    raise ValueError("Drifter coordinates should be on the route")
-                if coord[1] > 90 or coord[1] < -90 or coord[0] > 180 or coord[0] < -180:
-                    raise ValueError("Invalid coordinates in route")
-                if not poly.contains(Point(coord)):
-                    raise ValueError(
-                        "Drifter coordinates need to be within the region of interest"
-                    )
-        if len(self.argo_deploylocations) > 30:
-            raise ValueError("Too many argo deployment locations, maximum is 30")
-        if not len(self.argo_deploylocations) == 0:
-            for coord in self.argo_deploylocations:
-                if coord not in self.route_coordinates:
-                    raise ValueError("argo coordinates should be on the route")
-                if coord[1] > 90 or coord[1] < -90 or coord[0] > 180 or coord[0] < -180:
-                    raise ValueError("Invalid coordinates in route")
-                if not poly.contains(Point(coord)):
-                    raise ValueError(
-                        "argo coordinates need to be within the region of interest"
-                    )
-        if not isinstance(self.underway_data, bool):
-            raise ValueError("Underway data needs to be true or false")
-        if not isinstance(self.ADCP_data, bool):
-            raise ValueError("ADCP data needs to be true or false")
-        if (
-            self.ADCP_settings["bin_size_m"] < 0
-            or self.ADCP_settings["bin_size_m"] > 24
+            raise ValueError("Route needs to consist of at least locations.")
+
+        if not all(
+            [self._is_valid_location(coord) for coord in self.route_coordinates]
         ):
-            raise ValueError("Invalid bin size for ADCP")
-        if self.ADCP_settings["max_depth"] > 0:
-            raise ValueError("Invalid depth for ADCP")
-        if (
-            self.argo_characteristics["driftdepth"] > 0
-            or self.argo_characteristics["driftdepth"] < -5727
-        ):
-            raise ValueError(
-                "Specify negative depth. Max drift depth for argo is -5727 m due to data availability"
-            )
-        if (
-            self.argo_characteristics["maxdepth"] > 0
-            or self.argo_characteristics["maxdepth"] < -5727
-        ):
-            raise ValueError(
-                "Specify negative depth. Max depth for argo is -5727 m due to data availability"
-            )
-        if type(self.argo_characteristics["vertical_speed"]) is not float:
-            raise ValueError("Specify vertical speed for argo with decimals in m/s")
-        if self.argo_characteristics["vertical_speed"] > 0:
-            self.argo_characteristics["vertical_speed"] = -self.argo_characteristics[
-                "vertical_speed"
+            raise ValueError("Invalid coordinates in route.")
+
+        if not all(
+            [
+                self._is_valid_location(coord)
+                for coord in self.argo_float_deploy_locations
             ]
-        if (
-            abs(self.argo_characteristics["vertical_speed"]) < 0.06
-            or abs(self.argo_characteristics["vertical_speed"]) > 0.12
+        ):
+            raise ValueError("Argo float deploy locations are not valid coordinates.")
+
+        if not all(
+            [
+                any(
+                    [
+                        np.isclose(deploy.lat, coord.lat)
+                        and np.isclose(deploy.lon, coord.lon)
+                        for coord in self.route_coordinates
+                    ]
+                )
+                for deploy in self.argo_float_deploy_locations
+            ]
         ):
             raise ValueError(
-                "Specify a realistic speed for argo, i.e. between -0.06 and -0.12 m/s"
+                "Argo float deploy locations are not exactly on route coordinates."
             )
-        if self.argo_characteristics["cycle_days"] < 0:
-            raise ValueError("Specify a postitive number of cycle days for argo")
-        if self.argo_characteristics["drift_days"] < 0:
-            raise ValueError("Specify a postitive number of drift days for argo")
+
+        if not all(
+            [self._is_valid_location(coord) for coord in self.drifter_deploy_locations]
+        ):
+            raise ValueError("Drifter deploy locations are not valid coordinates.")
+
+        if not all(
+            [
+                any(
+                    [
+                        np.isclose(deploy.lat, coord.lat)
+                        and np.isclose(deploy.lon, coord.lon)
+                        for coord in self.route_coordinates
+                    ]
+                )
+                for deploy in self.drifter_deploy_locations
+            ]
+        ):
+            raise ValueError(
+                "Drifter deploy locations are not exactly on route coordinates."
+            )
+
+        if not all(
+            [self._is_valid_location(coord) for coord in self.ctd_deploy_locations]
+        ):
+            raise ValueError("CTD deploy locations are not valid coordinates.")
+
+        if not all(
+            [
+                any(
+                    [
+                        np.isclose(deploy.lat, coord.lat)
+                        and np.isclose(deploy.lon, coord.lon)
+                        for coord in self.route_coordinates
+                    ]
+                )
+                for deploy in self.ctd_deploy_locations
+            ]
+        ):
+            raise ValueError(
+                "CTD deploy locations are not exactly on route coordinates."
+            )
+
+        if self.argo_float_config.max_depth > 0:
+            raise ValueError("Argo float max depth must be negative or zero.")
+
+        if self.argo_float_config.drift_depth > 0:
+            raise ValueError("Argo float drift depth must be negative or zero.")
+
+        if self.argo_float_config.vertical_speed >= 0:
+            raise ValueError("Argo float vertical speed must be negative.")
+
+        if self.argo_float_config.cycle_days <= 0:
+            raise ValueError("Argo float cycle days must be larger than zero.")
+
+        if self.argo_float_config.drift_days <= 0:
+            raise ValueError("Argo drift cycle days must be larger than zero.")
+
+        if self.adcp_config.max_depth > 0:
+            raise ValueError("ADCP max depth must be negative.")
+
+    @staticmethod
+    def _is_valid_location(location: Location) -> bool:
+        return (
+            location.lat >= -90
+            and location.lat <= 90
+            and location.lon >= -180
+            and location.lon <= 360
+        )
