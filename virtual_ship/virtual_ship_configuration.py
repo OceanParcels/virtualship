@@ -152,5 +152,5 @@ class VirtualShipConfig:
             location.lat >= -90
             and location.lat <= 90
             and location.lon >= -180
-            and location.lon <= 180
+            and location.lon <= 360
         )
