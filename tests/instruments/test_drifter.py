@@ -80,4 +80,3 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
         assert np.all(dlon[np.isfinite(dlon)] > 0), f"Drifter is not moving over x {drifter_i=}"
         temp = results.sel(trajectory=traj)["temperature"].values
         assert np.all(temp[np.isfinite(temp)] == CONST_TEMPERATURE), f"measured temperature does not match {drifter_i=}"
-
