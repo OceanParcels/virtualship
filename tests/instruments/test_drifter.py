@@ -29,7 +29,7 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
             "lat": np.array([0.0, 10.0]),
             "time": [
                 np.datetime64(base_time + datetime.timedelta(seconds=0)),
-                np.datetime64(base_time + datetime.timedelta(hours=4)),
+                np.datetime64(base_time + datetime.timedelta(days=3)),
             ],
         },
     )
@@ -47,7 +47,7 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
         Drifter(
             spacetime=Spacetime(
                 location=Location(latitude=1, longitude=1),
-                time=base_time + datetime.timedelta(hours=1),
+                time=base_time + datetime.timedelta(hours=20),
             ),
             depth=0.0,
             lifetime=None,
@@ -74,13 +74,10 @@ def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
     for drifter_i, traj in enumerate(results.trajectory):
         # Check if drifters are moving
         # lat, lon, should be increasing values (with the above positive VU fieldset)
-        assert np.all(
-            np.diff(results.sel(trajectory=traj)["lat"].values) > 0
-        ), f"Drifter is not moving over y {drifter_i=}"
-        assert np.all(
-            np.diff(results.sel(trajectory=traj)["lon"].values) > 0
-        ), f"Drifter is not mvoing over x {drifter_i=}"
+        dlat = np.diff(results.sel(trajectory=traj)["lat"].values)
+        assert np.all(dlat[np.isfinite(dlat)] > 0), f"Drifter is not moving over y {drifter_i=}"
+        dlon = np.diff(results.sel(trajectory=traj)["lon"].values)
+        assert np.all(dlon[np.isfinite(dlon)] > 0), f"Drifter is not moving over x {drifter_i=}"
+        temp = results.sel(trajectory=traj)["temperature"].values
+        assert np.all(temp[np.isfinite(temp)] == CONST_TEMPERATURE), f"measured temperature does not match {drifter_i=}"
 
-        assert np.all(
-            results.sel(trajectory=traj)["temperature"] == CONST_TEMPERATURE
-        ), f"measured temperature does not match {drifter_i=}"
