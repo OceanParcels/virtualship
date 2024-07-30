@@ -44,7 +44,9 @@ def sailship(config: VirtualShipConfig):
     )  # cannot happen as verify_waypoints checks this
     time = config.waypoints[0].time
 
-    for wp, wp_next in zip(config.waypoints, config.waypoints[1:] + [None]):
+    for wp, wp_next in zip(
+        config.waypoints, config.waypoints[1:] + [None], strict=True
+    ):
         spacetime = Spacetime(location=wp.location, time=time)
 
         match wp.instrument:
