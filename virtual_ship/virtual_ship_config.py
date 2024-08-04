@@ -6,6 +6,7 @@ from parcels import FieldSet
 
 from .location import Location
 from .waypoint import Waypoint
+from datetime import timedelta
 
 
 @dataclass
@@ -43,6 +44,11 @@ class VirtualShipConfig:
 
     argo_float_config: ArgoFloatConfig
     adcp_config: ADCPConfig
+
+    ship_underwater_st_period: timedelta
+    adcp_period: timedelta
+
+    ctd_stationkeeping_time: timedelta
 
     def verify(self) -> None:
         """

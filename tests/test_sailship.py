@@ -12,6 +12,7 @@ from virtual_ship.virtual_ship_config import (
     ArgoFloatConfig,
     VirtualShipConfig,
 )
+from datetime import timedelta
 
 
 def _make_ctd_fieldset(base_time: datetime) -> FieldSet:
@@ -65,7 +66,7 @@ def test_sailship() -> None:
     )
 
     ship_underwater_st_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0, "S": 0, "T": 0},
+        {"U": 0, "V": 0, "salinity": 0, "temperature": 0},
         {"lon": 0, "lat": 0},
     )
 
@@ -74,7 +75,7 @@ def test_sailship() -> None:
     drifter_fieldset = _make_drifter_fieldset(base_time)
 
     argo_float_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0, "T": 0, "S": 0},
+        {"U": 0, "V": 0, "T": 0, "z": 0},
         {
             "lon": 0,
             "lat": 0,
@@ -118,6 +119,9 @@ def test_sailship() -> None:
         drifter_fieldset=drifter_fieldset,
         argo_float_config=argo_float_config,
         adcp_config=adcp_config,
+        ship_underwater_st_period=timedelta(minutes=5),
+        adcp_period=timedelta(minutes=5),
+        ctd_stationkeeping_time=timedelta(minutes=20),
     )
 
     sailship(config)
