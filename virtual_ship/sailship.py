@@ -144,28 +144,27 @@ def _simulate_schedule(
             )
 
         # add task to the task queue for the instrument at the current waypoint
-        match waypoint.instrument:
-            case InstrumentType.ARGO_FLOAT:
-                _argo_float_task(cruise, measurements, config=config)
-            case InstrumentType.DRIFTER:
-                _drifter_task(cruise, measurements, config=config)
-            case InstrumentType.CTD:
-                waiting_tasks.push(
-                    _WaitingTask(
-                        _ctd_task(
-                            config.ctd_config.stationkeeping_time,
-                            config.ctd_config.min_depth,
-                            config.ctd_config.max_depth,
-                            cruise,
-                            measurements,
-                        ),
-                        cruise.spacetime.time,
-                    )
+        if waypoint.instrument is InstrumentType.ARGO_FLOAT:
+            _argo_float_task(cruise, measurements, config=config)
+        elif waypoint.instrument is InstrumentType.DRIFTER:
+            _drifter_task(cruise, measurements, config=config)
+        elif waypoint.instrument is InstrumentType.CTD:
+            waiting_tasks.push(
+                _WaitingTask(
+                    _ctd_task(
+                        config.ctd_config.stationkeeping_time,
+                        config.ctd_config.min_depth,
+                        config.ctd_config.max_depth,
+                        cruise,
+                        measurements,
+                    ),
+                    cruise.spacetime.time,
                 )
-            case None:
-                pass
-            case _:
-                raise NotImplementedError()
+            )
+        elif waypoint.instrument is None:
+            pass
+        else:
+            raise NotImplementedError()
 
         # sail to the next waypoint
         waypoint_reached = False
@@ -413,9 +412,8 @@ def _verify_waypoints(
     # check that ship will arrive on time at each waypoint (in case nothing goes wrong)
     time = waypoints[0].time
     for wp, wp_next in zip(waypoints, waypoints[1:]):
-        match wp.instrument:
-            case InstrumentType.CTD:
-                time += timedelta(minutes=20)
+        if wp.instrument is InstrumentType.CTD:
+            time += timedelta(minutes=20)
 
         geodinv: tuple[float, float, float] = projection.inv(
             wp.location.lon, wp.location.lat, wp_next.location.lon, wp_next.location.lat
