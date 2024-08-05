@@ -18,7 +18,7 @@ from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.ship_underwater_st import simulate_ship_underwater_st
 from .location import Location
 from .planning_error import PlanningError
-from .sorted_queue import PriorityQueue
+from .priority_queue import PriorityQueue
 from .spacetime import Spacetime
 from .virtual_ship_config import VirtualShipConfig
 from .waypoint import Waypoint
