@@ -146,9 +146,9 @@ def _simulate_schedule(
         # add task to the task queue for the instrument at the current waypoint
         match waypoint.instrument:
             case InstrumentType.ARGO_FLOAT:
-                _argo_float_task(cruise, measurements)
+                _argo_float_task(cruise, measurements, config=config)
             case InstrumentType.DRIFTER:
-                _drifter_task(cruise, measurements)
+                _drifter_task(cruise, measurements, config=config)
             case InstrumentType.CTD:
                 waiting_tasks.push(
                     _WaitingTask(

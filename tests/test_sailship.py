@@ -78,7 +78,7 @@ def test_sailship() -> None:
     drifter_fieldset = _make_drifter_fieldset(base_time)
 
     argo_float_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0, "T": 0, "z": 0},
+        {"U": 0, "V": 0, "T": 0, "S": 0},
         {
             "lon": 0,
             "lat": 0,
@@ -134,6 +134,14 @@ def test_sailship() -> None:
             time=base_time + datetime.timedelta(hours=1),
             instrument=InstrumentType.CTD,
         ),
+        Waypoint(
+            location=Location(latitude=-23.281289, longitude=63.743631),
+            instrument=InstrumentType.DRIFTER,
+        ),
+        Waypoint(
+            location=Location(latitude=-23.381289, longitude=63.743631),
+            instrument=InstrumentType.ARGO_FLOAT,
+        ),
     ]
 
     config = VirtualShipConfig(
@@ -147,12 +155,3 @@ def test_sailship() -> None:
     )
 
     sailship(config)
-
-    # start_time=datetime.datetime.strptime(
-    #     "2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"
-    # ),
-    # route_coordinates=[
-    #     Location(latitude=-23.071289, longitude=63.743631),
-    #     Location(latitude=-23.081289, longitude=63.743631),
-    #     Location(latitude=-23.191289, longitude=63.743631),
-    # ],
