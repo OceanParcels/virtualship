@@ -1,6 +1,7 @@
 """Performs a complete cruise with virtual ship."""
 
 import datetime
+from datetime import timedelta
 
 import numpy as np
 from parcels import Field, FieldSet
@@ -10,12 +11,11 @@ from virtual_ship.sailship import sailship
 from virtual_ship.virtual_ship_config import (
     ADCPConfig,
     ArgoFloatConfig,
-    VirtualShipConfig,
+    CTDConfig,
     DrifterConfig,
     ShipUnderwaterSTConfig,
-    CTDConfig,
+    VirtualShipConfig,
 )
-from datetime import timedelta
 
 
 def _make_ctd_fieldset(base_time: datetime) -> FieldSet:

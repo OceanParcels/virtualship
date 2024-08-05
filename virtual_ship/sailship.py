@@ -1,8 +1,12 @@
 """sailship function."""
 
 from __future__ import annotations
+
 import os
-from datetime import timedelta
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Generator
 
 import pyproj
 
@@ -12,17 +16,12 @@ from .instruments.argo_float import ArgoFloat, simulate_argo_floats
 from .instruments.ctd import CTD, simulate_ctd
 from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.ship_underwater_st import simulate_ship_underwater_st
+from .location import Location
 from .planning_error import PlanningError
+from .sorted_queue import PriorityQueue
 from .spacetime import Spacetime
 from .virtual_ship_config import VirtualShipConfig
 from .waypoint import Waypoint
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field
-from typing import Generator, Callable
-from collections import deque
-from .location import Location
-from contextlib import contextmanager
-from .sorted_queue import SortedQueue
 
 
 def sailship(config: VirtualShipConfig):
@@ -30,8 +29,6 @@ def sailship(config: VirtualShipConfig):
     Use parcels to simulate the ship, take ctd_instruments and measure ADCP and underwaydata.
 
     :param config: The cruise configuration.
-    :raises NotImplementedError: In case an instrument is not supported.
-    :raises PlanningError: In case the schedule is not feasible when checking before sailing, or if it turns out not to be feasible during sailing.
     """
     config.verify()
 
@@ -112,7 +109,7 @@ def _simulate_schedule(
     cruise = _Cruise(Spacetime(waypoints[0].location, waypoints[0].time))
     results = _ScheduleResults()
 
-    waiting_tasks = SortedQueue[_WaitingTask]()
+    waiting_tasks = PriorityQueue[_WaitingTask]()
     waiting_tasks.push(
         _WaitingTask(
             task=_ship_underwater_st_loop(

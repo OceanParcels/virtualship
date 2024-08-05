@@ -1,12 +1,12 @@
 """VirtualShipConfig class."""
 
 from dataclasses import dataclass
+from datetime import timedelta
 
 from parcels import FieldSet
 
 from .location import Location
 from .waypoint import Waypoint
-from datetime import timedelta
 
 
 @dataclass
@@ -33,7 +33,7 @@ class ADCPConfig:
 
 @dataclass
 class CTDConfig:
-    """Configuration for CTD instrument"""
+    """Configuration for CTD instrument."""
 
     stationkeeping_time: timedelta
     fieldset: FieldSet
@@ -43,7 +43,7 @@ class CTDConfig:
 
 @dataclass
 class ShipUnderwaterSTConfig:
-    """Configuration for underwater ST"""
+    """Configuration for underwater ST."""
 
     period: timedelta
     fieldset: FieldSet
@@ -51,7 +51,7 @@ class ShipUnderwaterSTConfig:
 
 @dataclass
 class DrifterConfig:
-    """Configuration for drifters"""
+    """Configuration for drifters."""
 
     fieldset: FieldSet
 
