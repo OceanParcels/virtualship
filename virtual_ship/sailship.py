@@ -359,6 +359,14 @@ def _argo_float_task(
 def _verify_waypoints(
     waypoints: list[Waypoint], ship_speed: float, projection: pyproj.Geod
 ) -> None:
+    """
+    Verify waypoints are ordered by time, first waypoint has a start time, and that schedule is feasible in terms of time if no unexpected things happen.
+
+    :param waypoints: The waypoints to check.
+    :param ship_speed: Speed of the ship.
+    :param projection: projection used to sail between waypoints.
+    :raises PlanningError: If waypoints are not feasible or incorrect.
+    """
     # check first waypoint has a time
     if waypoints[0].time is None:
         raise PlanningError("First waypoint must have a specified time.")
