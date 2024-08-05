@@ -27,7 +27,7 @@ from .waypoint import Waypoint
 
 def sailship(config: VirtualShipConfig):
     """
-    Use parcels to simulate the ship, take ctd_instruments and measure ADCP and underwaydata.
+    Use parcels to simulate a cruise.
 
     :param config: The cruise configuration.
     """
