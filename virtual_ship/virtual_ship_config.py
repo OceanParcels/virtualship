@@ -14,6 +14,7 @@ class ArgoFloatConfig:
     """Configuration for argos floats."""
 
     fieldset: FieldSet
+    min_depth: float
     max_depth: float
     drift_depth: float
     vertical_speed: float
@@ -54,6 +55,8 @@ class DrifterConfig:
     """Configuration for drifters."""
 
     fieldset: FieldSet
+    depth: float
+    lifetime: timedelta
 
 
 @dataclass

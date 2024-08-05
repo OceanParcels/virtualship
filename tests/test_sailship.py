@@ -88,6 +88,7 @@ def test_sailship() -> None:
 
     argo_float_config = ArgoFloatConfig(
         fieldset=argo_float_fieldset,
+        min_depth=-argo_float_fieldset.U.depth[0],
         max_depth=-2000,
         drift_depth=-1000,
         vertical_speed=-0.10,
@@ -113,7 +114,11 @@ def test_sailship() -> None:
         max_depth=ctd_fieldset.U.depth[-1],
     )
 
-    drifter_config = DrifterConfig(fieldset=drifter_fieldset)
+    drifter_config = DrifterConfig(
+        fieldset=drifter_fieldset,
+        depth=-drifter_fieldset.U.depth[0],
+        lifetime=timedelta(weeks=4),
+    )
 
     waypoints = [
         Waypoint(

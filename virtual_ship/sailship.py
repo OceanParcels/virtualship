@@ -130,18 +130,9 @@ def _simulate_schedule(
         # add task to the task queue for the instrument at the current waypoint
         match waypoint.instrument:
             case InstrumentType.ARGO_FLOAT:
-                waiting_tasks.push(
-                    _WaitingTask(
-                        _argo_float_task(cruise, results),
-                        wait_until=cruise.spacetime.time,
-                    )
-                )
+                _argo_float_task(cruise, results)
             case InstrumentType.DRIFTER:
-                waiting_tasks.push(
-                    _WaitingTask(
-                        _drifter_Task(cruise, results), wait_until=cruise.spacetime.time
-                    )
-                )
+                _drifter_task(cruise, results)
             case InstrumentType.CTD:
                 waiting_tasks.push(
                     _WaitingTask(
@@ -340,20 +331,32 @@ def _ctd_task(
         yield _WaitFor(stationkeeping_time)
 
 
-def _drifter_Task(
-    cruise: _Cruise, schedule_results: _ScheduleResults
-) -> Generator[_WaitFor, None, None]:
-    # TODO add drifter to drifter list
-    # yield 0 second wait time so python understands that the function must be a generator
-    yield _WaitFor(timedelta())
+def _drifter_task(
+    cruise: _Cruise, schedule_results: _ScheduleResults, config: VirtualShipConfig
+) -> None:
+    schedule_results.drifters.append(
+        Drifter(
+            cruise.spacetime,
+            depth=config.drifter_config.depth,
+            lifetime=config.drifter_config.lifetime,
+        )
+    )
 
 
 def _argo_float_task(
-    cruise: _Cruise, schedule_results: _ScheduleResults
-) -> Generator[_WaitFor, None, None]:
-    # TODO add argo float to argo float list
-    # yield 0 second wait time so python understands that the function must be a generator
-    yield _WaitFor(timedelta())
+    cruise: _Cruise, schedule_results: _ScheduleResults, config: VirtualShipConfig
+) -> None:
+    schedule_results.argo_floats.append(
+        ArgoFloat(
+            spacetime=cruise.spacetime,
+            min_depth=config.argo_float_config.min_depth,
+            max_depth=config.argo_float_config.max_depth,
+            drift_depth=config.argo_float_config.drift_depth,
+            vertical_speed=config.argo_float_config.vertical_speed,
+            cycle_days=config.argo_float_config.cycle_days,
+            drift_days=config.argo_float_config.drift_days,
+        )
+    )
 
 
 def _verify_waypoints(
