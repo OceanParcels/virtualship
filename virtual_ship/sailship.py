@@ -106,6 +106,16 @@ def _simulate_schedule(
     projection: pyproj.Geod,
     config: VirtualShipConfig,
 ) -> _ScheduleResults:
+    """
+    Simulate the sailing and aggregate what measurements should be simulated.
+
+    :param waypoints: The schedule.
+    :param projection: Projection used to sail between waypoints.
+    :param config: The cruise configuration.
+    :returns: Results from the simulation.
+    :raises NotImplementedError: When not supported instruments are encountered.
+    :raises RuntimeError: When schedule appears infeasible. This should not happen in this version of virtual ship as the schedule is verified beforehand.
+    """
     cruise = _Cruise(Spacetime(waypoints[0].location, waypoints[0].time))
     measurements = _MeasurementsToSimulate()
 
