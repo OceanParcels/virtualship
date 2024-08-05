@@ -10,6 +10,7 @@ from typing import Generator
 
 import pyproj
 
+from .costs import costs
 from .instrument_type import InstrumentType
 from .instruments.adcp import simulate_adcp
 from .instruments.argo_float import ArgoFloat, simulate_argo_floats
@@ -37,18 +38,21 @@ def sailship(config: VirtualShipConfig):
 
     _verify_waypoints(config.waypoints, config.ship_speed, projection=projection)
 
+    # simulate the sailing and aggregate what measurements should be simulated
     schedule_results = _simulate_schedule(
         waypoints=config.waypoints,
         projection=projection,
         config=config,
     )
 
+    # simulate the measurements
+
     print("Simulating onboard salinity and temperature measurements.")
     simulate_ship_underwater_st(
         fieldset=config.ship_underwater_st_config.fieldset,
         out_path=os.path.join("results", "ship_underwater_st.zarr"),
         depth=-2,
-        sample_points=schedule_results.ship_underwater_sts,
+        sample_points=schedule_results.measurements_to_simulate.ship_underwater_sts,
     )
 
     print("Simulating onboard ADCP.")
@@ -58,14 +62,14 @@ def sailship(config: VirtualShipConfig):
         max_depth=config.adcp_config.max_depth,
         min_depth=-5,
         num_bins=(-5 - config.adcp_config.max_depth) // config.adcp_config.bin_size_m,
-        sample_points=schedule_results.adcps,
+        sample_points=schedule_results.measurements_to_simulate.adcps,
     )
 
     print("Simulating CTD casts.")
     simulate_ctd(
         out_path=os.path.join("results", "ctd.zarr"),
         fieldset=config.ctd_config.fieldset,
-        ctds=schedule_results.ctds,
+        ctds=schedule_results.measurements_to_simulate.ctds,
         outputdt=timedelta(seconds=10),
     )
 
@@ -73,7 +77,7 @@ def sailship(config: VirtualShipConfig):
     simulate_drifters(
         out_path=os.path.join("results", "drifters.zarr"),
         fieldset=config.drifter_config.fieldset,
-        drifters=schedule_results.drifters,
+        drifters=schedule_results.measurements_to_simulate.drifters,
         outputdt=timedelta(hours=5),
         dt=timedelta(minutes=5),
         endtime=None,
@@ -82,21 +86,19 @@ def sailship(config: VirtualShipConfig):
     print("Simulating argo floats")
     simulate_argo_floats(
         out_path=os.path.join("results", "argo_floats.zarr"),
-        argo_floats=schedule_results.argo_floats,
+        argo_floats=schedule_results.measurements_to_simulate.argo_floats,
         fieldset=config.argo_float_config.fieldset,
         outputdt=timedelta(minutes=5),
         endtime=None,
     )
 
-    # convert CTD data to CSV
-    # print("Postprocessing..")
-    # postprocess()
-
-    # print("All data has been gathered and postprocessed, returning home.")
-
-    # time_past = time - config.waypoints[0].time
-    # cost = costs(config, time_past)
-    # print(f"This cruise took {time_past} and would have cost {cost:,.0f} euros.")
+    # calculate cruise cost
+    assert (
+        config.waypoints[0].time is not None
+    ), "First waypoints cannot have None time as this has been verified before during config verification."
+    time_past = schedule_results.end_spacetime.time - config.waypoints[0].time
+    cost = costs(config, time_past)
+    print(f"This cruise took {time_past} and would have cost {cost:,.0f} euros.")
 
 
 def _simulate_schedule(
@@ -104,35 +106,39 @@ def _simulate_schedule(
     projection: pyproj.Geod,
     config: VirtualShipConfig,
 ) -> _ScheduleResults:
-    # TODO verify waypoint reached in time
-
     cruise = _Cruise(Spacetime(waypoints[0].location, waypoints[0].time))
-    results = _ScheduleResults()
+    measurements = _MeasurementsToSimulate()
 
+    # add recurring tasks to task list
     waiting_tasks = PriorityQueue[_WaitingTask]()
     waiting_tasks.push(
         _WaitingTask(
             task=_ship_underwater_st_loop(
-                config.ship_underwater_st_config.period, cruise, results
+                config.ship_underwater_st_config.period, cruise, measurements
             ),
             wait_until=cruise.spacetime.time,
         )
     )
     waiting_tasks.push(
         _WaitingTask(
-            task=_adcp_loop(config.adcp_config.period, cruise, results),
+            task=_adcp_loop(config.adcp_config.period, cruise, measurements),
             wait_until=cruise.spacetime.time,
         )
     )
 
     # sail to each waypoint while executing tasks
     for waypoint in waypoints:
+        if waypoint.time is not None and cruise.spacetime.time > waypoint.time:
+            raise RuntimeError(
+                "Could not reach waypoint in time. This should not happen in this version of virtual ship as the schedule is verified beforehand."
+            )
+
         # add task to the task queue for the instrument at the current waypoint
         match waypoint.instrument:
             case InstrumentType.ARGO_FLOAT:
-                _argo_float_task(cruise, results)
+                _argo_float_task(cruise, measurements)
             case InstrumentType.DRIFTER:
-                _drifter_task(cruise, results)
+                _drifter_task(cruise, measurements)
             case InstrumentType.CTD:
                 waiting_tasks.push(
                     _WaitingTask(
@@ -141,7 +147,7 @@ def _simulate_schedule(
                             config.ctd_config.min_depth,
                             config.ctd_config.max_depth,
                             cruise,
-                            results,
+                            measurements,
                         ),
                         cruise.spacetime.time,
                     )
@@ -228,13 +234,15 @@ def _simulate_schedule(
         except StopIteration:
             pass
 
-    return results
+    return _ScheduleResults(
+        measurements_to_simulate=measurements, end_spacetime=cruise.spacetime
+    )
 
 
 class _Cruise:
-    _finished: bool
-    _sail_lock_count: int
-    spacetime: Spacetime
+    _finished: bool  # if last waypoint has been reached
+    _sail_lock_count: int  # if sailing should be paused because of tasks; number of tasks that requested a pause; 0 means good to go sail
+    spacetime: Spacetime  # current location and time
 
     def __init__(self, spacetime: Spacetime) -> None:
         self._finished = False
@@ -262,12 +270,18 @@ class _Cruise:
 
 
 @dataclass
-class _ScheduleResults:
+class _MeasurementsToSimulate:
     adcps: list[Spacetime] = field(default_factory=list, init=False)
     ship_underwater_sts: list[Spacetime] = field(default_factory=list, init=False)
     argo_floats: list[ArgoFloat] = field(default_factory=list, init=False)
     drifters: list[Drifter] = field(default_factory=list, init=False)
     ctds: list[CTD] = field(default_factory=list, init=False)
+
+
+@dataclass
+class _ScheduleResults:
+    measurements_to_simulate: _MeasurementsToSimulate
+    end_spacetime: Spacetime
 
 
 @dataclass
@@ -298,18 +312,18 @@ class _WaitingTask:
 
 
 def _ship_underwater_st_loop(
-    sample_period: timedelta, cruise: _Cruise, schedule_results: _ScheduleResults
+    sample_period: timedelta, cruise: _Cruise, measurements: _MeasurementsToSimulate
 ) -> Generator[_WaitFor, None, None]:
     while not cruise.finished:
-        schedule_results.ship_underwater_sts.append(cruise.spacetime)
+        measurements.ship_underwater_sts.append(cruise.spacetime)
         yield _WaitFor(sample_period)
 
 
 def _adcp_loop(
-    sample_period: timedelta, cruise: _Cruise, schedule_results: _ScheduleResults
+    sample_period: timedelta, cruise: _Cruise, measurements: _MeasurementsToSimulate
 ) -> Generator[_WaitFor, None, None]:
     while not cruise.finished:
-        schedule_results.adcps.append(cruise.spacetime)
+        measurements.adcps.append(cruise.spacetime)
         yield _WaitFor(sample_period)
 
 
@@ -318,10 +332,10 @@ def _ctd_task(
     min_depth: float,
     max_depth: float,
     cruise: _Cruise,
-    schedule_results: _ScheduleResults,
+    measurements: _MeasurementsToSimulate,
 ) -> Generator[_WaitFor, None, None]:
     with cruise.do_not_sail():
-        schedule_results.ctds.append(
+        measurements.ctds.append(
             CTD(
                 spacetime=cruise.spacetime,
                 min_depth=min_depth,
@@ -332,9 +346,9 @@ def _ctd_task(
 
 
 def _drifter_task(
-    cruise: _Cruise, schedule_results: _ScheduleResults, config: VirtualShipConfig
+    cruise: _Cruise, measurements: _MeasurementsToSimulate, config: VirtualShipConfig
 ) -> None:
-    schedule_results.drifters.append(
+    measurements.drifters.append(
         Drifter(
             cruise.spacetime,
             depth=config.drifter_config.depth,
@@ -344,9 +358,9 @@ def _drifter_task(
 
 
 def _argo_float_task(
-    cruise: _Cruise, schedule_results: _ScheduleResults, config: VirtualShipConfig
+    cruise: _Cruise, measurements: _MeasurementsToSimulate, config: VirtualShipConfig
 ) -> None:
-    schedule_results.argo_floats.append(
+    measurements.argo_floats.append(
         ArgoFloat(
             spacetime=cruise.spacetime,
             min_depth=config.argo_float_config.min_depth,
