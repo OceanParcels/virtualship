@@ -429,7 +429,7 @@ def _verify_waypoints(
             time = arrival_time
         elif arrival_time > wp_next.time:
             raise PlanningError(
-                "Waypoint planning is not valid: would arrive too late at a waypoint."
+                f"Waypoint planning is not valid: would arrive too late at a waypoint requiring time {wp_next.time}"
             )
         else:
             time = wp_next.time
