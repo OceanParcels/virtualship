@@ -11,6 +11,9 @@ from virtual_ship.virtual_ship_config import (
     ADCPConfig,
     ArgoFloatConfig,
     VirtualShipConfig,
+    DrifterConfig,
+    ShipUnderwaterSTConfig,
+    CTDConfig,
 )
 from datetime import timedelta
 
@@ -92,7 +95,25 @@ def test_sailship() -> None:
         drift_days=9,
     )
 
-    adcp_config = ADCPConfig(max_depth=-1000, bin_size_m=24)
+    adcp_config = ADCPConfig(
+        max_depth=-1000,
+        bin_size_m=24,
+        period=timedelta(minutes=5),
+        fieldset=adcp_fieldset,
+    )
+
+    ship_underwater_st_config = ShipUnderwaterSTConfig(
+        period=timedelta(minutes=5), fieldset=ship_underwater_st_fieldset
+    )
+
+    ctd_config = CTDConfig(
+        stationkeeping_time=timedelta(minutes=20),
+        fieldset=ctd_fieldset,
+        min_depth=ctd_fieldset.U.depth[0],
+        max_depth=ctd_fieldset.U.depth[-1],
+    )
+
+    drifter_config = DrifterConfig(fieldset=drifter_fieldset)
 
     waypoints = [
         Waypoint(
@@ -113,15 +134,11 @@ def test_sailship() -> None:
     config = VirtualShipConfig(
         ship_speed=5.14,
         waypoints=waypoints,
-        adcp_fieldset=adcp_fieldset,
-        ship_underwater_st_fieldset=ship_underwater_st_fieldset,
-        ctd_fieldset=ctd_fieldset,
-        drifter_fieldset=drifter_fieldset,
         argo_float_config=argo_float_config,
         adcp_config=adcp_config,
-        ship_underwater_st_period=timedelta(minutes=5),
-        adcp_period=timedelta(minutes=5),
-        ctd_stationkeeping_time=timedelta(minutes=20),
+        ship_underwater_st_config=ship_underwater_st_config,
+        ctd_config=ctd_config,
+        drifter_config=drifter_config,
     )
 
     sailship(config)

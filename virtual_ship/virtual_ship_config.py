@@ -27,6 +27,33 @@ class ADCPConfig:
 
     max_depth: float
     bin_size_m: int
+    period: timedelta
+    fieldset: FieldSet
+
+
+@dataclass
+class CTDConfig:
+    """Configuration for CTD instrument"""
+
+    stationkeeping_time: timedelta
+    fieldset: FieldSet
+    min_depth: float
+    max_depth: float
+
+
+@dataclass
+class ShipUnderwaterSTConfig:
+    """Configuration for underwater ST"""
+
+    period: timedelta
+    fieldset: FieldSet
+
+
+@dataclass
+class DrifterConfig:
+    """Configuration for drifters"""
+
+    fieldset: FieldSet
 
 
 @dataclass
@@ -37,18 +64,11 @@ class VirtualShipConfig:
 
     waypoints: list[Waypoint]
 
-    adcp_fieldset: FieldSet
-    ship_underwater_st_fieldset: FieldSet
-    ctd_fieldset: FieldSet
-    drifter_fieldset: FieldSet
-
     argo_float_config: ArgoFloatConfig
     adcp_config: ADCPConfig
-
-    ship_underwater_st_period: timedelta
-    adcp_period: timedelta
-
-    ctd_stationkeeping_time: timedelta
+    ctd_config: CTDConfig
+    ship_underwater_st_config: ShipUnderwaterSTConfig
+    drifter_config: DrifterConfig
 
     def verify(self) -> None:
         """
