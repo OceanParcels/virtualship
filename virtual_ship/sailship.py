@@ -11,11 +11,11 @@ from typing import Generator
 import pyproj
 
 from .instrument_type import InstrumentType
-from .instruments.adcp import _simulate_adcp
-from .instruments.argo_float import ArgoFloat, _simulate_argo_floats
-from .instruments.ctd import CTD, _simulate_ctd
-from .instruments.drifter import Drifter, _simulate_drifters
-from .instruments.ship_underwater_st import _simulate_ship_underwater_st
+from .instruments.adcp import simulate_adcp
+from .instruments.argo_float import ArgoFloat, simulate_argo_floats
+from .instruments.ctd import CTD, simulate_ctd
+from .instruments.drifter import Drifter, simulate_drifters
+from .instruments.ship_underwater_st import simulate_ship_underwater_st
 from .location import Location
 from .planning_error import PlanningError
 from .priority_queue import PriorityQueue
@@ -44,7 +44,7 @@ def sailship(config: VirtualShipConfig):
     )
 
     print("Simulating onboard salinity and temperature measurements.")
-    _simulate_ship_underwater_st(
+    simulate_ship_underwater_st(
         fieldset=config.ship_underwater_st_config.fieldset,
         out_path=os.path.join("results", "ship_underwater_st.zarr"),
         depth=-2,
@@ -52,7 +52,7 @@ def sailship(config: VirtualShipConfig):
     )
 
     print("Simulating onboard ADCP.")
-    _simulate_adcp(
+    simulate_adcp(
         fieldset=config.adcp_config.fieldset,
         out_path=os.path.join("results", "adcp.zarr"),
         max_depth=config.adcp_config.max_depth,
@@ -62,7 +62,7 @@ def sailship(config: VirtualShipConfig):
     )
 
     print("Simulating CTD casts.")
-    _simulate_ctd(
+    simulate_ctd(
         out_path=os.path.join("results", "ctd.zarr"),
         fieldset=config.ctd_config.fieldset,
         ctds=schedule_results.ctds,
@@ -70,7 +70,7 @@ def sailship(config: VirtualShipConfig):
     )
 
     print("Simulating drifters")
-    _simulate_drifters(
+    simulate_drifters(
         out_path=os.path.join("results", "drifters.zarr"),
         fieldset=config.drifter_config.fieldset,
         drifters=schedule_results.drifters,
@@ -80,7 +80,7 @@ def sailship(config: VirtualShipConfig):
     )
 
     print("Simulating argo floats")
-    _simulate_argo_floats(
+    simulate_argo_floats(
         out_path=os.path.join("results", "argo_floats.zarr"),
         argo_floats=schedule_results.argo_floats,
         fieldset=config.argo_float_config.fieldset,
