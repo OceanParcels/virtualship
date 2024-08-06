@@ -112,11 +112,11 @@ def _simulate_schedule(
     """
     Simulate the sailing and aggregate the virtual measurements that should be taken.
 
-    :param waypoints: The schedule.
+    :param waypoints: The waypoints.
     :param projection: Projection used to sail between waypoints.
     :param config: The cruise configuration.
     :returns: Results from the simulation.
-    :raises NotImplementedError: When not supported instruments are encountered.
+    :raises NotImplementedError: When unsupported instruments are encountered.
     :raises RuntimeError: When schedule appears infeasible. This should not happen in this version of virtual ship as the schedule is verified beforehand.
     """
     cruise = _Cruise(Spacetime(waypoints[0].location, waypoints[0].time))
@@ -389,7 +389,7 @@ def _verify_waypoints(
     waypoints: list[Waypoint], ship_speed: float, projection: pyproj.Geod
 ) -> None:
     """
-    Verify waypoints are ordered by time, first waypoint has a start time, and that schedule is feasible in terms of time if no unexpected things happen.
+    Verify waypoints are ordered by time, first waypoint has a start time, and that schedule is feasible in terms of time if no unexpected events happen.
 
     :param waypoints: The waypoints to check.
     :param ship_speed: Speed of the ship.
@@ -412,9 +412,9 @@ def _verify_waypoints(
             "Each waypoint should be timed after all previous waypoints"
         )
 
-    # check that ship will arrive on time at each waypoint (in case nothing goes wrong)
+    # check that ship will arrive on time at each waypoint (in case no unexpected event happen)
     time = waypoints[0].time
-    for wp, wp_next in zip(waypoints, waypoints[1:]):
+    for wp_i, (wp, wp_next) in enumerate(zip(waypoints, waypoints[1:])):
         if wp.instrument is InstrumentType.CTD:
             time += timedelta(minutes=20)
 
@@ -430,7 +430,7 @@ def _verify_waypoints(
             time = arrival_time
         elif arrival_time > wp_next.time:
             raise PlanningError(
-                f"Waypoint planning is not valid: would arrive too late at a waypoint requiring time {wp_next.time}"
+                f"Waypoint planning is not valid: would arrive too late at a waypoint number {wp_i}. location: {wp.location} time: {wp.time} instrument: {wp.instrument}"
             )
         else:
             time = wp_next.time
