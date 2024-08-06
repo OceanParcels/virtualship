@@ -60,7 +60,7 @@ def simulate_ctd(
     outputdt: timedelta,
 ) -> None:
     """
-    Use parcels to simulate a set of CTDs in a fieldset.
+    Use Parcels to simulate a set of CTDs in a fieldset.
 
     :param fieldset: The fieldset to simulate the CTDs in.
     :param out_path: The path to write the results to.
@@ -75,7 +75,7 @@ def simulate_ctd(
         print(
             "No CTDs provided. Parcels currently crashes when providing an empty particle set, so no CTD simulation will be done and no files will be created."
         )
-        # TODO when parcels supports it this check can be removed.
+        # TODO when Parcels supports it this check can be removed.
         return
 
     fieldset_starttime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[0])

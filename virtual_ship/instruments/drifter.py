@@ -49,7 +49,7 @@ def simulate_drifters(
     endtime: datetime | None,
 ) -> None:
     """
-    Use parcels to simulate a set of drifters in a fieldset.
+    Use Parcels to simulate a set of drifters in a fieldset.
 
     :param fieldset: The fieldset to simulate the Drifters in.
     :param out_path: The path to write the results to.
@@ -62,7 +62,7 @@ def simulate_drifters(
         print(
             "No drifters provided. Parcels currently crashes when providing an empty particle set, so no drifter simulation will be done and no files will be created."
         )
-        # TODO when parcels supports it this check can be removed.
+        # TODO when Parcels supports it this check can be removed.
         return
 
     # define parcel particles

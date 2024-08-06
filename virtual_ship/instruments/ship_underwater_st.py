@@ -37,7 +37,7 @@ def simulate_ship_underwater_st(
     sample_points: list[Spacetime],
 ) -> None:
     """
-    Use parcels to simulate underway data, measuring salinity and temperature at the given depth along the ship track in a fieldset.
+    Use Parcels to simulate underway data, measuring salinity and temperature at the given depth along the ship track in a fieldset.
 
     :param fieldset: The fieldset to simulate the sampling in.
     :param out_path: The path to write the results to.

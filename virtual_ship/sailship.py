@@ -27,7 +27,7 @@ from .waypoint import Waypoint
 
 def sailship(config: VirtualShipConfig):
     """
-    Use parcels to simulate a virtual ship expedition.
+    Use Parcels to simulate a virtual ship expedition.
 
     :param config: The expedition configuration.
     """
