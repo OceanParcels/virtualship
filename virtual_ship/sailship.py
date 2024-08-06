@@ -110,7 +110,7 @@ def _simulate_schedule(
     config: VirtualShipConfig,
 ) -> _ScheduleResults:
     """
-    Simulate the sailing and aggregate what measurements should be simulated.
+    Simulate the sailing and aggregate the virtual measurements that should be taken.
 
     :param waypoints: The schedule.
     :param projection: Projection used to sail between waypoints.
