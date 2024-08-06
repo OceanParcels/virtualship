@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from typing import Generator
 
 import pyproj
+from sortedcontainers import SortedList
 
 from .costs import costs
 from .instrument_type import InstrumentType
@@ -19,7 +20,6 @@ from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.ship_underwater_st import simulate_ship_underwater_st
 from .location import Location
 from .planning_error import PlanningError
-from .priority_queue import PriorityQueue
 from .spacetime import Spacetime
 from .virtual_ship_config import VirtualShipConfig
 from .waypoint import Waypoint
@@ -123,9 +123,9 @@ def _simulate_schedule(
     measurements = _MeasurementsToSimulate()
 
     # add recurring tasks to task list
-    waiting_tasks = PriorityQueue[_WaitingTask]()
+    waiting_tasks = SortedList[_WaitingTask]()
     if config.ship_underwater_st_config is not None:
-        waiting_tasks.push(
+        waiting_tasks.add(
             _WaitingTask(
                 task=_ship_underwater_st_loop(
                     config.ship_underwater_st_config.period, cruise, measurements
@@ -134,7 +134,7 @@ def _simulate_schedule(
             )
         )
     if config.adcp_config is not None:
-        waiting_tasks.push(
+        waiting_tasks.add(
             _WaitingTask(
                 task=_adcp_loop(config.adcp_config.period, cruise, measurements),
                 wait_until=cruise.spacetime.time,
@@ -154,7 +154,7 @@ def _simulate_schedule(
         elif waypoint.instrument is InstrumentType.DRIFTER:
             _drifter_task(cruise, measurements, config=config)
         elif waypoint.instrument is InstrumentType.CTD:
-            waiting_tasks.push(
+            waiting_tasks.add(
                 _WaitingTask(
                     _ctd_task(
                         config.ctd_config.stationkeeping_time,
@@ -176,13 +176,13 @@ def _simulate_schedule(
         while not waypoint_reached:
             # execute all tasks planned for current time
             while (
-                not waiting_tasks.is_empty()
-                and waiting_tasks.peek().wait_until <= cruise.spacetime.time
+                len(waiting_tasks) > 0
+                and waiting_tasks[0].wait_until <= cruise.spacetime.time
             ):
-                task = waiting_tasks.pop()
+                task = waiting_tasks.pop(0)
                 try:
                     wait_for = next(task.task)
-                    waiting_tasks.push(
+                    waiting_tasks.add(
                         _WaitingTask(task.task, cruise.spacetime.time + wait_for.time)
                     )
                 except StopIteration:
@@ -191,7 +191,7 @@ def _simulate_schedule(
             # if sailing is prevented by a current task, just let time pass until the next task
             if cruise.sail_is_locked:
                 cruise.spacetime = Spacetime(
-                    cruise.spacetime.location, waiting_tasks.peek().wait_until
+                    cruise.spacetime.location, waiting_tasks[0].wait_until
                 )
             # else, let time pass while sailing
             else:
@@ -211,16 +211,14 @@ def _simulate_schedule(
 
                 # if waypoint is reached before next task, sail to the waypoint
                 if (
-                    waiting_tasks.is_empty()
-                    or arrival_time <= waiting_tasks.peek().wait_until
+                    len(waiting_tasks) == 0
+                    or arrival_time <= waiting_tasks[0].wait_until
                 ):
                     cruise.spacetime = Spacetime(waypoint.location, arrival_time)
                     waypoint_reached = True
                 # else, sail until task starts
                 else:
-                    time_to_sail = (
-                        waiting_tasks.peek().wait_until - cruise.spacetime.time
-                    )
+                    time_to_sail = waiting_tasks[0].wait_until - cruise.spacetime.time
                     distance_to_move = config.ship_speed * time_to_sail.total_seconds()
                     geodfwd: tuple[float, float, float] = projection.fwd(
                         lons=cruise.spacetime.location.lon,
@@ -238,11 +236,11 @@ def _simulate_schedule(
     cruise.finish()
 
     # don't sail anymore, but let tasks finish
-    while not waiting_tasks.is_empty():
-        task = waiting_tasks.pop()
+    while len(waiting_tasks) > 0:
+        task = waiting_tasks.pop(0)
         try:
             wait_for = next(task.task)
-            waiting_tasks.push(
+            waiting_tasks.add(
                 _WaitingTask(task.task, cruise.spacetime.time + wait_for.time)
             )
         except StopIteration:
