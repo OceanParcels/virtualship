@@ -31,7 +31,7 @@ def simulate_adcp(
     sample_points: list[Spacetime],
 ) -> None:
     """
-    Use parcels to simulate an ADCP in a fieldset.
+    Use Parcels to simulate an ADCP in a fieldset.
 
     :param fieldset: The fieldset to simulate the ADCP in.
     :param out_path: The path to write the results to.

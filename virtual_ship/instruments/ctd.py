@@ -60,7 +60,7 @@ def simulate_ctd(
     outputdt: timedelta,
 ) -> None:
     """
-    Use parcels to simulate a set of CTDs in a fieldset.
+    Use Parcels to simulate a set of CTDs in a fieldset.
 
     :param fieldset: The fieldset to simulate the CTDs in.
     :param out_path: The path to write the results to.
@@ -70,6 +70,13 @@ def simulate_ctd(
     """
     WINCH_SPEED = 1.0  # sink and rise speed in m/s
     DT = 10.0  # dt of CTD simulation integrator
+
+    if len(ctds) == 0:
+        print(
+            "No CTDs provided. Parcels currently crashes when providing an empty particle set, so no CTD simulation will be done and no files will be created."
+        )
+        # TODO when Parcels supports it this check can be removed.
+        return
 
     fieldset_starttime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[0])
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])

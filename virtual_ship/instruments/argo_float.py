@@ -123,7 +123,7 @@ def simulate_argo_floats(
     endtime: datetime | None,
 ) -> None:
     """
-    Use parcels to simulate a set of Argo floats in a fieldset.
+    Use Parcels to simulate a set of Argo floats in a fieldset.
 
     :param fieldset: The fieldset to simulate the Argo floats in.
     :param out_path: The path to write the results to.
@@ -132,6 +132,13 @@ def simulate_argo_floats(
     :param endtime: Stop at this time, or if None, continue until the end of the fieldset.
     """
     DT = 10.0  # dt of Argo float simulation integrator
+
+    if len(argo_floats) == 0:
+        print(
+            "No Argo floats provided. Parcels currently crashes when providing an empty particle set, so no argo floats simulation will be done and no files will be created."
+        )
+        # TODO when Parcels supports it this check can be removed.
+        return
 
     # define parcel particles
     argo_float_particleset = ParticleSet(
