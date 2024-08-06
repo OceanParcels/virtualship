@@ -47,23 +47,26 @@ def sailship(config: VirtualShipConfig):
 
     # simulate the measurements
 
-    print("Simulating onboard salinity and temperature measurements.")
-    simulate_ship_underwater_st(
-        fieldset=config.ship_underwater_st_config.fieldset,
-        out_path=os.path.join("results", "ship_underwater_st.zarr"),
-        depth=-2,
-        sample_points=schedule_results.measurements_to_simulate.ship_underwater_sts,
-    )
+    if config.ship_underwater_st_config is not None:
+        print("Simulating onboard salinity and temperature measurements.")
+        simulate_ship_underwater_st(
+            fieldset=config.ship_underwater_st_config.fieldset,
+            out_path=os.path.join("results", "ship_underwater_st.zarr"),
+            depth=-2,
+            sample_points=schedule_results.measurements_to_simulate.ship_underwater_sts,
+        )
 
-    print("Simulating onboard ADCP.")
-    simulate_adcp(
-        fieldset=config.adcp_config.fieldset,
-        out_path=os.path.join("results", "adcp.zarr"),
-        max_depth=config.adcp_config.max_depth,
-        min_depth=-5,
-        num_bins=(-5 - config.adcp_config.max_depth) // config.adcp_config.bin_size_m,
-        sample_points=schedule_results.measurements_to_simulate.adcps,
-    )
+    if config.adcp_config is not None:
+        print("Simulating onboard ADCP.")
+        simulate_adcp(
+            fieldset=config.adcp_config.fieldset,
+            out_path=os.path.join("results", "adcp.zarr"),
+            max_depth=config.adcp_config.max_depth,
+            min_depth=-5,
+            num_bins=(-5 - config.adcp_config.max_depth)
+            // config.adcp_config.bin_size_m,
+            sample_points=schedule_results.measurements_to_simulate.adcps,
+        )
 
     print("Simulating CTD casts.")
     simulate_ctd(
@@ -121,20 +124,22 @@ def _simulate_schedule(
 
     # add recurring tasks to task list
     waiting_tasks = PriorityQueue[_WaitingTask]()
-    waiting_tasks.push(
-        _WaitingTask(
-            task=_ship_underwater_st_loop(
-                config.ship_underwater_st_config.period, cruise, measurements
-            ),
-            wait_until=cruise.spacetime.time,
+    if config.ship_underwater_st_config is not None:
+        waiting_tasks.push(
+            _WaitingTask(
+                task=_ship_underwater_st_loop(
+                    config.ship_underwater_st_config.period, cruise, measurements
+                ),
+                wait_until=cruise.spacetime.time,
+            )
         )
-    )
-    waiting_tasks.push(
-        _WaitingTask(
-            task=_adcp_loop(config.adcp_config.period, cruise, measurements),
-            wait_until=cruise.spacetime.time,
+    if config.adcp_config is not None:
+        waiting_tasks.push(
+            _WaitingTask(
+                task=_adcp_loop(config.adcp_config.period, cruise, measurements),
+                wait_until=cruise.spacetime.time,
+            )
         )
-    )
 
     # sail to each waypoint while executing tasks
     for waypoint in waypoints:

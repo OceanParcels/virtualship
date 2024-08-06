@@ -68,9 +68,11 @@ class VirtualShipConfig:
     waypoints: list[Waypoint]
 
     argo_float_config: ArgoFloatConfig
-    adcp_config: ADCPConfig
+    adcp_config: ADCPConfig | None  # if None, ADCP is disabled
     ctd_config: CTDConfig
-    ship_underwater_st_config: ShipUnderwaterSTConfig
+    ship_underwater_st_config: (
+        ShipUnderwaterSTConfig | None
+    )  # if None, ship underwater st is disabled
     drifter_config: DrifterConfig
 
     def verify(self) -> None:
@@ -102,7 +104,7 @@ class VirtualShipConfig:
         if self.argo_float_config.drift_days <= 0:
             raise ValueError("Argo drift cycle days must be larger than zero.")
 
-        if self.adcp_config.max_depth > 0:
+        if self.adcp_config is not None and self.adcp_config.max_depth > 0:
             raise ValueError("ADCP max depth must be negative.")
 
     @staticmethod
