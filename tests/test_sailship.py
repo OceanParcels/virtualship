@@ -1,15 +1,19 @@
 """Performs a complete cruise with virtual ship."""
 
 import datetime
+from datetime import timedelta
 
 import numpy as np
 from parcels import Field, FieldSet
 
-from virtual_ship import Location
+from virtual_ship import InstrumentType, Location, Waypoint
 from virtual_ship.sailship import sailship
-from virtual_ship.virtual_ship_configuration import (
+from virtual_ship.virtual_ship_config import (
     ADCPConfig,
     ArgoFloatConfig,
+    CTDConfig,
+    DrifterConfig,
+    ShipUnderwaterSTConfig,
     VirtualShipConfig,
 )
 
@@ -65,7 +69,7 @@ def test_sailship() -> None:
     )
 
     ship_underwater_st_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0, "S": 0, "T": 0},
+        {"U": 0, "V": 0, "salinity": 0, "temperature": 0},
         {"lon": 0, "lat": 0},
     )
 
@@ -84,6 +88,7 @@ def test_sailship() -> None:
 
     argo_float_config = ArgoFloatConfig(
         fieldset=argo_float_fieldset,
+        min_depth=-argo_float_fieldset.U.depth[0],
         max_depth=-2000,
         drift_depth=-1000,
         vertical_speed=-0.10,
@@ -91,28 +96,62 @@ def test_sailship() -> None:
         drift_days=9,
     )
 
-    adcp_config = ADCPConfig(max_depth=-1000, bin_size_m=24)
+    adcp_config = ADCPConfig(
+        max_depth=-1000,
+        bin_size_m=24,
+        period=timedelta(minutes=5),
+        fieldset=adcp_fieldset,
+    )
+
+    ship_underwater_st_config = ShipUnderwaterSTConfig(
+        period=timedelta(minutes=5), fieldset=ship_underwater_st_fieldset
+    )
+
+    ctd_config = CTDConfig(
+        stationkeeping_time=timedelta(minutes=20),
+        fieldset=ctd_fieldset,
+        min_depth=ctd_fieldset.U.depth[0],
+        max_depth=ctd_fieldset.U.depth[-1],
+    )
+
+    drifter_config = DrifterConfig(
+        fieldset=drifter_fieldset,
+        depth=-drifter_fieldset.U.depth[0],
+        lifetime=timedelta(weeks=4),
+    )
+
+    waypoints = [
+        Waypoint(
+            location=Location(latitude=-23.071289, longitude=63.743631),
+            time=base_time,
+        ),
+        Waypoint(
+            location=Location(latitude=-23.081289, longitude=63.743631),
+            instrument=InstrumentType.CTD,
+        ),
+        Waypoint(
+            location=Location(latitude=-23.181289, longitude=63.743631),
+            time=base_time + datetime.timedelta(hours=1),
+            instrument=InstrumentType.CTD,
+        ),
+        Waypoint(
+            location=Location(latitude=-23.281289, longitude=63.743631),
+            instrument=InstrumentType.DRIFTER,
+        ),
+        Waypoint(
+            location=Location(latitude=-23.381289, longitude=63.743631),
+            instrument=InstrumentType.ARGO_FLOAT,
+        ),
+    ]
 
     config = VirtualShipConfig(
-        start_time=datetime.datetime.strptime(
-            "2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S"
-        ),
-        route_coordinates=[
-            Location(latitude=-23.071289, longitude=63.743631),
-            Location(latitude=-23.081289, longitude=63.743631),
-            Location(latitude=-23.191289, longitude=63.743631),
-        ],
-        adcp_fieldset=adcp_fieldset,
-        ship_underwater_st_fieldset=ship_underwater_st_fieldset,
-        ctd_fieldset=ctd_fieldset,
-        drifter_fieldset=drifter_fieldset,
-        argo_float_deploy_locations=[
-            Location(latitude=-23.081289, longitude=63.743631)
-        ],
-        drifter_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
-        ctd_deploy_locations=[Location(latitude=-23.081289, longitude=63.743631)],
+        ship_speed=5.14,
+        waypoints=waypoints,
         argo_float_config=argo_float_config,
         adcp_config=adcp_config,
+        ship_underwater_st_config=ship_underwater_st_config,
+        ctd_config=ctd_config,
+        drifter_config=drifter_config,
     )
 
     sailship(config)
