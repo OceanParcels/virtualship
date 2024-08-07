@@ -36,7 +36,9 @@ def sailship(config: VirtualShipConfig):
     # projection used to sail between waypoints
     projection = pyproj.Geod(ellps="WGS84")
 
-    _verify_waypoints(config.waypoints, config.ship_speed, projection=projection)
+    _verify_waypoints(
+        config.waypoints, config.ship_speed, projection=projection, config=config
+    )
 
     # simulate the sailing and aggregate what measurements should be simulated
     schedule_results = _simulate_schedule(
@@ -386,7 +388,10 @@ def _argo_float_task(
 
 
 def _verify_waypoints(
-    waypoints: list[Waypoint], ship_speed: float, projection: pyproj.Geod
+    waypoints: list[Waypoint],
+    ship_speed: float,
+    projection: pyproj.Geod,
+    config: VirtualShipConfig,
 ) -> None:
     """
     Verify waypoints are ordered by time, first waypoint has a start time, and that schedule is feasible in terms of time if no unexpected events happen.
@@ -394,7 +399,9 @@ def _verify_waypoints(
     :param waypoints: The waypoints to check.
     :param ship_speed: Speed of the ship.
     :param projection: projection used to sail between waypoints.
+    :param config: The cruise configuration.
     :raises PlanningError: If waypoints are not feasible or incorrect.
+    :raises ValueError: If there are no fieldsets in the config, which are needed to verify all waypoints are on water.
     """
     # check first waypoint has a time
     if waypoints[0].time is None:
@@ -410,6 +417,47 @@ def _verify_waypoints(
     ):
         raise PlanningError(
             "Each waypoint should be timed after all previous waypoints"
+        )
+
+    # check if all waypoints are in water
+    # this is done by picking an arbitrary provided fieldset and checking if UV is not zero
+
+    # get all available fieldsets
+    available_fieldsets = [
+        fs
+        for fs in [
+            config.adcp_config.fieldset if config.adcp_config is not None else None,
+            config.argo_float_config.fieldset,
+            config.ctd_config.fieldset,
+            config.drifter_config.fieldset,
+            (
+                config.ship_underwater_st_config.fieldset
+                if config.ship_underwater_st_config is not None
+                else None
+            ),
+        ]
+        if fs is not None
+    ]
+    # check if there are any fieldsets, else its an error
+    if len(available_fieldsets) == 0:
+        raise ValueError(
+            "No fieldsets provided to check if waypoints are on land. Assuming no provided fieldsets is an error."
+        )
+    # pick any
+    fieldset = available_fieldsets[0]
+    # get waypoints with 0 UV
+    land_waypoints = [
+        (wp_i, wp)
+        for wp_i, wp in enumerate(waypoints)
+        if fieldset.UV.eval(
+            0, 0, wp.location.lat, wp.location.lon, applyConversion=False
+        )
+        == (0.0, 0.0)
+    ]
+    # raise an error if there are any
+    if len(land_waypoints) > 0:
+        raise PlanningError(
+            f"The following waypoints are on land: {['#' + str(wp_i) + ' ' + str(wp) for (wp_i, wp) in land_waypoints]}"
         )
 
     # check that ship will arrive on time at each waypoint (in case no unexpected event happen)

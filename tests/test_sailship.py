@@ -19,10 +19,10 @@ from virtual_ship.virtual_ship_config import (
 
 
 def _make_ctd_fieldset(base_time: datetime) -> FieldSet:
-    u = np.zeros((2, 2, 2, 2))
-    v = np.zeros((2, 2, 2, 2))
-    t = np.zeros((2, 2, 2, 2))
-    s = np.zeros((2, 2, 2, 2))
+    u = np.full((2, 2, 2, 2), 1.0)
+    v = np.full((2, 2, 2, 2), 1.0)
+    t = np.full((2, 2, 2, 2), 1.0)
+    s = np.full((2, 2, 2, 2), 1.0)
 
     fieldset = FieldSet.from_data(
         {"V": v, "U": u, "T": t, "S": s},
@@ -64,12 +64,12 @@ def test_sailship() -> None:
     base_time = datetime.datetime.strptime("2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
 
     adcp_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0},
+        {"U": 1, "V": 1},
         {"lon": 0, "lat": 0},
     )
 
     ship_underwater_st_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0, "salinity": 0, "temperature": 0},
+        {"U": 1, "V": 1, "salinity": 0, "temperature": 0},
         {"lon": 0, "lat": 0},
     )
 
@@ -78,7 +78,7 @@ def test_sailship() -> None:
     drifter_fieldset = _make_drifter_fieldset(base_time)
 
     argo_float_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0, "T": 0, "S": 0},
+        {"U": 1, "V": 1, "T": 0, "S": 0},
         {
             "lon": 0,
             "lat": 0,
