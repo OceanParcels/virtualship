@@ -5,7 +5,6 @@ from datetime import timedelta
 
 from parcels import FieldSet
 
-from .location import Location
 from .waypoint import Waypoint
 
 
@@ -84,11 +83,6 @@ class VirtualShipConfig:
         if len(self.waypoints) < 2:
             raise ValueError("Waypoints require at least a start and an end.")
 
-        if not all(
-            [self._is_valid_location(waypoint.location) for waypoint in self.waypoints]
-        ):
-            raise ValueError("Invalid location for waypoint.")
-
         if self.argo_float_config.max_depth > 0:
             raise ValueError("Argo float max depth must be negative or zero.")
 
@@ -106,12 +100,3 @@ class VirtualShipConfig:
 
         if self.adcp_config is not None and self.adcp_config.max_depth > 0:
             raise ValueError("ADCP max depth must be negative.")
-
-    @staticmethod
-    def _is_valid_location(location: Location) -> bool:
-        return (
-            location.lat >= -90
-            and location.lat <= 90
-            and location.lon >= -180
-            and location.lon <= 360
-        )
