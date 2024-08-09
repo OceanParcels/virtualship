@@ -35,7 +35,7 @@ def temperature_noise(temperature: np.ndarray, depth: np.ndarray) -> np.ndarray:
     )
     drift = (
         0.3
-        # * (np.random.random() * 2.0 - 1)
+        * (np.random.random() * 2.0 - 1)
         * np.array(range(len(temperature)))
         / len(temperature)
     )
