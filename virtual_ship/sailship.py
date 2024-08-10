@@ -37,9 +37,7 @@ def sailship(config: VirtualShipConfig):
     # projection used to sail between waypoints
     projection = pyproj.Geod(ellps="WGS84")
 
-    _verify_waypoints(
-        config.waypoints, config.ship_speed, projection=projection, config=config
-    )
+    _verify_waypoints(projection=projection, config=config)
 
     # simulate the sailing and aggregate what measurements should be simulated
     schedule_results = _simulate_schedule(
@@ -389,27 +387,26 @@ def _argo_float_task(
 
 
 def _verify_waypoints(
-    waypoints: list[Waypoint],
-    ship_speed: float,
     projection: pyproj.Geod,
     config: VirtualShipConfig,
 ) -> None:
     """
     Verify waypoints are ordered by time, first waypoint has a start time, and that schedule is feasible in terms of time if no unexpected events happen.
 
-    :param waypoints: The waypoints to check.
-    :param ship_speed: Speed of the ship.
     :param projection: projection used to sail between waypoints.
     :param config: The cruise configuration.
     :raises PlanningError: If waypoints are not feasible or incorrect.
     :raises ValueError: If there are no fieldsets in the config, which are needed to verify all waypoints are on water.
     """
+    if len(config.waypoints) == 0:
+        raise PlanningError("At least one waypoint must be provided.")
+
     # check first waypoint has a time
-    if waypoints[0].time is None:
+    if config.waypoints[0].time is None:
         raise PlanningError("First waypoint must have a specified time.")
 
     # check waypoint times are in ascending order
-    timed_waypoints = [wp for wp in waypoints if wp.time is not None]
+    timed_waypoints = [wp for wp in config.waypoints if wp.time is not None]
     if not all(
         [
             next.time >= cur.time
@@ -449,7 +446,7 @@ def _verify_waypoints(
     # get waypoints with 0 UV
     land_waypoints = [
         (wp_i, wp)
-        for wp_i, wp in enumerate(waypoints)
+        for wp_i, wp in enumerate(config.waypoints)
         if _is_on_land_zero_uv(fieldset, wp)
     ]
     # raise an error if there are any
@@ -459,8 +456,8 @@ def _verify_waypoints(
         )
 
     # check that ship will arrive on time at each waypoint (in case no unexpected event happen)
-    time = waypoints[0].time
-    for wp_i, (wp, wp_next) in enumerate(zip(waypoints, waypoints[1:])):
+    time = config.waypoints[0].time
+    for wp_i, (wp, wp_next) in enumerate(zip(config.waypoints, config.waypoints[1:])):
         if wp.instrument is InstrumentType.CTD:
             time += timedelta(minutes=20)
 
@@ -469,7 +466,7 @@ def _verify_waypoints(
         )
         distance = geodinv[2]
 
-        time_to_reach = timedelta(seconds=distance / ship_speed)
+        time_to_reach = timedelta(seconds=distance / config.ship_speed)
         arrival_time = time + time_to_reach
 
         if wp_next.time is None:
