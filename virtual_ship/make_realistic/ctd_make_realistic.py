@@ -1,13 +1,24 @@
+"""ctd_make_realistic function."""
+
+import random
+
+import numpy as np
+import opensimplex
 import py
 import xarray as xr
-import opensimplex
-import numpy as np
-import random
 
 
 def ctd_make_realistic(
     zarr_path: str | py.path.LocalPath, out_dir: str | py.path.LocalPath, prefix: str
 ) -> list[py.path.LocalPath]:
+    """
+    Take simulated CTD data, add noise, then save in CNV format (1 file per CTD).
+
+    :param zarr_path: Input simulated data.
+    :param out_dir: Output directory for CNV file.
+    :param prefix: Prefix for CNV files. Will be postfixed with '_{ctd_num}'.
+    :returns: Paths to created file.
+    """
     original = xr.open_zarr(zarr_path)
 
     files = []
@@ -87,9 +98,13 @@ def _to_cnv(
     """
     Convert data to CNV.
 
-    :param time: Elapsed time since first measurement in seconds.
-    :param temperature: Temperature data.
-    :param depth: Depth data.
+    :param filename: Output file name.
+    :param latitudes: Latitude data.
+    :param longitudes: Longitude data.
+    :param times: Elapsed time since first measurement in seconds.
+    :param temperatures: Temperature data.
+    :param depths: Depth data.
+    :param salinities: Salinity data.
     :returns: The CNV.
 
     """
