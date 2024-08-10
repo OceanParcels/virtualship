@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from typing import Generator
 
 import pyproj
+from parcels import FieldSet
 from sortedcontainers import SortedList
 
 from .costs import costs
@@ -449,10 +450,7 @@ def _verify_waypoints(
     land_waypoints = [
         (wp_i, wp)
         for wp_i, wp in enumerate(waypoints)
-        if fieldset.UV.eval(
-            0, 0, wp.location.lat, wp.location.lon, applyConversion=False
-        )
-        == (0.0, 0.0)
+        if _is_on_land_zero_uv(fieldset, wp)
     ]
     # raise an error if there are any
     if len(land_waypoints) > 0:
@@ -482,3 +480,16 @@ def _verify_waypoints(
             )
         else:
             time = wp_next.time
+
+
+def _is_on_land_zero_uv(fieldset: FieldSet, waypoint: Waypoint) -> bool:
+    """
+    Check if waypoint is on land by assuming zero velocity means land.
+
+    :param fieldset: The fieldset to sample the velocity from.
+    :param waypoint: The waypoint to check.
+    :returns: If the waypoint is on land.
+    """
+    return fieldset.UV.eval(
+        0, 0, waypoint.location.lat, waypoint.location.lon, applyConversion=False
+    ) == (0.0, 0.0)
