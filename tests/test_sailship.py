@@ -166,15 +166,15 @@ def test_verify_waypoints() -> None:
 
     # the sets of waypoints to test
     WAYPOINTS = [
-        [],  # require at least one waypoints check
-        [Waypoint(Location(0.0, 0.0))],  # first waypoint must have time check
+        [],  # require at least one waypoint
+        [Waypoint(Location(0.0, 0.0))],  # first waypoint must have time
         [
             Waypoint(Location(0.0, 0.0), BASE_TIME + datetime.timedelta(days=1)),
             Waypoint(Location(0.0, 0.0), BASE_TIME),
-        ],  # waypoint times must be in ascending order check
+        ],  # waypoint times must be in ascending order
         [
             Waypoint(Location(0.0, 0.0), BASE_TIME),
-        ],  # 0 uv points are on land check
+        ],  # 0 uv points are on land
         [
             Waypoint(Location(0.1, 0.1), BASE_TIME),
             Waypoint(Location(1.0, 1.0), BASE_TIME + datetime.timedelta(seconds=1)),
