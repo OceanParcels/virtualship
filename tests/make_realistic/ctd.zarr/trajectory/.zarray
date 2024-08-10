@@ -1,6 +1,6 @@
 {
     "chunks": [
-        1
+        2
     ],
     "compressor": {
         "blocksize": 0,
@@ -9,7 +9,6 @@
         "id": "blosc",
         "shuffle": 1
     },
-    "dimension_separator": ".",
     "dtype": "<i8",
     "fill_value": null,
     "filters": null,
