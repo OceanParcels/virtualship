@@ -48,9 +48,10 @@ def _ctd_cast(particle, fieldset, time):
             particle_ddepth = -particle_ddepth
     # raising
     else:
-        particle_ddepth = particle.winch_speed * particle.dt
-        if particle.depth + particle_ddepth > -particle.min_depth:
+        if particle.depth + particle_ddepth > particle.min_depth:
             particle.delete()
+        else:
+            particle_ddepth = particle.winch_speed * particle.dt
 
 
 def simulate_ctd(
