@@ -17,7 +17,7 @@
     "order": "C",
     "shape": [
         2,
-        1992
+        3
     ],
     "zarr_format": 2
 }
