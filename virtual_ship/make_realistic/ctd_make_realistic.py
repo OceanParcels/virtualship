@@ -34,7 +34,11 @@ def ctd_make_realistic(
         temperature = _add_temperature_noise(temperature, depth)
         salinity = _add_salinity_noise(salinity, depth)
 
-        out_file = out_dir.join(f"{prefix}{ctd_i}.cnv")
+        out_file = (
+            out_dir.join(f"{prefix}{ctd_i}.cnv")
+            if isinstance(out_dir, py.path.LocalPath)
+            else f"{out_dir}/{prefix}{ctd_i}.cnv"
+        )
         files.append(out_file)
 
         cnv = _to_cnv(
