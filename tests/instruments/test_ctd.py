@@ -33,7 +33,7 @@ def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
         CTD(
             spacetime=Spacetime(
                 location=Location(latitude=1, longitude=0),
-                time=base_time + datetime.timedelta(minutes=5),
+                time=base_time + datetime.timedelta(hours=0),
             ),
             min_depth=0,
             max_depth=float("-inf"),
