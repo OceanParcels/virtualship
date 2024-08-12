@@ -4,10 +4,12 @@ import datetime
 from datetime import timedelta
 
 import numpy as np
+import pyproj
+import pytest
 from parcels import Field, FieldSet
 
 from virtual_ship import InstrumentType, Location, Waypoint
-from virtual_ship.sailship import sailship
+from virtual_ship.sailship import PlanningError, _verify_waypoints, sailship
 from virtual_ship.virtual_ship_config import (
     ADCPConfig,
     ArgoFloatConfig,
@@ -19,10 +21,10 @@ from virtual_ship.virtual_ship_config import (
 
 
 def _make_ctd_fieldset(base_time: datetime) -> FieldSet:
-    u = np.zeros((2, 2, 2, 2))
-    v = np.zeros((2, 2, 2, 2))
-    t = np.zeros((2, 2, 2, 2))
-    s = np.zeros((2, 2, 2, 2))
+    u = np.full((2, 2, 2, 2), 1.0)
+    v = np.full((2, 2, 2, 2), 1.0)
+    t = np.full((2, 2, 2, 2), 1.0)
+    s = np.full((2, 2, 2, 2), 1.0)
 
     fieldset = FieldSet.from_data(
         {"V": v, "U": u, "T": t, "S": s},
@@ -64,12 +66,12 @@ def test_sailship() -> None:
     base_time = datetime.datetime.strptime("2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
 
     adcp_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0},
+        {"U": 1, "V": 1},
         {"lon": 0, "lat": 0},
     )
 
     ship_underwater_st_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0, "salinity": 0, "temperature": 0},
+        {"U": 1, "V": 1, "salinity": 0, "temperature": 0},
         {"lon": 0, "lat": 0},
     )
 
@@ -78,7 +80,7 @@ def test_sailship() -> None:
     drifter_fieldset = _make_drifter_fieldset(base_time)
 
     argo_float_fieldset = FieldSet.from_data(
-        {"U": 0, "V": 0, "T": 0, "S": 0},
+        {"U": 1, "V": 1, "T": 0, "S": 0},
         {
             "lon": 0,
             "lat": 0,
@@ -155,3 +157,78 @@ def test_sailship() -> None:
     )
 
     sailship(config)
+
+
+def test_verify_waypoints() -> None:
+    # arbitrary cruise start time
+    BASE_TIME = datetime.datetime.strptime("2022-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
+    PROJECTION = pyproj.Geod(ellps="WGS84")
+
+    # the sets of waypoints to test
+    WAYPOINTS = [
+        [],  # require at least one waypoint
+        [Waypoint(Location(0.0, 0.0))],  # first waypoint must have time
+        [
+            Waypoint(Location(0.0, 0.0), BASE_TIME + datetime.timedelta(days=1)),
+            Waypoint(Location(0.0, 0.0), BASE_TIME),
+        ],  # waypoint times must be in ascending order
+        [
+            Waypoint(Location(0.0, 0.0), BASE_TIME),
+        ],  # 0 uv points are on land
+        [
+            Waypoint(Location(0.1, 0.1), BASE_TIME),
+            Waypoint(Location(1.0, 1.0), BASE_TIME + datetime.timedelta(seconds=1)),
+        ],  # waypoints must be reachable in time
+        [
+            Waypoint(Location(0.1, 0.1), BASE_TIME),
+            Waypoint(Location(1.0, 1.0), BASE_TIME + datetime.timedelta(days=1)),
+        ],  # a valid schedule
+    ]
+
+    # the expected errors for the schedules, or None if expected to be valid
+    EXPECT_MATCH = [
+        "^At least one waypoint must be provided.$",
+        "^First waypoint must have a specified time.$",
+        "^Each waypoint should be timed after all previous waypoints$",
+        "^The following waypoints are on land: .*$",
+        "^Waypoint planning is not valid: would arrive too late at a waypoint number .*$",
+        None,
+    ]
+
+    # create a fieldset matching the test waypoints
+    u = np.full((1, 1, 2, 2), 1.0)
+    v = np.full((1, 1, 2, 2), 1.0)
+    u[0, 0, 0, 0] = 0.0
+    v[0, 0, 0, 0] = 0.0
+
+    fieldset = FieldSet.from_data(
+        {"V": v, "U": u},
+        {
+            "time": [np.datetime64(BASE_TIME)],
+            "depth": [0],
+            "lat": [0, 1],
+            "lon": [0, 1],
+        },
+    )
+
+    # dummy configs
+    ctd_config = CTDConfig(None, fieldset, None, None)
+    drifter_config = DrifterConfig(None, None, None)
+    argo_float_config = ArgoFloatConfig(None, None, None, None, None, None, None)
+
+    # test each set of waypoints and verify the raised errors (or none if valid)
+    for waypoints, expect_match in zip(WAYPOINTS, EXPECT_MATCH, strict=True):
+        config = VirtualShipConfig(
+            ship_speed=5.14,
+            waypoints=waypoints,
+            argo_float_config=argo_float_config,
+            adcp_config=None,
+            ship_underwater_st_config=None,
+            ctd_config=ctd_config,
+            drifter_config=drifter_config,
+        )
+        if expect_match is not None:
+            with pytest.raises(PlanningError, match=expect_match):
+                _verify_waypoints(PROJECTION, config)
+        else:
+            _verify_waypoints(PROJECTION, config)
