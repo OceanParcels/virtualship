@@ -6,14 +6,14 @@
             "ncei_template_version": "NCEI_NetCDF_Trajectory_Template_v2.0",
             "parcels_kernels": "NewParticle_sample_salinity_sample_temperature_ctd_cast",
             "parcels_mesh": "spherical",
-            "parcels_version": "0.0.1-23-g3a0fc94"
+            "parcels_version": "0.0.1-24-ge5b76ce"
         },
         ".zgroup": {
             "zarr_format": 2
         },
         "lat/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -30,7 +30,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -46,7 +46,7 @@
         },
         "lon/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -63,7 +63,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -79,7 +79,7 @@
         },
         "max_depth/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -96,7 +96,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -111,7 +111,7 @@
         },
         "min_depth/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -128,7 +128,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -158,7 +158,7 @@
             "filters": null,
             "order": "C",
             "shape": [
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -169,7 +169,7 @@
         },
         "raising/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -186,7 +186,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -201,7 +201,7 @@
         },
         "salinity/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -218,7 +218,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -233,7 +233,7 @@
         },
         "temperature/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -250,7 +250,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -265,7 +265,7 @@
         },
         "time/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -282,7 +282,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -299,7 +299,7 @@
         },
         "trajectory/.zarray": {
             "chunks": [
-                1
+                2
             ],
             "compressor": {
                 "blocksize": 0,
@@ -308,7 +308,6 @@
                 "id": "blosc",
                 "shuffle": 1
             },
-            "dimension_separator": ".",
             "dtype": "<i8",
             "fill_value": null,
             "filters": null,
@@ -325,7 +324,7 @@
         },
         "winch_speed/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -342,7 +341,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
@@ -357,7 +356,7 @@
         },
         "z/.zarray": {
             "chunks": [
-                1,
+                2,
                 1
             ],
             "compressor": {
@@ -374,7 +373,7 @@
             "order": "C",
             "shape": [
                 2,
-                2007
+                1992
             ],
             "zarr_format": 2
         },
