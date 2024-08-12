@@ -31,7 +31,8 @@ def ctd_make_realistic(
         salinity = original.sel(trajectory=traj)["salinity"].values
         depth = original.sel(trajectory=traj)["z"].values
 
-        # temperature = _add_temperature_noise(temperature, depth)
+        temperature = _add_temperature_noise(temperature, depth)
+        salinity = _add_salinity_noise(salinity, depth)
 
         out_file = out_dir.join(f"{prefix}{ctd_i}.cnv")
         files.append(out_file)
@@ -84,6 +85,38 @@ def _add_temperature_noise(temperature: np.ndarray, depth: np.ndarray) -> np.nda
     )
 
     return temperature + surface_noise + drift + noise + noise3 + noise2
+
+
+def _add_salinity_noise(salinity: np.ndarray, depth: np.ndarray) -> np.ndarray:
+    surface_noise = (
+        2.0 * (-np.random.random_sample(len(salinity))) * np.exp(depth / 4.0)
+    )
+    noise = (
+        0.001
+        * np.maximum(1.0 + depth / 1000.0, 0.1)
+        * np.random.random_sample(len(salinity))
+    )
+    drift = (
+        0.02
+        * (np.random.random() * 2.0 - 1)
+        * np.array(range(len(salinity)))
+        / len(salinity)
+    )
+    opensimplex.seed(np.random.randint(999999))
+    noise2 = (
+        0.07
+        * np.maximum(1.0 + depth / 1000.0, 0.1)
+        * (
+            np.array([opensimplex.noise2(n / 30, 0.0) for n in range(len(salinity))])
+            ** 8
+        )
+    )
+    opensimplex.seed(np.random.randint(999999))
+    noise3 = 0.003 * (
+        np.array([opensimplex.noise2(n / 8, 0.0) for n in range(len(salinity))]) ** 2
+    )
+
+    return salinity + surface_noise + drift + noise + noise2 + noise3
 
 
 def _to_cnv(
