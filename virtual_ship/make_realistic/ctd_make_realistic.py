@@ -9,7 +9,9 @@ import xarray as xr
 
 
 def ctd_make_realistic(
-    zarr_path: str | py.path.LocalPath, out_dir: str | py.path.LocalPath, prefix: str
+    zarr_path: str | py.path.LocalPath,
+    out_dir: str | py.path.LocalPath,
+    prefix: str,
 ) -> list[py.path.LocalPath]:
     """
     Take simulated CTD data, add noise, then save in CNV format (1 file per CTD).
@@ -49,6 +51,7 @@ def ctd_make_realistic(
             temperatures=temperature,
             depths=depth,
             salinities=salinity,
+            start_time=time[0],
         )
 
         with open(out_file, "w") as out_cnv:
@@ -149,6 +152,7 @@ def _to_cnv(
     temperatures: np.ndarray,
     depths: np.ndarray,
     salinities: np.ndarray,
+    start_time: np.datetime64,
 ) -> str:
     """
     Convert data to CNV.
@@ -160,13 +164,21 @@ def _to_cnv(
     :param temperatures: Temperature data.
     :param depths: Depth data.
     :param salinities: Salinity data.
+    :param start_time: Start time of measuring. This will be in the header of the CNV file.
     :returns: The CNV.
-
     """
+    formatted_time = np.datetime_as_string(start_time, unit="s")
+    formatted_time = (
+        np.datetime64(formatted_time)
+        .astype("M8[s]")
+        .item()
+        .strftime("%b %d %Y %H:%M:%S")
+    )
+
     header = rf"""
 * Sea-Bird SBE 9 Data File:
 * FileName = {filename}
-# start_time = Aug 02 2024 21:29:45 [NMEA time, first data scan]
+# start_time = {formatted_time} [NMEA time, first data scan]
 # bad_flag = -9.990e-29
 # file_type = ascii
 # name 0 = scan: Scan Count
