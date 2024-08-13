@@ -58,6 +58,15 @@ def ctd_make_realistic(
 
 
 def _add_temperature_noise(temperature: np.ndarray, depth: np.ndarray) -> np.ndarray:
+    """
+    Return the provided temperature with added noise.
+
+    The noise is not a realistic nor based on anything physics, but simply an attempt to have the data look somewhat similar to a real CTD cast.
+
+    :param temperature: The clean temperature.
+    :param depth: Depth measured by CTD.
+    :return: Temperature with added noise.
+    """
     surface_noise = (
         2.0
         * (np.random.random_sample(len(temperature)) * 2.0 - 1)
@@ -92,6 +101,15 @@ def _add_temperature_noise(temperature: np.ndarray, depth: np.ndarray) -> np.nda
 
 
 def _add_salinity_noise(salinity: np.ndarray, depth: np.ndarray) -> np.ndarray:
+    """
+    Return the provided salinity with added noise.
+
+    The noise is not a realistic nor based on anything physics, but simply an attempt to have the data look somewhat similar to a real CTD cast.
+
+    :param salinity: The clean salinity.
+    :param depth: Depth measured by CTD.
+    :return: Salinity with added noise.
+    """
     surface_noise = (
         2.0 * (-np.random.random_sample(len(salinity))) * np.exp(depth / 4.0)
     )
