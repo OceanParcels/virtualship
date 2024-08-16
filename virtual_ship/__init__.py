@@ -6,6 +6,7 @@ from .location import Location
 from .planning_error import PlanningError
 from .spacetime import Spacetime
 from .waypoint import Waypoint
+from .schedule import Schedule
 
 __all__ = [
     "InstrumentType",
@@ -15,4 +16,5 @@ __all__ = [
     "Waypoint",
     "instruments",
     "sailship",
+    "Schedule",
 ]
