@@ -64,7 +64,7 @@ class VirtualShipConfig:
 
     ship_speed: float  # m/s
 
-    waypoints: Schedule
+    schedule: Schedule
 
     argo_float_config: ArgoFloatConfig
     adcp_config: ADCPConfig | None  # if None, ADCP is disabled
@@ -80,7 +80,7 @@ class VirtualShipConfig:
 
         :raises ValueError: If not valid.
         """
-        if len(self.waypoints) < 2:
+        if len(self.schedule.waypoints) < 2:
             raise ValueError("Waypoints require at least a start and an end.")
 
         if self.argo_float_config.max_depth > 0:

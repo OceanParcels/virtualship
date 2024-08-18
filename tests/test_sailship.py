@@ -18,6 +18,7 @@ from virtual_ship.virtual_ship_config import (
     ShipUnderwaterSTConfig,
     VirtualShipConfig,
 )
+from virtual_ship import Schedule
 
 
 def _make_ctd_fieldset(base_time: datetime) -> FieldSet:
@@ -146,9 +147,11 @@ def test_sailship() -> None:
         ),
     ]
 
+    schedule = Schedule(waypoints=waypoints)
+
     config = VirtualShipConfig(
         ship_speed=5.14,
-        waypoints=waypoints,
+        schedule=schedule,
         argo_float_config=argo_float_config,
         adcp_config=adcp_config,
         ship_underwater_st_config=ship_underwater_st_config,
@@ -220,7 +223,7 @@ def test_verify_waypoints() -> None:
     for waypoints, expect_match in zip(WAYPOINTS, EXPECT_MATCH, strict=True):
         config = VirtualShipConfig(
             ship_speed=5.14,
-            waypoints=waypoints,
+            schedule=Schedule(waypoints),
             argo_float_config=argo_float_config,
             adcp_config=None,
             ship_underwater_st_config=None,
