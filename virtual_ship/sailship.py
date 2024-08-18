@@ -21,6 +21,7 @@ from .instruments.drifter import Drifter, simulate_drifters
 from .instruments.ship_underwater_st import simulate_ship_underwater_st
 from .location import Location
 from .planning_error import PlanningError
+from .schedule import Schedule
 from .spacetime import Spacetime
 from .virtual_ship_config import VirtualShipConfig
 from .waypoint import Waypoint
@@ -106,14 +107,14 @@ def sailship(config: VirtualShipConfig):
 
 
 def _simulate_schedule(
-    waypoints: list[Waypoint],
+    waypoints: Schedule,
     projection: pyproj.Geod,
     config: VirtualShipConfig,
 ) -> _ScheduleResults:
     """
     Simulate the sailing and aggregate the virtual measurements that should be taken.
 
-    :param waypoints: The waypoints.
+    :param waypoints: The schedule of waypoints.
     :param projection: Projection used to sail between waypoints.
     :param config: The cruise configuration.
     :returns: Results from the simulation.

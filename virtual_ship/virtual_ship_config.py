@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from parcels import FieldSet
 
-from .waypoint import Waypoint
+from .schedule import Schedule
 
 
 @dataclass
@@ -64,7 +64,7 @@ class VirtualShipConfig:
 
     ship_speed: float  # m/s
 
-    waypoints: list[Waypoint]
+    waypoints: Schedule
 
     argo_float_config: ArgoFloatConfig
     adcp_config: ADCPConfig | None  # if None, ADCP is disabled

@@ -4,17 +4,17 @@ from . import instruments, sailship
 from .instrument_type import InstrumentType
 from .location import Location
 from .planning_error import PlanningError
+from .schedule import Schedule
 from .spacetime import Spacetime
 from .waypoint import Waypoint
-from .schedule import Schedule
 
 __all__ = [
     "InstrumentType",
     "Location",
     "PlanningError",
+    "Schedule",
     "Spacetime",
     "Waypoint",
     "instruments",
     "sailship",
-    "Schedule",
 ]

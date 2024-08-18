@@ -1,5 +1,16 @@
-from virtual_ship import Schedule, Waypoint, Location
+import py
+from virtual_ship import Location, Schedule, Waypoint
 
-def test_schedule() -> None:
-    schedule = Schedule([Waypoint(Location(0, 0), 0), Waypoint(Location(1, 1), 1)])
-    schedule.to_yaml("schedule.yaml")
+def test_schedule(tmpdir: py.path.LocalPath) -> None:
+    out_path = tmpdir.join("schedule.yaml")
+
+    schedule = Schedule(
+        [
+            Waypoint(Location(0, 0), time=0, instrument=None),
+            Waypoint(Location(1, 1), time=1, instrument=None),
+        ]
+    )
+    schedule.to_yaml(out_path)
+
+    schedule2 = Schedule.from_yaml(out_path)
+    assert schedule == schedule2
