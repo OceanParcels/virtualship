@@ -1,0 +1,26 @@
+package:
+  name: virtual_ship
+  version: 0.0.2
+
+source:
+  path: virtual_ship
+
+requirements:
+  run:
+    - python >=3.8
+    - parcels >=3,<4
+    - pyproj >=3,<4
+    - sortedcontainers ==2.4.0
+    - opensimplex ==0.4.5
+    - numpy >=1,<2
+
+about:
+  home: https://oceanparcels.org/
+  license: MIT
+  license_file: LICENSE
+  summary: >
+    Code for the Virtual Ship Classroom, where Marine Scientists can combine
+    Copernicus Marine Data with an OceanParcels ship to go on a virtual expedition.
+  description: >
+    Code for the Virtual Ship Classroom, where Marine Scientists can combine
+    Copernicus Marine Data with an OceanParcels ship to go on a virtual expedition.
