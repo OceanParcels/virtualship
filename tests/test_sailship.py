@@ -8,7 +8,7 @@ import pyproj
 import pytest
 from parcels import Field, FieldSet
 
-from virtual_ship import InstrumentType, Location, Waypoint
+from virtual_ship import InstrumentType, Location, Schedule, Waypoint
 from virtual_ship.sailship import PlanningError, _verify_waypoints, sailship
 from virtual_ship.virtual_ship_config import (
     ADCPConfig,
@@ -18,7 +18,6 @@ from virtual_ship.virtual_ship_config import (
     ShipUnderwaterSTConfig,
     VirtualShipConfig,
 )
-from virtual_ship import Schedule
 
 
 def _make_ctd_fieldset(base_time: datetime) -> FieldSet:
