@@ -1,6 +1,7 @@
 import py
 from virtual_ship import Location, Schedule, Waypoint
 
+
 def test_schedule(tmpdir: py.path.LocalPath) -> None:
     out_path = tmpdir.join("schedule.yaml")
 
