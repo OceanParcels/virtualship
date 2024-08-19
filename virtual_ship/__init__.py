@@ -7,6 +7,7 @@ from .planning_error import PlanningError
 from .schedule import Schedule
 from .spacetime import Spacetime
 from .waypoint import Waypoint
+from .loop import loop
 
 __all__ = [
     "InstrumentType",
@@ -17,4 +18,5 @@ __all__ = [
     "Waypoint",
     "instruments",
     "sailship",
+    "loop",
 ]

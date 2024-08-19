@@ -8,6 +8,7 @@ import yaml
 
 from .location import Location
 from .waypoint import Waypoint
+from pathlib import Path
 
 
 @dataclass
@@ -17,7 +18,7 @@ class Schedule:
     waypoints: list[Waypoint]
 
     @classmethod
-    def from_yaml(cls, path: str) -> Schedule:
+    def from_yaml(cls, path: str | Path) -> Schedule:
         """
         Load schedule from YAML file.
 
@@ -36,7 +37,7 @@ class Schedule:
             ]
         return Schedule(waypoints)
 
-    def to_yaml(self, path: str) -> None:
+    def to_yaml(self, path: str | Path) -> None:
         """
         Save schedule to YAML file.
 
