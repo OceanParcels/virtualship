@@ -22,7 +22,7 @@ def costs(config: VirtualShipConfig, total_time: timedelta):
     num_argos = len(
         [
             waypoint
-            for waypoint in config.waypoints
+            for waypoint in config.schedule.waypoints
             if waypoint.instrument is InstrumentType.ARGO_FLOAT
         ]
     )
@@ -30,7 +30,7 @@ def costs(config: VirtualShipConfig, total_time: timedelta):
     num_drifters = len(
         [
             waypoint
-            for waypoint in config.waypoints
+            for waypoint in config.schedule.waypoints
             if waypoint.instrument is InstrumentType.DRIFTER
         ]
     )

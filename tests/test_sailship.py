@@ -8,7 +8,7 @@ import pyproj
 import pytest
 from parcels import Field, FieldSet
 
-from virtual_ship import InstrumentType, Location, Waypoint
+from virtual_ship import InstrumentType, Location, Schedule, Waypoint
 from virtual_ship.sailship import PlanningError, _verify_waypoints, sailship
 from virtual_ship.virtual_ship_config import (
     ADCPConfig,
@@ -146,9 +146,11 @@ def test_sailship() -> None:
         ),
     ]
 
+    schedule = Schedule(waypoints=waypoints)
+
     config = VirtualShipConfig(
         ship_speed=5.14,
-        waypoints=waypoints,
+        schedule=schedule,
         argo_float_config=argo_float_config,
         adcp_config=adcp_config,
         ship_underwater_st_config=ship_underwater_st_config,
@@ -220,7 +222,7 @@ def test_verify_waypoints() -> None:
     for waypoints, expect_match in zip(WAYPOINTS, EXPECT_MATCH, strict=True):
         config = VirtualShipConfig(
             ship_speed=5.14,
-            waypoints=waypoints,
+            schedule=Schedule(waypoints),
             argo_float_config=argo_float_config,
             adcp_config=None,
             ship_underwater_st_config=None,
