@@ -41,7 +41,6 @@ def sailship(config: VirtualShipConfig):
 
     # simulate the sailing and aggregate what measurements should be simulated
     schedule_results = _simulate_schedule(
-        waypoints=config.waypoints,
         projection=projection,
         config=config,
     )
@@ -98,29 +97,31 @@ def sailship(config: VirtualShipConfig):
 
     # calculate cruise cost
     assert (
-        config.waypoints[0].time is not None
+        config.schedule.waypoints[0].time is not None
     ), "First waypoints cannot have None time as this has been verified before during config verification."
-    time_past = schedule_results.end_spacetime.time - config.waypoints[0].time
+    time_past = schedule_results.end_spacetime.time - config.schedule.waypoints[0].time
     cost = costs(config, time_past)
     print(f"This cruise took {time_past} and would have cost {cost:,.0f} euros.")
 
 
 def _simulate_schedule(
-    waypoints: list[Waypoint],
     projection: pyproj.Geod,
     config: VirtualShipConfig,
 ) -> _ScheduleResults:
     """
     Simulate the sailing and aggregate the virtual measurements that should be taken.
 
-    :param waypoints: The waypoints.
     :param projection: Projection used to sail between waypoints.
     :param config: The cruise configuration.
     :returns: Results from the simulation.
     :raises NotImplementedError: When unsupported instruments are encountered.
     :raises RuntimeError: When schedule appears infeasible. This should not happen in this version of virtual ship as the schedule is verified beforehand.
     """
-    cruise = _Cruise(Spacetime(waypoints[0].location, waypoints[0].time))
+    cruise = _Cruise(
+        Spacetime(
+            config.schedule.waypoints[0].location, config.schedule.waypoints[0].time
+        )
+    )
     measurements = _MeasurementsToSimulate()
 
     # add recurring tasks to task list
@@ -143,7 +144,7 @@ def _simulate_schedule(
         )
 
     # sail to each waypoint while executing tasks
-    for waypoint in waypoints:
+    for waypoint in config.schedule.waypoints:
         if waypoint.time is not None and cruise.spacetime.time > waypoint.time:
             raise RuntimeError(
                 "Could not reach waypoint in time. This should not happen in this version of virtual ship as the schedule is verified beforehand."
@@ -398,15 +399,15 @@ def _verify_waypoints(
     :raises PlanningError: If waypoints are not feasible or incorrect.
     :raises ValueError: If there are no fieldsets in the config, which are needed to verify all waypoints are on water.
     """
-    if len(config.waypoints) == 0:
+    if len(config.schedule.waypoints) == 0:
         raise PlanningError("At least one waypoint must be provided.")
 
     # check first waypoint has a time
-    if config.waypoints[0].time is None:
+    if config.schedule.waypoints[0].time is None:
         raise PlanningError("First waypoint must have a specified time.")
 
     # check waypoint times are in ascending order
-    timed_waypoints = [wp for wp in config.waypoints if wp.time is not None]
+    timed_waypoints = [wp for wp in config.schedule.waypoints if wp.time is not None]
     if not all(
         [
             next.time >= cur.time
@@ -446,7 +447,7 @@ def _verify_waypoints(
     # get waypoints with 0 UV
     land_waypoints = [
         (wp_i, wp)
-        for wp_i, wp in enumerate(config.waypoints)
+        for wp_i, wp in enumerate(config.schedule.waypoints)
         if _is_on_land_zero_uv(fieldset, wp)
     ]
     # raise an error if there are any
@@ -456,8 +457,10 @@ def _verify_waypoints(
         )
 
     # check that ship will arrive on time at each waypoint (in case no unexpected event happen)
-    time = config.waypoints[0].time
-    for wp_i, (wp, wp_next) in enumerate(zip(config.waypoints, config.waypoints[1:])):
+    time = config.schedule.waypoints[0].time
+    for wp_i, (wp, wp_next) in enumerate(
+        zip(config.schedule.waypoints, config.schedule.waypoints[1:])
+    ):
         if wp.instrument is InstrumentType.CTD:
             time += timedelta(minutes=20)
 
