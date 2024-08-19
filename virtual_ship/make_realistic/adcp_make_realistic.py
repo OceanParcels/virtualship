@@ -1,13 +1,8 @@
 """adcp_make_realistic function."""
 
-import random
-
 import numpy as np
-import opensimplex
 import py
 import xarray as xr
-import numpy as np
-import matplotlib.pyplot as plt
 
 
 def adcp_make_realistic(
@@ -33,15 +28,6 @@ def adcp_make_realistic(
     all_vs = original["V"].values
 
     all_us, all_vs = _add_noise(times, depths, all_us, all_vs)
-
-    # Create the heatmap
-    plt.figure(figsize=(10, 6))
-    plt.pcolormesh(times, depths, all_us, shading="auto", cmap="viridis")
-    plt.colorbar(label="Speed (m/s)")
-    plt.xlabel("Time")
-    plt.ylabel("Depth")
-    plt.title("Heatmap of Speed over Time and Depth")
-    plt.show()
 
     csv = _to_csv(times, depths, lats, lons, all_us, all_vs)
     out_file = (

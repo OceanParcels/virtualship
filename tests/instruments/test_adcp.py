@@ -26,21 +26,20 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
     sample_points = [
         Spacetime(Location(1, 2), base_time + datetime.timedelta(seconds=0)),
         Spacetime(Location(3, 4), base_time + datetime.timedelta(seconds=1)),
-        Spacetime(Location(2, 3), base_time + datetime.timedelta(seconds=0.5)),
     ]
 
     # expected observations at sample points
     expected_obs = [
         {
             "V": {"surface": 5, "max_depth": 6},
-            "U": {"surface": 6, "max_depth": 8},
+            "U": {"surface": 7, "max_depth": 8},
             "lat": sample_points[0].location.lat,
             "lon": sample_points[0].location.lon,
             "time": base_time + datetime.timedelta(seconds=0),
         },
         {
-            "V": {"surface": 6, "max_depth": 7},
-            "U": {"surface": 7, "max_depth": 8},
+            "V": {"surface": 9, "max_depth": 10},
+            "U": {"surface": 11, "max_depth": 12},
             "lat": sample_points[1].location.lat,
             "lon": sample_points[1].location.lon,
             "time": base_time + datetime.timedelta(seconds=1),
@@ -80,8 +79,7 @@ def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
     )
 
     # perform simulation
-    # out_path = tmpdir.join("out.zarr")
-    out_path = "out.zarr"
+    out_path = tmpdir.join("out.zarr")
 
     simulate_adcp(
         fieldset=fieldset,

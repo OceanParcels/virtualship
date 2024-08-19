@@ -1,7 +1,8 @@
+import csv
+
 import py
 
 from virtual_ship.make_realistic import adcp_make_realistic
-import csv
 
 
 def test_adcp_make_realistic(tmpdir: py.path.LocalPath) -> None:
