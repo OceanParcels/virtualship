@@ -25,24 +25,11 @@ classifiers = [
     "Intended Audience :: Education",
 ]
 dependencies = [
-    "shapely >= 2, < 3",
-    "pyproj >= 3, < 4",
     "parcels >= 3, < 4",
-    "scipy >= 1, < 2",
-    "xarray >= 2023, < 2024",
-    # The packages below are parcels packages not included in their distribution requirements.
-    "numpy >= 1, < 2",
-    "cgen >= 2020, < 2021",
-    "dask >= 2023, < 2025",
-    "cftime >= 1, < 2",
-    "psutil >= 1, < 2",
-    "netCDF4 >= 1, < 2",
-    "zarr >= 2, < 3",
-    "tqdm >= 4, < 5",
-    "pymbolic >= 2022, < 2023",
+    "pyproj >= 3, < 4",
     "sortedcontainers == 2.4.0",
-    "sortedcontainers-stubs == 2.4.2",
-    "opensimplex == 0.4.5.1",
+    "opensimplex == 0.4.5",
+    "numpy >=1, < 2",
 ]
 
 [project.urls]
@@ -71,6 +58,7 @@ dev = [
     "codecov == 2.1.13",
     "seabird == 0.12.0",
     "setuptools == 70.0.0",
+    "sortedcontainers-stubs == 2.4.2",
 ]
 
 [tool.isort]
