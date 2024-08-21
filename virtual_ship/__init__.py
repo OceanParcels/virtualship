@@ -8,6 +8,14 @@ from .schedule import Schedule
 from .spacetime import Spacetime
 from .waypoint import Waypoint
 from .loop import loop
+from .ship_config import (
+    ShipConfig,
+    ArgoFloatConfig,
+    ADCPConfig,
+    ShipUnderwaterSTConfig,
+    CTDConfig,
+    DrifterConfig,
+)
 
 __all__ = [
     "InstrumentType",
@@ -19,4 +27,10 @@ __all__ = [
     "instruments",
     "sailship",
     "loop",
+    "ShipConfig",
+    "ArgoFloatConfig",
+    "ADCPConfig",
+    "ShipUnderwaterSTConfig",
+    "CTDConfig",
+    "DrifterConfig",
 ]

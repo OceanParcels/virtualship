@@ -27,14 +27,18 @@ class Schedule:
         """
         with open(path, "r") as in_file:
             data = yaml.safe_load(in_file)
-            waypoints = [
-                Waypoint(
-                    location=Location(waypoint["lat"], waypoint["lon"]),
-                    time=waypoint["time"],
-                    instrument=waypoint["instrument"],
-                )
-                for waypoint in data
-            ]
+            try:
+                waypoints = [
+                    Waypoint(
+                        location=Location(waypoint["lat"], waypoint["lon"]),
+                        time=waypoint["time"],
+                        instrument=waypoint["instrument"],
+                    )
+                    for waypoint in data
+                ]
+            except Exception as err:
+                raise ValueError("Schedule not in correct format.") from err
+
         return Schedule(waypoints)
 
     def to_yaml(self, path: str | Path) -> None:
