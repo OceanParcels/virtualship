@@ -1,55 +1,50 @@
 # from datetime import datetime
-# from .schedule import Schedule
+from .schedule import Schedule
 from pathlib import Path
 
-# import pyproj
-# from virtual_ship import ShipConfig
+import pyproj
+from .ship_config import ShipConfig
 
 
 def loop(expedition_dir: str | Path) -> None:
-    raise NotImplementedError()
+    if isinstance(expedition_dir, str):
+        expedition_dir = Path(expedition_dir)
+
+    ship_config = _get_ship_config(expedition_dir)
+    if ship_config is None:
+        return
+
+    schedule = _get_schedule(expedition_dir)
+    if schedule is None:
+        return
+
+    # projection used to sail between waypoints
+    projection = pyproj.Geod(ellps="WGS84")
+
+    # simulate_schedule(projection=projection, config=config)
 
 
-#     if isinstance(expedition_dir, str):
-#         expedition_dir = Path(expedition_dir)
-
-#     ship_config = get_ship_config(expedition_dir)
-#     if ship_config is None:
-#         return
-
-#     schedule = get_schedule(expedition_dir)
-#     if schedule is None:
-#         return
-
-#     # projection used to sail between waypoints
-#     projection = pyproj.Geod(ellps="WGS84")
-
-#     ship_config = ShipConfig.from_yaml()
-
-#     simulate_schedule(projection=projection, config=config)
+def print_and_wait_for_user(message: str) -> None:
+    print(message)
+    input()
 
 
-# def print_and_wait_for_user(message: str) -> None:
-#     print(message)
-#     input()
+def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
+    schedule_path = expedition_dir.joinpath("ship_config.yaml")
+    try:
+        return ShipConfig.from_yaml(schedule_path)
+    except FileNotFoundError:
+        print(f'Schedule not found. Save it to "{schedule_path}".')
+        return None
 
 
-# def get_ship_config(expedition_dir: Path) -> Schedule | None:
-#     schedule_path = expedition_dir.joinpath("ship_config.yaml")
-#     try:
-#         return Schedule.from_yaml(schedule_path)
-#     except FileNotFoundError:
-#         print(f'Schedule not found. Save it to "{schedule_path}".')
-#         return None
-
-
-# def get_schedule(expedition_dir: Path) -> Schedule | None:
-#     schedule_path = expedition_dir.joinpath("schedule.yaml")
-#     try:
-#         return Schedule.from_yaml(schedule_path)
-#     except FileNotFoundError:
-#         print(f'Schedule not found. Save it to "{schedule_path}".')
-#         return None
+def _get_schedule(expedition_dir: Path) -> Schedule | None:
+    schedule_path = expedition_dir.joinpath("schedule.yaml")
+    try:
+        return Schedule.from_yaml(schedule_path)
+    except FileNotFoundError:
+        print(f'Schedule not found. Save it to "{schedule_path}".')
+        return None
 
 
 # def simulate_schedule(

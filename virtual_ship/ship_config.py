@@ -126,7 +126,7 @@ class ShipConfig(BaseModel):
     If None, no ST measurements will be performed.
     """
 
-    drifter_config: DrifterConfig
+    drifter_config: DrifterConfig | None
     """
     Drifter configuration.
     
@@ -135,12 +135,12 @@ class ShipConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    def save_to_yaml(self, file_path: str | Path) -> None:
+    def to_yaml(self, file_path: str | Path) -> None:
         with open(file_path, "w") as file:
             yaml.dump(self.model_dump(by_alias=True), file)
 
     @classmethod
-    def load_from_yaml(cls, file_path: str | Path) -> ShipConfig:
+    def from_yaml(cls, file_path: str | Path) -> ShipConfig:
         with open(file_path, "r") as file:
             data = yaml.safe_load(file)
         return ShipConfig(**data)
