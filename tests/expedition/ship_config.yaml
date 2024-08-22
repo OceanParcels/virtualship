@@ -1,5 +1,5 @@
 adcp_config:
-  bin_size_m: 24
+  num_bins: 40
   max_depth: -1000.0
   period_minutes: 5.0
 argo_float_config:

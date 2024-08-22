@@ -3,9 +3,9 @@ waypoints:
   location:
     latitude: 0
     longitude: 0
-  time: 2023-01-01 00:00:00
+  time: 1950-01-01 00:00:00
 - instrument: null
   location:
-    latitude: 0.01
-    longitude: 0.01
-  time: 2023-01-01 01:00:00
+    latitude: 1
+    longitude: 1
+  time: 1950-01-01 01:00:00

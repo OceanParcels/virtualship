@@ -17,7 +17,7 @@ from .schedule import Schedule
 
 def simulate_schedule(
     projection: pyproj.Geod, ship_config: ShipConfig, schedule: Schedule
-) -> _ScheduleResults:
+) -> ScheduleResults:
     """
     Simulate the expedition schedule and aggregate the virtual measurements that should be taken.
 
@@ -25,7 +25,6 @@ def simulate_schedule(
     :param ship_config: The ship configuration.
     :returns: Results from the simulation.
     :raises NotImplementedError: When unsupported instruments are encountered.
-    :raises RuntimeError: When schedule appears infeasible. This should not happen in this version of virtual ship as the schedule is verified beforehand.
     """
     cruise = _SimulationState(
         Spacetime(
@@ -33,7 +32,7 @@ def simulate_schedule(
             schedule.waypoints[0].time,
         )
     )
-    measurements = _MeasurementsToSimulate()
+    measurements = MeasurementsToSimulate()
 
     # add recurring tasks to task list
     waiting_tasks = SortedList[_WaitingTask]()
@@ -55,10 +54,16 @@ def simulate_schedule(
         )
 
     # sail to each waypoint while executing tasks
-    for waypoint in schedule.waypoints:
+    for waypoint_i, waypoint in enumerate(schedule.waypoints):
         if waypoint.time is not None and cruise.spacetime.time > waypoint.time:
-            raise RuntimeError(
+            print(
                 "Could not reach waypoint in time. This should not happen in this version of virtual ship as the schedule is verified beforehand."
+            )
+            return ScheduleResults(
+                success=False,
+                measurements_to_simulate=measurements,
+                end_spacetime=cruise.spacetime.time,
+                failed_waypoint_i=waypoint_i,
             )
 
         # add task to the task queue for the instrument at the current waypoint
@@ -161,8 +166,10 @@ def simulate_schedule(
         except StopIteration:
             pass
 
-    return _ScheduleResults(
-        measurements_to_simulate=measurements, end_spacetime=cruise.spacetime
+    return ScheduleResults(
+        success=True,
+        measurements_to_simulate=measurements,
+        end_spacetime=cruise.spacetime,
     )
 
 
@@ -197,7 +204,7 @@ class _SimulationState:
 
 
 @dataclass
-class _MeasurementsToSimulate:
+class MeasurementsToSimulate:
     adcps: list[Spacetime] = field(default_factory=list, init=False)
     ship_underwater_sts: list[Spacetime] = field(default_factory=list, init=False)
     argo_floats: list[ArgoFloat] = field(default_factory=list, init=False)
@@ -206,9 +213,11 @@ class _MeasurementsToSimulate:
 
 
 @dataclass
-class _ScheduleResults:
-    measurements_to_simulate: _MeasurementsToSimulate
+class ScheduleResults:
+    success: bool
+    measurements_to_simulate: MeasurementsToSimulate
     end_spacetime: Spacetime
+    failed_waypoint_i: int | None = None
 
 
 @dataclass
@@ -241,7 +250,7 @@ class _WaitingTask:
 def _ship_underwater_st_loop(
     sample_period: timedelta,
     cruise: _SimulationState,
-    measurements: _MeasurementsToSimulate,
+    measurements: MeasurementsToSimulate,
 ) -> Generator[_WaitFor, None, None]:
     while not cruise.finished:
         measurements.ship_underwater_sts.append(cruise.spacetime)
@@ -251,7 +260,7 @@ def _ship_underwater_st_loop(
 def _adcp_loop(
     sample_period: timedelta,
     cruise: _SimulationState,
-    measurements: _MeasurementsToSimulate,
+    measurements: MeasurementsToSimulate,
 ) -> Generator[_WaitFor, None, None]:
     while not cruise.finished:
         measurements.adcps.append(cruise.spacetime)
@@ -263,7 +272,7 @@ def _ctd_task(
     min_depth: float,
     max_depth: float,
     cruise: _SimulationState,
-    measurements: _MeasurementsToSimulate,
+    measurements: MeasurementsToSimulate,
 ) -> Generator[_WaitFor, None, None]:
     with cruise.do_not_sail():
         measurements.ctds.append(
@@ -278,7 +287,7 @@ def _ctd_task(
 
 def _drifter_task(
     cruise: _SimulationState,
-    measurements: _MeasurementsToSimulate,
+    measurements: MeasurementsToSimulate,
     config: ShipConfig,
 ) -> None:
     measurements.drifters.append(
@@ -292,7 +301,7 @@ def _drifter_task(
 
 def _argo_float_task(
     cruise: _SimulationState,
-    measurements: _MeasurementsToSimulate,
+    measurements: MeasurementsToSimulate,
     config: ShipConfig,
 ) -> None:
     measurements.argo_floats.append(

@@ -1,4 +1,4 @@
-"""VirtualShipConfig class."""
+"""ShipConfig and supporting classes."""
 
 from __future__ import annotations
 from datetime import timedelta
@@ -6,7 +6,6 @@ from datetime import timedelta
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict, field_serializer, Field
 import yaml
-from typing import Any
 
 
 class ArgoFloatConfig(BaseModel):
@@ -24,7 +23,7 @@ class ADCPConfig(BaseModel):
     """Configuration for ADCP instrument."""
 
     max_depth: float = Field(le=0.0)
-    bin_size_m: int = Field(gt=0.0)
+    num_bins: int = Field(gt=0.0)
     period: timedelta = Field(
         serialization_alias="period_minutes",
         validation_alias="period_minutes",

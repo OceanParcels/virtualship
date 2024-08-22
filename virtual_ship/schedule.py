@@ -2,64 +2,25 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-import yaml
-
-from .location import Location
-from .waypoint import Waypoint
 from pathlib import Path
+from pydantic import BaseModel, ConfigDict
+import yaml
+from .waypoint import Waypoint
 
 
-@dataclass
-class Schedule:
+class Schedule(BaseModel):
     """Schedule of the virtual ship."""
 
     waypoints: list[Waypoint]
 
+    model_config = ConfigDict(extra="forbid")
+
+    def to_yaml(self, file_path: str | Path) -> None:
+        with open(file_path, "w") as file:
+            yaml.dump(self.model_dump(by_alias=True), file)
+
     @classmethod
-    def from_yaml(cls, path: str | Path) -> Schedule:
-        """
-        Load schedule from YAML file.
-
-        :param path: The file to read from.
-        :returns: Schedule of waypoints from the YAML file.
-        """
-        with open(path, "r") as in_file:
-            data = yaml.safe_load(in_file)
-            try:
-                waypoints = [
-                    Waypoint(
-                        location=Location(waypoint["lat"], waypoint["lon"]),
-                        time=waypoint["time"],
-                        instrument=waypoint["instrument"],
-                    )
-                    for waypoint in data
-                ]
-            except Exception as err:
-                raise ValueError("Schedule not in correct format.") from err
-
-        return Schedule(waypoints)
-
-    def to_yaml(self, path: str | Path) -> None:
-        """
-        Save schedule to YAML file.
-
-        :param path: The file to write to.
-        """
-        with open(path, "w") as out_file:
-            print(
-                yaml.dump(
-                    [
-                        {
-                            "lat": waypoint.location.lat,
-                            "lon": waypoint.location.lon,
-                            "time": waypoint.time,
-                            "instrument": waypoint.instrument,
-                        }
-                        for waypoint in self.waypoints
-                    ],
-                    out_file,
-                )
-            )
-        pass
+    def from_yaml(cls, file_path: str | Path) -> Schedule:
+        with open(file_path, "r") as file:
+            data = yaml.safe_load(file)
+        return Schedule(**data)

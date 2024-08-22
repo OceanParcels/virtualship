@@ -7,6 +7,9 @@ from .ship_config import ShipConfig
 from .checkpoint import Checkpoint
 from datetime import datetime
 from .simulate_schedule import simulate_schedule
+from .verify_schedule import verify_schedule
+from .input_data import InputData
+from .simulate_measurements import simulate_measurements
 
 
 def loop(expedition_dir: str | Path) -> None:
@@ -23,21 +26,54 @@ def loop(expedition_dir: str | Path) -> None:
 
     checkpoint = _load_checkpoint(expedition_dir)
     if checkpoint is None:
-        checkpoint = Checkpoint()
+        checkpoint = Checkpoint(past_schedule=Schedule(waypoints=[]))
+
+    # verify schedule and checkpoint match
+    if (
+        not schedule.waypoints[: len(checkpoint.past_schedule.waypoints)]
+        == checkpoint.past_schedule.waypoints
+    ):
+        print(
+            "Past waypoints in schedule have been changed! Restore past schedule and only change future waypoints."
+        )
+        return
 
     # projection used to sail between waypoints
     projection = pyproj.Geod(ellps="WGS84")
 
-    # simulate the schedule from the checkpoint
-    simulate_schedule(projection=projection, ship_config=ship_config)
-    # TODO this should return whether the complete schedule is done
-    # or the part of the schedule that's done
-    # store as checkpoint
-    # ask user to update schedule
-    # reload and check if matching checkpoint
-    # then simulate whole schedule again (it's fast anyway)
+    # load fieldsets
+    input_data = _load_input_data(
+        expedition_dir=expedition_dir, ship_config=ship_config
+    )
 
-    # finally, simulate measurements
+    # verify schedule makes sense
+    verify_schedule(projection, ship_config, schedule, input_data)
+
+    # simulate the schedule
+    schedule_results = simulate_schedule(
+        projection=projection, ship_config=ship_config, schedule=schedule
+    )
+    if not schedule_results.success:
+        print(
+            f"It is currently {schedule_results.end_spacetime} and waypoint {schedule_results.failed_waypoint_i} could not be reached in time. Update your schedule and continue the expedition."
+        )
+        _save_checkpoint(
+            Checkpoint(
+                past_schedule=Schedule(
+                    waypoints=schedule.waypoints[: schedule_results.failed_waypoint_i]
+                )
+            )
+        )
+        return
+
+    print("Simulating measurements. This may take a while..")
+    simulate_measurements(
+        expedition_dir,
+        ship_config,
+        input_data,
+        schedule_results.measurements_to_simulate,
+    )
+    print("Done simulating measurements.")
 
 
 def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
@@ -49,6 +85,17 @@ def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
         return None
 
 
+def _load_input_data(expedition_dir: Path, ship_config: ShipConfig) -> InputData:
+    return InputData.load(
+        directory=expedition_dir.joinpath("input_data"),
+        load_adcp=ship_config.adcp_config is not None,
+        load_argo_float=ship_config.argo_float_config is not None,
+        load_ctd=ship_config.ctd_config is not None,
+        load_drifter=ship_config.drifter_config is not None,
+        load_ship_underwater_st=ship_config.ship_underwater_st_config is not None,
+    )
+
+
 def _get_schedule(expedition_dir: Path) -> Schedule | None:
     file_path = expedition_dir.joinpath("schedule.yaml")
     try:
@@ -58,9 +105,14 @@ def _get_schedule(expedition_dir: Path) -> Schedule | None:
         return None
 
 
-def _load_checkpoint(expedition_dir: Path) -> Schedule | None:
+def _load_checkpoint(expedition_dir: Path) -> Checkpoint | None:
     file_path = expedition_dir.joinpath("checkpoint.yaml")
     try:
         return Checkpoint.from_yaml(file_path)
     except FileNotFoundError:
         return None
+
+
+def _save_checkpoint(checkpoint: Checkpoint, expedition_dir: Path) -> None:
+    file_path = expedition_dir.joinpath("checkpoint.yaml")
+    checkpoint.to_yaml(file_path)

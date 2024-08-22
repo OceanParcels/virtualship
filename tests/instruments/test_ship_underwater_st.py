@@ -56,8 +56,8 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
         {
             "V": np.zeros((2, 2, 2)),
             "U": np.zeros((2, 2, 2)),
-            "salinity": salinity,
-            "temperature": temperature,
+            "S": salinity,
+            "T": temperature,
         },
         {
             "lat": np.array([expected_obs[0]["lat"], expected_obs[1]["lat"]]),
@@ -95,7 +95,7 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
         zip(results.sel(trajectory=traj).obs, expected_obs, strict=True)
     ):
         obs = results.sel(trajectory=traj, obs=obs_i)
-        for var in ["salinity", "temperature", "lat", "lon"]:
+        for var in ["S", "T", "lat", "lon"]:
             obs_value = obs[var].values.item()
             exp_value = exp[var]
             assert np.isclose(
