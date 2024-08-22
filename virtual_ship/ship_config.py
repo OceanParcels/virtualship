@@ -3,9 +3,8 @@
 from __future__ import annotations
 from datetime import timedelta
 
-from parcels import FieldSet
 from pathlib import Path
-from pydantic import BaseModel, ConfigDict, field_serializer, field_validator, Field
+from pydantic import BaseModel, ConfigDict, field_serializer, Field
 import yaml
 from typing import Any
 
