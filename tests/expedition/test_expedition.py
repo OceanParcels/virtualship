@@ -1,5 +1,5 @@
-from virtual_ship import loop
+from virtual_ship import do_expedition
 
 
 def test_expedition() -> None:
-    loop(".")
+    do_expedition(".")

@@ -7,7 +7,7 @@ from .planning_error import PlanningError
 from .schedule import Schedule
 from .spacetime import Spacetime
 from .waypoint import Waypoint
-from .loop import loop
+from .do_expedition import do_expedition
 from .ship_config import (
     ShipConfig,
     ArgoFloatConfig,
@@ -26,7 +26,7 @@ __all__ = [
     "Waypoint",
     "instruments",
     "sailship",
-    "loop",
+    "do_expedition",
     "ShipConfig",
     "ArgoFloatConfig",
     "ADCPConfig",

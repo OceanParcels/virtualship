@@ -1,34 +1,36 @@
-# from datetime import datetime
 from .schedule import Schedule
 from pathlib import Path
 
 import pyproj
 from .ship_config import ShipConfig
 from .checkpoint import Checkpoint
-from datetime import datetime
 from .simulate_schedule import simulate_schedule
 from .verify_schedule import verify_schedule
 from .input_data import InputData
 from .simulate_measurements import simulate_measurements
+from .expedition_cost import expedition_cost
 
 
-def loop(expedition_dir: str | Path) -> None:
+def do_expedition(expedition_dir: str | Path) -> None:
     if isinstance(expedition_dir, str):
         expedition_dir = Path(expedition_dir)
 
+    # load ship configuration
     ship_config = _get_ship_config(expedition_dir)
     if ship_config is None:
         return
 
+    # load schedule
     schedule = _get_schedule(expedition_dir)
     if schedule is None:
         return
 
+    # load last checkpoint
     checkpoint = _load_checkpoint(expedition_dir)
     if checkpoint is None:
         checkpoint = Checkpoint(past_schedule=Schedule(waypoints=[]))
 
-    # verify schedule and checkpoint match
+    # verify that schedule and checkpoint match
     if (
         not schedule.waypoints[: len(checkpoint.past_schedule.waypoints)]
         == checkpoint.past_schedule.waypoints
@@ -66,6 +68,7 @@ def loop(expedition_dir: str | Path) -> None:
         )
         return
 
+    # simulate measurements
     print("Simulating measurements. This may take a while..")
     simulate_measurements(
         expedition_dir,
@@ -74,6 +77,16 @@ def loop(expedition_dir: str | Path) -> None:
         schedule_results.measurements_to_simulate,
     )
     print("Done simulating measurements.")
+
+    # calculate expedition cost in US$
+    assert (
+        schedule.waypoints[0].time is not None
+    ), "First waypoint has no time. This should not be possible as it should have been verified before."
+    time_past = schedule_results.end_spacetime.time - schedule.waypoints[0].time
+    cost = expedition_cost(schedule_results, time_past)
+    with open(expedition_dir.joinpath("results", "cost.txt"), "w") as file:
+        file.writelines(f"cost: {cost} US$")
+    print(f"This expedition took {time_past} and would have cost {cost:,.0f} US$.")
 
 
 def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
