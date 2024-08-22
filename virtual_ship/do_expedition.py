@@ -1,17 +1,27 @@
-from .schedule import Schedule
+"""do_expedition function."""
+
 from pathlib import Path
 
 import pyproj
-from .ship_config import ShipConfig
+
 from .checkpoint import Checkpoint
+from .expedition_cost import expedition_cost
+from .input_data import InputData
+from .schedule import Schedule
+from .ship_config import ShipConfig
+from .simulate_measurements import simulate_measurements
 from .simulate_schedule import simulate_schedule
 from .verify_schedule import verify_schedule
-from .input_data import InputData
-from .simulate_measurements import simulate_measurements
-from .expedition_cost import expedition_cost
 
 
 def do_expedition(expedition_dir: str | Path) -> None:
+    """
+    Perform an expedition, providing terminal feedback and file output.
+
+    This function is written as the entry point for a command line script.
+
+    :param expedition_dir: The base directory for the expedition.
+    """
     if isinstance(expedition_dir, str):
         expedition_dir = Path(expedition_dir)
 

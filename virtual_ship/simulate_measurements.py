@@ -1,13 +1,16 @@
-from .ship_config import ShipConfig
+"""simulate_measurements function."""
+
+from datetime import timedelta
+from pathlib import Path
+
+from .input_data import InputData
 from .instruments.adcp import simulate_adcp
 from .instruments.argo_float import simulate_argo_floats
 from .instruments.ctd import simulate_ctd
 from .instruments.drifter import simulate_drifters
 from .instruments.ship_underwater_st import simulate_ship_underwater_st
+from .ship_config import ShipConfig
 from .simulate_schedule import MeasurementsToSimulate
-from pathlib import Path
-from datetime import timedelta
-from .input_data import InputData
 
 
 def simulate_measurements(
@@ -16,6 +19,17 @@ def simulate_measurements(
     input_data: InputData,
     measurements: MeasurementsToSimulate,
 ) -> None:
+    """
+    Simulate measurements using parcels.
+
+    Saves everything the $expedition_dir/results.
+
+    :param expedition_dir: Base directory of the expedition.
+    :param ship_config: Ship configuration.
+    :param input_data: Input data for simulation.
+    :param measurements: The measurements to simulate.
+    :raises RuntimeError: In case fieldsets of configuration is not provided. Make sure to check this before calling this function.
+    """
     if isinstance(expedition_dir, str):
         expedition_dir = Path(expedition_dir)
 

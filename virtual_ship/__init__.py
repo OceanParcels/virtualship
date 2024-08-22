@@ -1,36 +1,34 @@
 """Code for the Virtual Ship Classroom, where Marine Scientists can combine Copernicus Marine Data with an OceanParcels ship to go on a virtual expedition."""
 
 from . import instruments, sailship
+from .do_expedition import do_expedition
 from .instrument_type import InstrumentType
 from .location import Location
-from .planning_error import PlanningError
 from .schedule import Schedule
-from .spacetime import Spacetime
-from .waypoint import Waypoint
-from .do_expedition import do_expedition
 from .ship_config import (
-    ShipConfig,
-    ArgoFloatConfig,
     ADCPConfig,
-    ShipUnderwaterSTConfig,
+    ArgoFloatConfig,
     CTDConfig,
     DrifterConfig,
+    ShipConfig,
+    ShipUnderwaterSTConfig,
 )
+from .spacetime import Spacetime
+from .waypoint import Waypoint
 
 __all__ = [
-    "InstrumentType",
-    "Location",
-    "PlanningError",
-    "Schedule",
-    "Spacetime",
-    "Waypoint",
-    "instruments",
-    "sailship",
-    "do_expedition",
-    "ShipConfig",
-    "ArgoFloatConfig",
     "ADCPConfig",
-    "ShipUnderwaterSTConfig",
+    "ArgoFloatConfig",
     "CTDConfig",
     "DrifterConfig",
+    "InstrumentType",
+    "Location",
+    "Schedule",
+    "ShipConfig",
+    "ShipUnderwaterSTConfig",
+    "Spacetime",
+    "Waypoint",
+    "do_expedition",
+    "instruments",
+    "sailship",
 ]

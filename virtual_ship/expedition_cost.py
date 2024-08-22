@@ -1,13 +1,16 @@
-from .simulate_schedule import ScheduleResults
+"""expedition_cost function."""
+
 from datetime import timedelta
+
+from .simulate_schedule import ScheduleResults
 
 
 def expedition_cost(schedule_results: ScheduleResults, time_past: timedelta) -> float:
     """
     Calculate the cost of the expedition in US$.
 
-    :schedule_results: Results from schedule simulation.
-    :time_past: Time the expedition took.
+    :param schedule_results: Results from schedule simulation.
+    :param time_past: Time the expedition took.
     :returns: The calculated cost of the expedition in US$.
     """
     SHIP_COST_PER_DAY = 30000

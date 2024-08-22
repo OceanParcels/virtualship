@@ -1,12 +1,17 @@
+"""InputData class."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from parcels import FieldSet, Field
 from pathlib import Path
+
+from parcels import Field, FieldSet
 
 
 @dataclass
 class InputData:
+    """A collection of fieldsets that function as input data for simulation."""
+
     adcp_fieldset: FieldSet | None
     argo_float_fieldset: FieldSet | None
     ctd_fieldset: FieldSet | None
@@ -23,6 +28,19 @@ class InputData:
         load_drifter: bool,
         load_ship_underwater_st: bool,
     ) -> InputData:
+        """
+        Create an instance of this class from netCDF files.
+
+        For now this function makes a lot of assumption about file location and contents.
+
+        :param directory: Base directory of the expedition.
+        :param load_adcp: Whether to load the ADCP fieldset.
+        :param load_argo_float: Whether to load the argo float fieldset.
+        :param load_ctd: Whether to load the CTD fieldset.
+        :param load_drifter: Whether to load the drifter fieldset.
+        :param load_ship_underwater_st: Whether to load the ship underwater ST fieldset.
+        :returns: An instance of this class with loaded fieldsets.
+        """
         if load_drifter:
             drifter_fieldset = cls._load_drifter_fieldset(directory)
         else:

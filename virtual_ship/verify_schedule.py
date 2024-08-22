@@ -1,12 +1,15 @@
-import pyproj
-from .ship_config import ShipConfig
-from .planning_error import PlanningError
-from .schedule import Schedule
-from parcels import FieldSet
-from .instrument_type import InstrumentType
+"""verify_schedule function and supporting classes."""
+
 from datetime import timedelta
-from .waypoint import Waypoint
+
+import pyproj
+from parcels import FieldSet
+
 from .input_data import InputData
+from .instrument_type import InstrumentType
+from .schedule import Schedule
+from .ship_config import ShipConfig
+from .waypoint import Waypoint
 
 
 def verify_schedule(
@@ -20,6 +23,8 @@ def verify_schedule(
 
     :param projection: projection used to sail between waypoints.
     :param ship_config: The cruise ship_configuration.
+    :param schedule: The schedule to verify.
+    :param input_data: Fieldsets that can be used to check for zero UV condition (is waypoint on land).
     :raises PlanningError: If waypoints are not feasible or incorrect.
     :raises ValueError: If there are no fieldsets in the ship_config, which are needed to verify all waypoints are on water.
     """
@@ -100,6 +105,12 @@ def verify_schedule(
             )
         else:
             time = wp_next.time
+
+
+class PlanningError(RuntimeError):
+    """An error in the schedule."""
+
+    pass
 
 
 def _is_on_land_zero_uv(fieldset: FieldSet, waypoint: Waypoint) -> bool:

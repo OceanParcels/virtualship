@@ -1,18 +1,23 @@
+"""simulate_schedule function and supporting classes."""
+
 from __future__ import annotations
-import pyproj
-from .ship_config import ShipConfig
-from datetime import datetime, timedelta
+
+from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Generator
+
+import pyproj
+from sortedcontainers import SortedList
+
+from .instrument_type import InstrumentType
 from .instruments.argo_float import ArgoFloat
 from .instruments.ctd import CTD
 from .instruments.drifter import Drifter
-from .spacetime import Spacetime
-from sortedcontainers import SortedList
-from .instrument_type import InstrumentType
 from .location import Location
-from contextlib import contextmanager
-from typing import Generator
 from .schedule import Schedule
+from .ship_config import ShipConfig
+from .spacetime import Spacetime
 
 
 def simulate_schedule(
@@ -23,6 +28,7 @@ def simulate_schedule(
 
     :param projection: Projection used to sail between waypoints.
     :param ship_config: The ship configuration.
+    :param schedule: The schedule to simulate.
     :returns: Results from the simulation.
     :raises NotImplementedError: When unsupported instruments are encountered.
     """
@@ -205,6 +211,8 @@ class _SimulationState:
 
 @dataclass
 class MeasurementsToSimulate:
+    """The measurements to simulate, as concluded from schedule simulation."""
+
     adcps: list[Spacetime] = field(default_factory=list, init=False)
     ship_underwater_sts: list[Spacetime] = field(default_factory=list, init=False)
     argo_floats: list[ArgoFloat] = field(default_factory=list, init=False)
@@ -214,6 +222,8 @@ class MeasurementsToSimulate:
 
 @dataclass
 class ScheduleResults:
+    """Results from schedule simulation."""
+
     success: bool
     measurements_to_simulate: MeasurementsToSimulate
     end_spacetime: Spacetime
