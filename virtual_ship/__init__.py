@@ -1,6 +1,5 @@
 """Code for the Virtual Ship Classroom, where Marine Scientists can combine Copernicus Marine Data with an OceanParcels ship to go on a virtual expedition."""
 
-from . import instruments, sailship
 from .do_expedition import do_expedition
 from .instrument_type import InstrumentType
 from .location import Location
@@ -30,5 +29,4 @@ __all__ = [
     "Waypoint",
     "do_expedition",
     "instruments",
-    "sailship",
 ]
