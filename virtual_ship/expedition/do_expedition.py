@@ -10,7 +10,7 @@ from .input_data import InputData
 from .schedule import Schedule
 from .ship_config import ShipConfig
 from .simulate_measurements import simulate_measurements
-from .simulate_schedule import simulate_schedule, ScheduleProblem
+from .simulate_schedule import ScheduleProblem, simulate_schedule
 from .verify_schedule import verify_schedule
 
 

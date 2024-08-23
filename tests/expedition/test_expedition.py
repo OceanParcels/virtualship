@@ -1,5 +1,6 @@
-from virtual_ship.expedition import do_expedition
 from pytest import CaptureFixture
+
+from virtual_ship.expedition import do_expedition
 
 
 def test_expedition(capfd: CaptureFixture) -> None:

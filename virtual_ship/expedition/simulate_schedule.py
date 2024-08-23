@@ -7,25 +7,29 @@ from datetime import datetime, timedelta
 
 import pyproj
 
-from .instrument_type import InstrumentType
 from ..instruments.argo_float import ArgoFloat
 from ..instruments.ctd import CTD
 from ..instruments.drifter import Drifter
 from ..location import Location
+from ..spacetime import Spacetime
+from .instrument_type import InstrumentType
 from .schedule import Schedule
 from .ship_config import ShipConfig
-from ..spacetime import Spacetime
 from .waypoint import Waypoint
 
 
 @dataclass
 class ScheduleOk:
+    """Result of schedule that could be completed."""
+
     time: datetime
     measurements_to_simulate: MeasurementsToSimulate
 
 
 @dataclass
 class ScheduleProblem:
+    """Result of schedule that could not be fully completed."""
+
     time: datetime
     failed_waypoint_i: int
 
@@ -44,6 +48,14 @@ class MeasurementsToSimulate:
 def simulate_schedule(
     projection: pyproj.Geod, ship_config: ShipConfig, schedule: Schedule
 ) -> ScheduleOk | ScheduleProblem:
+    """
+    Simulate a schedule.
+
+    :param projection: The projection to use for sailing.
+    :param ship_config: Ship configuration.
+    :param schedule: The schedule to simulate.
+    :returns: Either the results of a successfully simulated schedule, or information on where the schedule became infeasible.
+    """
     return _ScheduleSimulator(projection, ship_config, schedule).simulate()
 
 
