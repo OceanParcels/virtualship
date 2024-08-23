@@ -1,6 +1,5 @@
 """Everything for simulating an expedition."""
 
-# from .do_expedition import do_expedition
 from .do_expedition import do_expedition
 from .instrument_type import InstrumentType
 from .schedule import Schedule

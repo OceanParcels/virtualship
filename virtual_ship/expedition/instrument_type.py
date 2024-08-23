@@ -1,6 +1,6 @@
 """InstrumentType Enum."""
 
-from enum import Enum, auto
+from enum import Enum
 
 
 class InstrumentType(Enum):
