@@ -11,13 +11,13 @@ import pyproj
 from sortedcontainers import SortedList
 
 from .instrument_type import InstrumentType
-from .instruments.argo_float import ArgoFloat
-from .instruments.ctd import CTD
-from .instruments.drifter import Drifter
-from .location import Location
+from ..instruments.argo_float import ArgoFloat
+from ..instruments.ctd import CTD
+from ..instruments.drifter import Drifter
+from ..location import Location
 from .schedule import Schedule
 from .ship_config import ShipConfig
-from .spacetime import Spacetime
+from ..spacetime import Spacetime
 
 
 def simulate_schedule(

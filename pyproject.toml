@@ -62,6 +62,9 @@ dev = [
     "sortedcontainers-stubs == 2.4.2",
 ]
 
+[project.scripts]
+do_expedition = "virtual_ship.cli.do_expedition:main"
+
 [tool.isort]
 profile = "black"
 skip_gitignore = true

@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 
 import py
 
-from virtual_ship import Location, Schedule, Waypoint
+from virtual_ship import Location
+from virtual_ship.expedition import Schedule, Waypoint
 
 
 def test_schedule(tmpdir: py.path.LocalPath) -> None:

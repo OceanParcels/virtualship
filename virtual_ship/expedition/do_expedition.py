@@ -18,8 +18,6 @@ def do_expedition(expedition_dir: str | Path) -> None:
     """
     Perform an expedition, providing terminal feedback and file output.
 
-    This function is written as the entry point for a command line script.
-
     :param expedition_dir: The base directory for the expedition.
     """
     if isinstance(expedition_dir, str):

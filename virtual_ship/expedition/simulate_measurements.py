@@ -4,11 +4,11 @@ from datetime import timedelta
 from pathlib import Path
 
 from .input_data import InputData
-from .instruments.adcp import simulate_adcp
-from .instruments.argo_float import simulate_argo_floats
-from .instruments.ctd import simulate_ctd
-from .instruments.drifter import simulate_drifters
-from .instruments.ship_underwater_st import simulate_ship_underwater_st
+from ..instruments.adcp import simulate_adcp
+from ..instruments.argo_float import simulate_argo_floats
+from ..instruments.ctd import simulate_ctd
+from ..instruments.drifter import simulate_drifters
+from ..instruments.ship_underwater_st import simulate_ship_underwater_st
 from .ship_config import ShipConfig
 from .simulate_schedule import MeasurementsToSimulate
 
