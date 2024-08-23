@@ -222,7 +222,7 @@ class _ScheduleSimulator:
         )
 
         # time costs of each measurement
-        time_costs = []
+        time_costs = [timedelta()]
 
         for instrument in instruments:
             if instrument is InstrumentType.ARGO_FLOAT:

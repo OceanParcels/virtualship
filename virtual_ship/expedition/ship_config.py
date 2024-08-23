@@ -46,8 +46,8 @@ class CTDConfig(BaseModel):
         validation_alias="stationkeeping_time_minutes",
         gt=timedelta(),
     )
-    min_depth: float = Field(ge=0.0)
-    max_depth: float = Field(ge=0.0)
+    min_depth: float = Field(le=0.0)
+    max_depth: float = Field(le=0.0)
 
     model_config = ConfigDict(populate_by_name=True)
 

@@ -82,7 +82,9 @@ def simulate_ctd(
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
 
     # deploy time for all ctds should be later than fieldset start time
-    if not all([ctd.spacetime.time >= fieldset_starttime for ctd in ctds]):
+    if not all(
+        [np.datetime64(ctd.spacetime.time) >= fieldset_starttime for ctd in ctds]
+    ):
         raise ValueError("CTD deployed before fieldset starts.")
 
     # depth the ctd will go to. shallowest between ctd max depth and bathymetry.

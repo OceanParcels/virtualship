@@ -101,12 +101,15 @@ class InputData:
                 g.depth = -g.depth
 
         # add bathymetry data
-        bathymetry_file = directory.joinpath("GLO-MFC_001_024_mask_bathy.nc")
+        bathymetry_file = directory.joinpath("bathymetry.nc")
         bathymetry_variables = ("bathymetry", "deptho")
         bathymetry_dimensions = {"lon": "longitude", "lat": "latitude"}
         bathymetry_field = Field.from_netcdf(
             bathymetry_file, bathymetry_variables, bathymetry_dimensions
         )
+        # make depth negative
+        if max(bathymetry_field.data > 0):
+            bathymetry_field.data = -bathymetry_field.data
         fieldset.add_field(bathymetry_field)
 
         # read in data already

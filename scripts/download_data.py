@@ -1,8 +1,33 @@
+"""
+Download data required to run expeditions.
+
+This is a very crude script, here just as long as we do not properly incorporate it into the library.
+"""
+
 import copernicusmarine
 import datetime
 
 if __name__ == "__main__":
-    datadir = "data_groupF"
+    datadir = "download"
+    username = input("username: ")
+    password = input("password: ")
+
+    copernicusmarine.subset(
+        dataset_id="cmems_mod_glo_phy_my_0.083deg_static",
+        force_dataset_part="bathy",
+        variables=["deptho"],
+        minimum_longitude=-0.01,
+        maximum_longitude=0.01,
+        minimum_latitude=-0.01,
+        maximum_latitude=0.01,
+        minimum_depth=0.49402499198913574,
+        maximum_depth=5727.9169921875,
+        output_filename="bathymetry.nc",
+        output_directory=datadir,
+        username=username,
+        password=password,
+        force_download=True,
+    )
 
     download_dict = {
         "UVdata": {
@@ -26,16 +51,19 @@ if __name__ == "__main__":
         copernicusmarine.subset(
             dataset_id=download_dict[dataset]["dataset_id"],
             variables=download_dict[dataset]["variables"],
-            minimum_longitude=-1,
-            maximum_longitude=1,
-            minimum_latitude=-1,
-            maximum_latitude=1,
+            minimum_longitude=-0.01,
+            maximum_longitude=0.01,
+            minimum_latitude=-0.01,
+            maximum_latitude=0.01,
             start_datetime=datetime.datetime.strptime("2023-01-01", "%Y-%m-%d"),
             end_datetime=datetime.datetime.strptime("2023-01-02", "%Y-%m-%d"),
             minimum_depth=0.49402499198913574,
             maximum_depth=5727.9169921875,
             output_filename=download_dict[dataset]["output_filename"],
             output_directory=datadir,
+            username=username,
+            password=password,
+            force_download=True,
         )
 
     download_dict = {
@@ -55,16 +83,19 @@ if __name__ == "__main__":
         copernicusmarine.subset(
             dataset_id=download_dict[dataset]["dataset_id"],
             variables=download_dict[dataset]["variables"],
-            minimum_longitude=-1,
-            maximum_longitude=1,
-            minimum_latitude=-1,
-            maximum_latitude=1,
+            minimum_longitude=-0.01,
+            maximum_longitude=0.01,
+            minimum_latitude=-0.01,
+            maximum_latitude=0.01,
             start_datetime=datetime.datetime.strptime("2023-01-01", "%Y-%m-%d"),
             end_datetime=datetime.datetime.strptime("2023-01-02", "%Y-%m-%d"),
             minimum_depth=0.49402499198913574,
             maximum_depth=0.49402499198913574,
             output_filename=download_dict[dataset]["output_filename"],
             output_directory=datadir,
+            username=username,
+            password=password,
+            force_download=True,
         )
 
     download_dict = {
@@ -89,14 +120,17 @@ if __name__ == "__main__":
         copernicusmarine.subset(
             dataset_id=download_dict[dataset]["dataset_id"],
             variables=download_dict[dataset]["variables"],
-            minimum_longitude=-1,
-            maximum_longitude=1,
-            minimum_latitude=-1,
-            maximum_latitude=1,
+            minimum_longitude=-0.01,
+            maximum_longitude=0.01,
+            minimum_latitude=-0.01,
+            maximum_latitude=0.01,
             start_datetime=datetime.datetime.strptime("2023-01-01", "%Y-%m-%d"),
             end_datetime=datetime.datetime.strptime("2023-01-02", "%Y-%m-%d"),
             minimum_depth=0.49402499198913574,
             maximum_depth=5727.9169921875,
             output_filename=download_dict[dataset]["output_filename"],
             output_directory=datadir,
+            username=username,
+            password=password,
+            force_download=True,
         )

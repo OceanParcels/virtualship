@@ -10,8 +10,8 @@ argo_float_config:
   min_depth: 0.0
   vertical_speed: -0.1
 ctd_config:
-  max_depth: 2000.0
-  min_depth: 0.0
+  max_depth: -2000.0
+  min_depth: -11.0
   stationkeeping_time_minutes: 20.0
 drifter_config:
   depth: 0.0
