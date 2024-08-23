@@ -10,7 +10,7 @@ from .input_data import InputData
 from .schedule import Schedule
 from .ship_config import ShipConfig
 from .simulate_measurements import simulate_measurements
-from .simulate_schedule import simulate_schedule, ScheduleOk, ScheduleProblem
+from .simulate_schedule import simulate_schedule, ScheduleProblem
 from .verify_schedule import verify_schedule
 
 
@@ -76,6 +76,16 @@ def do_expedition(expedition_dir: str | Path) -> None:
         )
         return
 
+    # calculate expedition cost in US$
+    assert (
+        schedule.waypoints[0].time is not None
+    ), "First waypoint has no time. This should not be possible as it should have been verified before."
+    time_past = schedule_results.time - schedule.waypoints[0].time
+    cost = expedition_cost(schedule_results, time_past)
+    with open(expedition_dir.joinpath("results", "cost.txt"), "w") as file:
+        file.writelines(f"cost: {cost} US$")
+    print(f"This expedition took {time_past} and would have cost {cost:,.0f} US$.")
+
     # simulate measurements
     print("Simulating measurements. This may take a while..")
     simulate_measurements(
@@ -86,15 +96,7 @@ def do_expedition(expedition_dir: str | Path) -> None:
     )
     print("Done simulating measurements.")
 
-    # calculate expedition cost in US$
-    assert (
-        schedule.waypoints[0].time is not None
-    ), "First waypoint has no time. This should not be possible as it should have been verified before."
-    time_past = schedule_results.time - schedule.waypoints[0].time
-    cost = expedition_cost(schedule_results, time_past)
-    with open(expedition_dir.joinpath("results", "cost.txt"), "w") as file:
-        file.writelines(f"cost: {cost} US$")
-    print(f"This expedition took {time_past} and would have cost {cost:,.0f} US$.")
+    print("Your expedition has concluded successfully!")
 
 
 def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:

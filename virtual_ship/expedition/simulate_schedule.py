@@ -108,21 +108,75 @@ class _ScheduleSimulator:
             lons2=location.lon,
             lats2=location.lat,
         )
+        azimuth1 = geodinv[0]
         distance_to_next_waypoint = geodinv[2]
         time_to_reach = timedelta(
             seconds=distance_to_next_waypoint / self._ship_config.ship_speed
         )
-        self._time = self._time + time_to_reach
-        self._location = location
+        end_time = self._time + time_to_reach
 
-        # TODO ADCP and ship underwater ST
+        # note all ADCP measurements
+        if self._ship_config.adcp_config is not None:
+            location = self._location
+            time = self._time
+            while self._next_adcp_time <= end_time:
+                time_to_sail = self._next_adcp_time - time
+                distance_to_move = (
+                    self._ship_config.ship_speed * time_to_sail.total_seconds()
+                )
+                geodfwd: tuple[float, float, float] = self._projection.fwd(
+                    lons=location.lon,
+                    lats=location.lat,
+                    az=azimuth1,
+                    dist=distance_to_move,
+                )
+                location = Location(latitude=geodfwd[1], longitude=geodfwd[0])
+                time = time + time_to_sail
+
+                self._measurements_to_simulate.adcps.append(
+                    Spacetime(location=location, time=time)
+                )
+
+                self._next_adcp_time = (
+                    self._next_adcp_time + self._ship_config.adcp_config.period
+                )
+
+        # note all ship underwater ST measurements
+        if self._ship_config.ship_underwater_st_config is not None:
+            location = self._location
+            time = self._time
+            while self._next_ship_underwater_st_time <= end_time:
+                time_to_sail = self._next_ship_underwater_st_time - time
+                distance_to_move = (
+                    self._ship_config.ship_speed * time_to_sail.total_seconds()
+                )
+                geodfwd: tuple[float, float, float] = self._projection.fwd(
+                    lons=location.lon,
+                    lats=location.lat,
+                    az=azimuth1,
+                    dist=distance_to_move,
+                )
+                location = Location(latitude=geodfwd[1], longitude=geodfwd[0])
+                time = time + time_to_sail
+
+                self._measurements_to_simulate.ship_underwater_sts.append(
+                    Spacetime(location=location, time=time)
+                )
+
+                self._next_ship_underwater_st_time = (
+                    self._next_ship_underwater_st_time
+                    + self._ship_config.ship_underwater_st_config.period
+                )
+
+        self._time = end_time
+        self._location = location
 
     def _progress_time_stationary(self, time_passed: timedelta) -> None:
         end_time = self._time + time_passed
 
         # note all ADCP measurements
         if self._ship_config.adcp_config is not None:
-            while self._next_adcp_time < end_time:
+            while self._next_adcp_time <= end_time:
                 self._measurements_to_simulate.adcps.append(
                     Spacetime(self._location, self._next_adcp_time)
                 )
@@ -132,7 +186,7 @@ class _ScheduleSimulator:
 
         # note all ship underwater ST measurements
         if self._ship_config.ship_underwater_st_config is not None:
-            while self._next_ship_underwater_st_time < end_time:
+            while self._next_ship_underwater_st_time <= end_time:
                 self._measurements_to_simulate.ship_underwater_sts.append(
                     Spacetime(self._location, self._next_ship_underwater_st_time)
                 )
