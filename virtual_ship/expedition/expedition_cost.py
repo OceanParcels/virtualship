@@ -2,10 +2,10 @@
 
 from datetime import timedelta
 
-from .simulate_schedule import ScheduleResults
+from .simulate_schedule import ScheduleOk
 
 
-def expedition_cost(schedule_results: ScheduleResults, time_past: timedelta) -> float:
+def expedition_cost(schedule_results: ScheduleOk, time_past: timedelta) -> float:
     """
     Calculate the cost of the expedition in US$.
 

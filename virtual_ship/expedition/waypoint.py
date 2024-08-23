@@ -13,4 +13,4 @@ class Waypoint:
 
     location: Location
     time: datetime | None = None
-    instrument: InstrumentType | None = None
+    instrument: InstrumentType | list[InstrumentType] | None = None

@@ -10,7 +10,7 @@ from .input_data import InputData
 from .schedule import Schedule
 from .ship_config import ShipConfig
 from .simulate_measurements import simulate_measurements
-from .simulate_schedule import simulate_schedule
+from .simulate_schedule import simulate_schedule, ScheduleOk, ScheduleProblem
 from .verify_schedule import verify_schedule
 
 
@@ -63,9 +63,9 @@ def do_expedition(expedition_dir: str | Path) -> None:
     schedule_results = simulate_schedule(
         projection=projection, ship_config=ship_config, schedule=schedule
     )
-    if not schedule_results.success:
+    if isinstance(schedule_results, ScheduleProblem):
         print(
-            f"It is currently {schedule_results.end_spacetime} and waypoint {schedule_results.failed_waypoint_i} could not be reached in time. Update your schedule and continue the expedition."
+            "Update your schedule and continue the expedition by running the tool again."
         )
         _save_checkpoint(
             Checkpoint(
@@ -90,7 +90,7 @@ def do_expedition(expedition_dir: str | Path) -> None:
     assert (
         schedule.waypoints[0].time is not None
     ), "First waypoint has no time. This should not be possible as it should have been verified before."
-    time_past = schedule_results.end_spacetime.time - schedule.waypoints[0].time
+    time_past = schedule_results.time - schedule.waypoints[0].time
     cost = expedition_cost(schedule_results, time_past)
     with open(expedition_dir.joinpath("results", "cost.txt"), "w") as file:
         file.writelines(f"cost: {cost} US$")

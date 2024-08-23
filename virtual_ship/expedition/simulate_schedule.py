@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Generator
 
 import pyproj
-from sortedcontainers import SortedList
 
 from .instrument_type import InstrumentType
 from ..instruments.argo_float import ArgoFloat
@@ -18,195 +15,19 @@ from ..location import Location
 from .schedule import Schedule
 from .ship_config import ShipConfig
 from ..spacetime import Spacetime
+from .waypoint import Waypoint
 
 
-def simulate_schedule(
-    projection: pyproj.Geod, ship_config: ShipConfig, schedule: Schedule
-) -> ScheduleResults:
-    """
-    Simulate the expedition schedule and aggregate the virtual measurements that should be taken.
-
-    :param projection: Projection used to sail between waypoints.
-    :param ship_config: The ship configuration.
-    :param schedule: The schedule to simulate.
-    :returns: Results from the simulation.
-    :raises NotImplementedError: When unsupported instruments are encountered.
-    """
-    cruise = _SimulationState(
-        Spacetime(
-            schedule.waypoints[0].location,
-            schedule.waypoints[0].time,
-        )
-    )
-    measurements = MeasurementsToSimulate()
-
-    # add recurring tasks to task list
-    waiting_tasks = SortedList[_WaitingTask]()
-    if ship_config.ship_underwater_st_config is not None:
-        waiting_tasks.add(
-            _WaitingTask(
-                task=_ship_underwater_st_loop(
-                    ship_config.ship_underwater_st_config.period, cruise, measurements
-                ),
-                wait_until=cruise.spacetime.time,
-            )
-        )
-    if ship_config.adcp_config is not None:
-        waiting_tasks.add(
-            _WaitingTask(
-                task=_adcp_loop(ship_config.adcp_config.period, cruise, measurements),
-                wait_until=cruise.spacetime.time,
-            )
-        )
-
-    # sail to each waypoint while executing tasks
-    for waypoint_i, waypoint in enumerate(schedule.waypoints):
-        if waypoint.time is not None and cruise.spacetime.time > waypoint.time:
-            print(
-                "Could not reach waypoint in time. This should not happen in this version of virtual ship as the schedule is verified beforehand."
-            )
-            return ScheduleResults(
-                success=False,
-                measurements_to_simulate=measurements,
-                end_spacetime=cruise.spacetime.time,
-                failed_waypoint_i=waypoint_i,
-            )
-
-        # add task to the task queue for the instrument at the current waypoint
-        if waypoint.instrument is InstrumentType.ARGO_FLOAT:
-            _argo_float_task(cruise, measurements, config=ship_config)
-        elif waypoint.instrument is InstrumentType.DRIFTER:
-            _drifter_task(cruise, measurements, config=ship_config)
-        elif waypoint.instrument is InstrumentType.CTD:
-            waiting_tasks.add(
-                _WaitingTask(
-                    _ctd_task(
-                        ship_config.ctd_config.stationkeeping_time,
-                        ship_config.ctd_config.min_depth,
-                        ship_config.ctd_config.max_depth,
-                        cruise,
-                        measurements,
-                    ),
-                    cruise.spacetime.time,
-                )
-            )
-        elif waypoint.instrument is None:
-            pass
-        else:
-            raise NotImplementedError()
-
-        # sail to the next waypoint
-        waypoint_reached = False
-        while not waypoint_reached:
-            # execute all tasks planned for current time
-            while (
-                len(waiting_tasks) > 0
-                and waiting_tasks[0].wait_until <= cruise.spacetime.time
-            ):
-                task = waiting_tasks.pop(0)
-                try:
-                    wait_for = next(task.task)
-                    waiting_tasks.add(
-                        _WaitingTask(task.task, cruise.spacetime.time + wait_for.time)
-                    )
-                except StopIteration:
-                    pass
-
-            # if sailing is prevented by a current task, just let time pass until the next task
-            if cruise.sail_is_locked:
-                cruise.spacetime = Spacetime(
-                    cruise.spacetime.location, waiting_tasks[0].wait_until
-                )
-            # else, let time pass while sailing
-            else:
-                # calculate time at which waypoint would be reached if simply sailing
-                geodinv: tuple[float, float, float] = projection.inv(
-                    lons1=cruise.spacetime.location.lon,
-                    lats1=cruise.spacetime.location.lat,
-                    lons2=waypoint.location.lon,
-                    lats2=waypoint.location.lat,
-                )
-                azimuth1 = geodinv[0]
-                distance_to_next_waypoint = geodinv[2]
-                time_to_reach = timedelta(
-                    seconds=distance_to_next_waypoint / ship_config.ship_speed
-                )
-                arrival_time = cruise.spacetime.time + time_to_reach
-
-                # if waypoint is reached before next task, sail to the waypoint
-                if (
-                    len(waiting_tasks) == 0
-                    or arrival_time <= waiting_tasks[0].wait_until
-                ):
-                    cruise.spacetime = Spacetime(waypoint.location, arrival_time)
-                    waypoint_reached = True
-                # else, sail until task starts
-                else:
-                    time_to_sail = waiting_tasks[0].wait_until - cruise.spacetime.time
-                    distance_to_move = (
-                        ship_config.ship_speed * time_to_sail.total_seconds()
-                    )
-                    geodfwd: tuple[float, float, float] = projection.fwd(
-                        lons=cruise.spacetime.location.lon,
-                        lats=cruise.spacetime.location.lat,
-                        az=azimuth1,
-                        dist=distance_to_move,
-                    )
-                    lon = geodfwd[0]
-                    lat = geodfwd[1]
-                    cruise.spacetime = Spacetime(
-                        Location(latitude=lat, longitude=lon),
-                        cruise.spacetime.time + time_to_sail,
-                    )
-
-    cruise.finish()
-
-    # don't sail anymore, but let tasks finish
-    while len(waiting_tasks) > 0:
-        task = waiting_tasks.pop(0)
-        try:
-            wait_for = next(task.task)
-            waiting_tasks.add(
-                _WaitingTask(task.task, cruise.spacetime.time + wait_for.time)
-            )
-        except StopIteration:
-            pass
-
-    return ScheduleResults(
-        success=True,
-        measurements_to_simulate=measurements,
-        end_spacetime=cruise.spacetime,
-    )
+@dataclass
+class ScheduleOk:
+    time: datetime
+    measurements_to_simulate: MeasurementsToSimulate
 
 
-class _SimulationState:
-    _finished: bool  # if last waypoint has been reached
-    _sail_lock_count: int  # if sailing should be paused because of tasks; number of tasks that requested a pause; 0 means good to go sail
-    spacetime: Spacetime  # current location and time
-
-    def __init__(self, spacetime: Spacetime) -> None:
-        self._finished = False
-        self._sail_lock_count = 0
-        self.spacetime = spacetime
-
-    @property
-    def finished(self) -> bool:
-        return self._finished
-
-    @contextmanager
-    def do_not_sail(self) -> Generator[None, None, None]:
-        try:
-            self._sail_lock_count += 1
-            yield
-        finally:
-            self._sail_lock_count -= 1
-
-    def finish(self) -> None:
-        self._finished = True
-
-    @property
-    def sail_is_locked(self) -> bool:
-        return self._sail_lock_count > 0
+@dataclass
+class ScheduleProblem:
+    time: datetime
+    failed_waypoint_i: int
 
 
 @dataclass
@@ -220,108 +41,155 @@ class MeasurementsToSimulate:
     ctds: list[CTD] = field(default_factory=list, init=False)
 
 
-@dataclass
-class ScheduleResults:
-    """Results from schedule simulation."""
-
-    success: bool
-    measurements_to_simulate: MeasurementsToSimulate
-    end_spacetime: Spacetime
-    failed_waypoint_i: int | None = None
+def simulate_schedule(
+    projection: pyproj.Geod, ship_config: ShipConfig, schedule: Schedule
+) -> ScheduleOk | ScheduleProblem:
+    return _ScheduleSimulator(projection, ship_config, schedule).simulate()
 
 
-@dataclass
-class _WaitFor:
-    time: timedelta
+class _ScheduleSimulator:
+    _projection: pyproj.Geod
+    _ship_config: ShipConfig
+    _schedule: Schedule
 
+    _time: datetime
+    """Current time."""
+    _location: Location
+    """Current ship location."""
 
-class _WaitingTask:
-    _task: Generator[_WaitFor, None, None]
-    _wait_until: datetime
+    _measurements_to_simulate: MeasurementsToSimulate
+
+    _next_adcp_time: datetime
+    """Next moment ADCP measurement will be done."""
+    _next_ship_underwater_st_time: datetime
+    """Next moment ship underwater ST measurement will be done."""
 
     def __init__(
-        self, task: Generator[_WaitFor, None, None], wait_until: datetime
+        self, projection: pyproj.Geod, ship_config: ShipConfig, schedule: Schedule
     ) -> None:
-        self._task = task
-        self._wait_until = wait_until
+        self._projection = projection
+        self._ship_config = ship_config
+        self._schedule = schedule
 
-    def __lt__(self, other: _WaitingTask):
-        return self._wait_until < other._wait_until
+        assert (
+            self._schedule.waypoints[0].time is not None
+        ), "First waypoint must have a time. This should have been verified before calling this function."
+        self._time = schedule.waypoints[0].time
+        self._location = schedule.waypoints[0].location
 
-    @property
-    def task(self) -> Generator[_WaitFor, None, None]:
-        return self._task
+        self._measurements_to_simulate = MeasurementsToSimulate()
 
-    @property
-    def wait_until(self) -> datetime:
-        return self._wait_until
+        self._next_adcp_time = self._time
+        self._next_ship_underwater_st_time = self._time
 
+    def simulate(self) -> ScheduleOk | ScheduleProblem:
+        for wp_i, waypoint in enumerate(self._schedule.waypoints):
+            # sail towards waypoint
+            self._progress_time_traveling_towards(waypoint.location)
 
-def _ship_underwater_st_loop(
-    sample_period: timedelta,
-    cruise: _SimulationState,
-    measurements: MeasurementsToSimulate,
-) -> Generator[_WaitFor, None, None]:
-    while not cruise.finished:
-        measurements.ship_underwater_sts.append(cruise.spacetime)
-        yield _WaitFor(sample_period)
+            # check if waypoint was reached in time
+            if waypoint.time is not None and self._time > waypoint.time:
+                print(
+                    f"Waypoint {wp_i} could not be reached in time. Current time: {self._time}. Waypoint time: {waypoint.time}."
+                )
+                return ScheduleProblem(self._time, wp_i)
 
+            # note measurements made at waypoint
+            time_passed = self._make_measurements(waypoint)
 
-def _adcp_loop(
-    sample_period: timedelta,
-    cruise: _SimulationState,
-    measurements: MeasurementsToSimulate,
-) -> Generator[_WaitFor, None, None]:
-    while not cruise.finished:
-        measurements.adcps.append(cruise.spacetime)
-        yield _WaitFor(sample_period)
+            # wait while measurements are being done
+            self._progress_time_stationary(time_passed)
+        return ScheduleOk(self._time, self._measurements_to_simulate)
 
-
-def _ctd_task(
-    stationkeeping_time: timedelta,
-    min_depth: float,
-    max_depth: float,
-    cruise: _SimulationState,
-    measurements: MeasurementsToSimulate,
-) -> Generator[_WaitFor, None, None]:
-    with cruise.do_not_sail():
-        measurements.ctds.append(
-            CTD(
-                spacetime=cruise.spacetime,
-                min_depth=min_depth,
-                max_depth=max_depth,
-            )
+    def _progress_time_traveling_towards(self, location: Location) -> None:
+        geodinv: tuple[float, float, float] = self._projection.inv(
+            lons1=self._location.lon,
+            lats1=self._location.lat,
+            lons2=location.lon,
+            lats2=location.lat,
         )
-        yield _WaitFor(stationkeeping_time)
-
-
-def _drifter_task(
-    cruise: _SimulationState,
-    measurements: MeasurementsToSimulate,
-    config: ShipConfig,
-) -> None:
-    measurements.drifters.append(
-        Drifter(
-            cruise.spacetime,
-            depth=config.drifter_config.depth,
-            lifetime=config.drifter_config.lifetime,
+        distance_to_next_waypoint = geodinv[2]
+        time_to_reach = timedelta(
+            seconds=distance_to_next_waypoint / self._ship_config.ship_speed
         )
-    )
+        self._time = self._time + time_to_reach
+        self._location = location
 
+        # TODO ADCP and ship underwater ST
 
-def _argo_float_task(
-    cruise: _SimulationState,
-    measurements: MeasurementsToSimulate,
-    config: ShipConfig,
-) -> None:
-    measurements.argo_floats.append(
-        ArgoFloat(
-            spacetime=cruise.spacetime,
-            min_depth=config.argo_float_config.min_depth,
-            max_depth=config.argo_float_config.max_depth,
-            drift_depth=config.argo_float_config.drift_depth,
-            vertical_speed=config.argo_float_config.vertical_speed,
-            cycle_days=config.argo_float_config.cycle_days,
-            drift_days=config.argo_float_config.drift_days,
+    def _progress_time_stationary(self, time_passed: timedelta) -> None:
+        end_time = self._time + time_passed
+
+        # note all ADCP measurements
+        if self._ship_config.adcp_config is not None:
+            while self._next_adcp_time < end_time:
+                self._measurements_to_simulate.adcps.append(
+                    Spacetime(self._location, self._next_adcp_time)
+                )
+                self._next_adcp_time = (
+                    self._next_adcp_time + self._ship_config.adcp_config.period
+                )
+
+        # note all ship underwater ST measurements
+        if self._ship_config.ship_underwater_st_config is not None:
+            while self._next_ship_underwater_st_time < end_time:
+                self._measurements_to_simulate.ship_underwater_sts.append(
+                    Spacetime(self._location, self._next_ship_underwater_st_time)
+                )
+                self._next_ship_underwater_st_time = (
+                    self._next_ship_underwater_st_time
+                    + self._ship_config.ship_underwater_st_config.period
+                )
+
+        self._time = end_time
+
+    def _make_measurements(self, waypoint: Waypoint) -> timedelta:
+        # if there are no instruments, there is no time cost
+        if waypoint.instrument is None:
+            return timedelta()
+
+        # make instruments a list even if it's only a single one
+        instruments = (
+            waypoint.instrument
+            if isinstance(waypoint.instrument, list)
+            else [waypoint.instrument]
         )
-    )
+
+        # time costs of each measurement
+        time_costs = []
+
+        for instrument in instruments:
+            if instrument is InstrumentType.ARGO_FLOAT:
+                self._measurements_to_simulate.argo_floats.append(
+                    ArgoFloat(
+                        spacetime=Spacetime(self._location, self._time),
+                        min_depth=self._ship_config.argo_float_config.min_depth,
+                        max_depth=self._ship_config.argo_float_config.max_depth,
+                        drift_depth=self._ship_config.argo_float_config.drift_depth,
+                        vertical_speed=self._ship_config.argo_float_config.vertical_speed,
+                        cycle_days=self._ship_config.argo_float_config.cycle_days,
+                        drift_days=self._ship_config.argo_float_config.drift_days,
+                    )
+                )
+            elif instrument is InstrumentType.CTD:
+                self._measurements_to_simulate.ctds.append(
+                    CTD(
+                        spacetime=Spacetime(self._location, self._time),
+                        min_depth=self._ship_config.ctd_config.min_depth,
+                        max_depth=self._ship_config.ctd_config.max_depth,
+                    )
+                )
+                time_costs.append(timedelta(minutes=20))
+            elif instrument is InstrumentType.DRIFTER:
+                self._measurements_to_simulate.drifters.append(
+                    Drifter(
+                        spacetime=Spacetime(self._location, self._time),
+                        depth=self._ship_config.drifter_config.depth,
+                        lifetime=self._ship_config.drifter_config.lifetime,
+                    )
+                )
+            else:
+                raise NotImplementedError("Instrument type not supported.")
+
+        # measurements are done in parallel, so return time of longest one
+        return max(time_costs)
