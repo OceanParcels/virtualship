@@ -1,5 +1,7 @@
 """do_expedition function."""
 
+import os
+import shutil
 from pathlib import Path
 
 import pyproj
@@ -12,8 +14,6 @@ from .ship_config import ShipConfig
 from .simulate_measurements import simulate_measurements
 from .simulate_schedule import ScheduleProblem, simulate_schedule
 from .verify_schedule import verify_schedule
-import os
-import shutil
 
 
 def do_expedition(expedition_dir: str | Path) -> None:

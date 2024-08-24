@@ -7,8 +7,8 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel
 
-from .schedule import Schedule
 from .instrument_type import InstrumentType
+from .schedule import Schedule
 
 
 class _YamlDumper(yaml.SafeDumper):
