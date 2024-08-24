@@ -8,6 +8,16 @@ import yaml
 from pydantic import BaseModel
 
 from .schedule import Schedule
+from .instrument_type import InstrumentType
+
+
+class _YamlDumper(yaml.SafeDumper):
+    pass
+
+
+_YamlDumper.add_representer(
+    InstrumentType, lambda dumper, data: dumper.represent_data(data.value)
+)
 
 
 class Checkpoint(BaseModel):
@@ -26,7 +36,7 @@ class Checkpoint(BaseModel):
         :param file_path: Path to the file to write to.
         """
         with open(file_path, "w") as file:
-            yaml.dump(self.model_dump(by_alias=True), file)
+            yaml.dump(self.model_dump(by_alias=True), file, Dumper=_YamlDumper)
 
     @classmethod
     def from_yaml(cls, file_path: str | Path) -> Checkpoint:

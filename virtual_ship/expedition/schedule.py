@@ -24,7 +24,12 @@ class Schedule(BaseModel):
         :param file_path: Path to the file to write to.
         """
         with open(file_path, "w") as file:
-            yaml.dump(self.model_dump(by_alias=True), file)
+            yaml.dump(
+                self.model_dump(
+                    by_alias=True,
+                ),
+                file,
+            )
 
     @classmethod
     def from_yaml(cls, file_path: str | Path) -> Schedule:

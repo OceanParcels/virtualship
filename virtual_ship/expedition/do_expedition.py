@@ -74,7 +74,8 @@ def do_expedition(expedition_dir: str | Path) -> None:
                 past_schedule=Schedule(
                     waypoints=schedule.waypoints[: schedule_results.failed_waypoint_i]
                 )
-            )
+            ),
+            expedition_dir,
         )
         return
 
