@@ -8,7 +8,7 @@ import copernicusmarine
 import datetime
 
 if __name__ == "__main__":
-    datadir = "download"
+    datadir = "input_data"
     username = input("username: ")
     password = input("password: ")
 
