@@ -55,7 +55,7 @@ def simulate_measurements(
         simulate_adcp(
             fieldset=input_data.adcp_fieldset,
             out_path=expedition_dir.joinpath("results", "adcp.zarr"),
-            max_depth=ship_config.adcp_config.max_depth,
+            max_depth=ship_config.adcp_config.max_depth_meter,
             min_depth=-5,
             num_bins=ship_config.adcp_config.num_bins,
             sample_points=measurements.adcps,

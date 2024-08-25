@@ -12,10 +12,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer
 class ArgoFloatConfig(BaseModel):
     """Configuration for argos floats."""
 
-    min_depth: float = Field(le=0.0)
-    max_depth: float = Field(le=0.0)
-    drift_depth: float = Field(le=0.0)
-    vertical_speed: float = Field(lt=0.0)
+    min_depth_meter: float = Field(le=0.0)
+    max_depth_meter: float = Field(le=0.0)
+    drift_depth_meter: float = Field(le=0.0)
+    vertical_speed_meter_per_second: float = Field(lt=0.0)
     cycle_days: float = Field(gt=0.0)
     drift_days: float = Field(gt=0.0)
 
@@ -23,7 +23,7 @@ class ArgoFloatConfig(BaseModel):
 class ADCPConfig(BaseModel):
     """Configuration for ADCP instrument."""
 
-    max_depth: float = Field(le=0.0)
+    max_depth_meter: float = Field(le=0.0)
     num_bins: int = Field(gt=0.0)
     period: timedelta = Field(
         serialization_alias="period_minutes",
@@ -46,8 +46,8 @@ class CTDConfig(BaseModel):
         validation_alias="stationkeeping_time_minutes",
         gt=timedelta(),
     )
-    min_depth: float = Field(le=0.0)
-    max_depth: float = Field(le=0.0)
+    min_depth_meter: float = Field(le=0.0)
+    max_depth_meter: float = Field(le=0.0)
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -75,7 +75,7 @@ class ShipUnderwaterSTConfig(BaseModel):
 class DrifterConfig(BaseModel):
     """Configuration for drifters."""
 
-    depth: float = Field(le=0.0)
+    depth_meter: float = Field(le=0.0)
     lifetime: timedelta = Field(
         serialization_alias="lifetime_minutes",
         validation_alias="lifetime_minutes",
@@ -92,7 +92,7 @@ class DrifterConfig(BaseModel):
 class ShipConfig(BaseModel):
     """Configuration of the virtual ship."""
 
-    ship_speed: float = Field(gt=0.0)
+    ship_speed_meter_per_second: float = Field(gt=0.0)
     """
     Velocity of the ship in meters per second.
     """

@@ -123,7 +123,8 @@ class _ScheduleSimulator:
         azimuth1 = geodinv[0]
         distance_to_next_waypoint = geodinv[2]
         time_to_reach = timedelta(
-            seconds=distance_to_next_waypoint / self._ship_config.ship_speed
+            seconds=distance_to_next_waypoint
+            / self._ship_config.ship_speed_meter_per_second
         )
         end_time = self._time + time_to_reach
 
@@ -134,7 +135,8 @@ class _ScheduleSimulator:
             while self._next_adcp_time <= end_time:
                 time_to_sail = self._next_adcp_time - time
                 distance_to_move = (
-                    self._ship_config.ship_speed * time_to_sail.total_seconds()
+                    self._ship_config.ship_speed_meter_per_second
+                    * time_to_sail.total_seconds()
                 )
                 geodfwd: tuple[float, float, float] = self._projection.fwd(
                     lons=location.lon,
@@ -160,7 +162,8 @@ class _ScheduleSimulator:
             while self._next_ship_underwater_st_time <= end_time:
                 time_to_sail = self._next_ship_underwater_st_time - time
                 distance_to_move = (
-                    self._ship_config.ship_speed * time_to_sail.total_seconds()
+                    self._ship_config.ship_speed_meter_per_second
+                    * time_to_sail.total_seconds()
                 )
                 geodfwd: tuple[float, float, float] = self._projection.fwd(
                     lons=location.lon,
@@ -229,10 +232,10 @@ class _ScheduleSimulator:
                 self._measurements_to_simulate.argo_floats.append(
                     ArgoFloat(
                         spacetime=Spacetime(self._location, self._time),
-                        min_depth=self._ship_config.argo_float_config.min_depth,
-                        max_depth=self._ship_config.argo_float_config.max_depth,
-                        drift_depth=self._ship_config.argo_float_config.drift_depth,
-                        vertical_speed=self._ship_config.argo_float_config.vertical_speed,
+                        min_depth=self._ship_config.argo_float_config.min_depth_meter,
+                        max_depth=self._ship_config.argo_float_config.max_depth_meter,
+                        drift_depth=self._ship_config.argo_float_config.drift_depth_meter,
+                        vertical_speed=self._ship_config.argo_float_config.vertical_speed_meter_per_second,
                         cycle_days=self._ship_config.argo_float_config.cycle_days,
                         drift_days=self._ship_config.argo_float_config.drift_days,
                     )
@@ -241,8 +244,8 @@ class _ScheduleSimulator:
                 self._measurements_to_simulate.ctds.append(
                     CTD(
                         spacetime=Spacetime(self._location, self._time),
-                        min_depth=self._ship_config.ctd_config.min_depth,
-                        max_depth=self._ship_config.ctd_config.max_depth,
+                        min_depth=self._ship_config.ctd_config.min_depth_meter,
+                        max_depth=self._ship_config.ctd_config.max_depth_meter,
                     )
                 )
                 time_costs.append(timedelta(minutes=20))
@@ -250,7 +253,7 @@ class _ScheduleSimulator:
                 self._measurements_to_simulate.drifters.append(
                     Drifter(
                         spacetime=Spacetime(self._location, self._time),
-                        depth=self._ship_config.drifter_config.depth,
+                        depth=self._ship_config.drifter_config.depth_meter,
                         lifetime=self._ship_config.drifter_config.lifetime,
                     )
                 )

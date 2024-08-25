@@ -17,7 +17,7 @@ def test_simulate_schedule_feasible() -> None:
 
     projection = pyproj.Geod(ellps="WGS84")
     ship_config = ShipConfig.from_yaml("expedition_dir/ship_config.yaml")
-    ship_config.ship_speed = 5.14
+    ship_config.ship_speed_meter_per_second = 5.14
     schedule = Schedule(
         waypoints=[
             Waypoint(Location(0, 0), base_time),
