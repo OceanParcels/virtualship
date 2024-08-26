@@ -22,9 +22,9 @@ _YamlDumper.add_representer(
 
 class Checkpoint(BaseModel):
     """
-    Checkpoint is schedule simulation.
+    A checkpoint of schedule simulation.
 
-    Until where the schedule execution proceeded without troubles.
+    Copy of the schedule until where the simulation proceeded without troubles.
     """
 
     past_schedule: Schedule
