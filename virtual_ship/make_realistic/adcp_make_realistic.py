@@ -20,10 +20,10 @@ def adcp_make_realistic(
     """
     original = xr.open_zarr(zarr_path)
 
-    times = original.sel(trajectory=0)["time"].values
+    times = original.sel(trajectory=1)["time"].values
     depths = original.sel(obs=0)["z"].values
-    lats = original.sel(trajectory=0)["lat"].values
-    lons = original.sel(trajectory=0)["lon"].values
+    lats = original.sel(trajectory=1)["lat"].values
+    lons = original.sel(trajectory=1)["lon"].values
     all_us = original["U"].values
     all_vs = original["V"].values
 
@@ -44,6 +44,39 @@ def adcp_make_realistic(
 def _add_noise(
     times: np.ndarray, depths: np.ndarray, all_us: np.ndarray, all_vs: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Return the provided data with added noise.
+
+    The noise is not a realistic nor based on anything physics, but simply an attempt to have the data look somewhat similar to real ADCP data.
+
+    :param times: Times of the measurements.
+    :param depths: Bin depths measured by ADCP.
+    :param all_us: All U measurements.
+    :param all_vs: All V measurements.
+    :return: U and V with added noise.
+    """
+    surface_noise = (
+        
+        noise = np.random.random((all_us.shape)) * 0.1 * max(all_us)
+        noise = np.where((depths > 100) & (depths < 240), 1, 0)
+        # for i, idx in all_us:
+        for i, us in enumerate(all_us):
+           noise.append([(depths < -100) & (depths > -240)] * (random.uniform(-1, 1) * np.random.random_sample(len(depths))) * us.max())
+
+        for 
+        all_us[(depths < -100) & (depths > -240)] * 0.1 * np.random.random_sample(all_us) * 0.1 * max(all_us)
+        # np.random.random_sample(all_us) * 0.1 * max(all_us)
+        # * np.where((depths > 100) & (depths < 240), 1, 0)
+    )
+    vertical_noise = (
+        for i in range(len(all_us)):
+            all_us[i] += noise
+            all_vs[i] += noise
+    )
+    #     0.05
+    #     * np.maximum(1.0 + depth / 1000.0, 0.1)
+    #     * np.random.random_sample(len(depths))
+    # )
     return all_us, all_vs
 
 

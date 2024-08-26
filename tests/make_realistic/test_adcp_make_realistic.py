@@ -7,7 +7,7 @@ from virtual_ship.make_realistic import adcp_make_realistic
 
 def test_adcp_make_realistic(tmpdir: py.path.LocalPath) -> None:
     # add noise and convert to CSV
-    file = adcp_make_realistic("adcp.zarr", out_dir=tmpdir, prefix="ADCP")
+    file = adcp_make_realistic("/Users/0448257/Data/adcp.zarr", out_dir=".", prefix="ADCP")
 
     # check if CSV is ok and can be loaded
     with open(file, mode="r", newline="") as csvfile:

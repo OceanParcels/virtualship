@@ -16,7 +16,7 @@ _ADCPParticle = ScipyParticle.add_variables(
 )
 
 
-def _sample_velocity(particle, fieldset, time):
+def _sample_velocity(particle, fieldset, time):    
     particle.U, particle.V = fieldset.UV.eval(
         time, particle.depth, particle.lat, particle.lon, applyConversion=False
     )
@@ -31,7 +31,7 @@ def simulate_adcp(
     sample_points: list[Spacetime],
 ) -> None:
     """
-    Use Parcels to simulate an ADCP in a fieldset.
+    Use Parcels to simulate an ADCP in a fieldset, returns U and V in the fieldset units. Writes the results to out_path.
 
     :param fieldset: The fieldset to simulate the ADCP in.
     :param out_path: The path to write the results to.
