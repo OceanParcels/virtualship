@@ -26,6 +26,7 @@ def verify_schedule(
     :param schedule: The schedule to verify.
     :param input_data: Fieldsets that can be used to check for zero UV condition (is waypoint on land).
     :raises PlanningError: If waypoints are not feasible or incorrect.
+    :raises NotImplementedError: If instrument is in schedule that is not implememented.
     """
     if len(schedule.waypoints) == 0:
         raise PlanningError("At least one waypoint must be provided.")
@@ -141,7 +142,7 @@ def verify_schedule(
                         "Planning has waypoint with drifter instrument, but configuration does not configure drifters."
                     )
                 else:
-                    raise RuntimeError("Instrument not supported.")
+                    raise NotImplementedError("Instrument not supported.")
 
 
 class PlanningError(RuntimeError):
