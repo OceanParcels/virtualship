@@ -5,94 +5,94 @@ from __future__ import annotations
 from datetime import timedelta
 from pathlib import Path
 
+import pydantic
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 
-class ArgoFloatConfig(BaseModel):
+class ArgoFloatConfig(pydantic.BaseModel):
     """Configuration for argos floats."""
 
-    min_depth_meter: float = Field(le=0.0)
-    max_depth_meter: float = Field(le=0.0)
-    drift_depth_meter: float = Field(le=0.0)
-    vertical_speed_meter_per_second: float = Field(lt=0.0)
-    cycle_days: float = Field(gt=0.0)
-    drift_days: float = Field(gt=0.0)
+    min_depth_meter: float = pydantic.Field(le=0.0)
+    max_depth_meter: float = pydantic.Field(le=0.0)
+    drift_depth_meter: float = pydantic.Field(le=0.0)
+    vertical_speed_meter_per_second: float = pydantic.Field(lt=0.0)
+    cycle_days: float = pydantic.Field(gt=0.0)
+    drift_days: float = pydantic.Field(gt=0.0)
 
 
-class ADCPConfig(BaseModel):
+class ADCPConfig(pydantic.BaseModel):
     """Configuration for ADCP instrument."""
 
-    max_depth_meter: float = Field(le=0.0)
-    num_bins: int = Field(gt=0.0)
-    period: timedelta = Field(
+    max_depth_meter: float = pydantic.Field(le=0.0)
+    num_bins: int = pydantic.Field(gt=0.0)
+    period: timedelta = pydantic.Field(
         serialization_alias="period_minutes",
         validation_alias="period_minutes",
         gt=timedelta(),
     )
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = pydantic.ConfigDict(populate_by_name=True)
 
-    @field_serializer("period")
+    @pydantic.pydantic.field_serializer("period")
     def _serialize_period(self, value: timedelta, _info):
         return value.total_seconds() / 60.0
 
 
-class CTDConfig(BaseModel):
+class CTDConfig(pydantic.BaseModel):
     """Configuration for CTD instrument."""
 
-    stationkeeping_time: timedelta = Field(
+    stationkeeping_time: timedelta = pydantic.Field(
         serialization_alias="stationkeeping_time_minutes",
         validation_alias="stationkeeping_time_minutes",
         gt=timedelta(),
     )
-    min_depth_meter: float = Field(le=0.0)
-    max_depth_meter: float = Field(le=0.0)
+    min_depth_meter: float = pydantic.Field(le=0.0)
+    max_depth_meter: float = pydantic.Field(le=0.0)
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = pydantic.ConfigDict(populate_by_name=True)
 
-    @field_serializer("stationkeeping_time")
+    @pydantic.pydantic.field_serializer("stationkeeping_time")
     def _serialize_stationkeeping_time(self, value: timedelta, _info):
         return value.total_seconds() / 60.0
 
 
-class ShipUnderwaterSTConfig(BaseModel):
+class ShipUnderwaterSTConfig(pydantic.BaseModel):
     """Configuration for underwater ST."""
 
-    period: timedelta = Field(
+    period: timedelta = pydantic.Field(
         serialization_alias="period_minutes",
         validation_alias="period_minutes",
         gt=timedelta(),
     )
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = pydantic.ConfigDict(populate_by_name=True)
 
-    @field_serializer("period")
+    @pydantic.pydantic.field_serializer("period")
     def _serialize_period(self, value: timedelta, _info):
         return value.total_seconds() / 60.0
 
 
-class DrifterConfig(BaseModel):
+class DrifterConfig(pydantic.BaseModel):
     """Configuration for drifters."""
 
-    depth_meter: float = Field(le=0.0)
-    lifetime: timedelta = Field(
+    depth_meter: float = pydantic.Field(le=0.0)
+    lifetime: timedelta = pydantic.Field(
         serialization_alias="lifetime_minutes",
         validation_alias="lifetime_minutes",
         gt=timedelta(),
     )
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = pydantic.ConfigDict(populate_by_name=True)
 
-    @field_serializer("lifetime")
+    @pydantic.pydantic.field_serializer("lifetime")
     def _serialize_lifetime(self, value: timedelta, _info):
         return value.total_seconds() / 60.0
 
 
-class ShipConfig(BaseModel):
+class ShipConfig(pydantic.BaseModel):
     """Configuration of the virtual ship."""
 
-    ship_speed_meter_per_second: float = Field(gt=0.0)
+    ship_speed_meter_per_second: float = pydantic.Field(gt=0.0)
     """
     Velocity of the ship in meters per second.
     """
@@ -132,7 +132,7 @@ class ShipConfig(BaseModel):
     If None, no drifters can be deployed.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = pydantic.ConfigDict(extra="forbid")
 
     def to_yaml(self, file_path: str | Path) -> None:
         """

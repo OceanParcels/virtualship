@@ -4,18 +4,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pydantic
 import yaml
-from pydantic import BaseModel, ConfigDict
 
 from .waypoint import Waypoint
 
 
-class Schedule(BaseModel):
+class Schedule(pydantic.BaseModel):
     """Schedule of the virtual ship."""
 
     waypoints: list[Waypoint]
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = pydantic.ConfigDict(extra="forbid")
 
     def to_yaml(self, file_path: str | Path) -> None:
         """

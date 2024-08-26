@@ -26,7 +26,6 @@ def verify_schedule(
     :param schedule: The schedule to verify.
     :param input_data: Fieldsets that can be used to check for zero UV condition (is waypoint on land).
     :raises PlanningError: If waypoints are not feasible or incorrect.
-    :raises ValueError: If there are no fieldsets in the ship_config, which are needed to verify all waypoints are on water.
     """
     if len(schedule.waypoints) == 0:
         raise PlanningError("At least one waypoint must be provided.")

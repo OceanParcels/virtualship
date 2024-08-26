@@ -97,8 +97,7 @@ class InputData:
 
         # make depth negative
         for g in fieldset.gridset.grids:
-            if max(g.depth) > 0:
-                g.depth = -g.depth
+            g.depth = -g.depth
 
         # add bathymetry data
         bathymetry_file = directory.joinpath("bathymetry.nc")
@@ -108,8 +107,7 @@ class InputData:
             bathymetry_file, bathymetry_variables, bathymetry_dimensions
         )
         # make depth negative
-        if max(bathymetry_field.data > 0):
-            bathymetry_field.data = -bathymetry_field.data
+        bathymetry_field.data = -bathymetry_field.data
         fieldset.add_field(bathymetry_field)
 
         # read in data already
@@ -139,8 +137,7 @@ class InputData:
 
         # make depth negative
         for g in fieldset.gridset.grids:
-            if max(g.depth) > 0:
-                g.depth = -g.depth
+            g.depth = -g.depth
 
         return fieldset
 

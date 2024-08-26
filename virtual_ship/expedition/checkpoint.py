@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pydantic
 import yaml
-from pydantic import BaseModel
 
 from .instrument_type import InstrumentType
 from .schedule import Schedule
@@ -20,7 +20,7 @@ _YamlDumper.add_representer(
 )
 
 
-class Checkpoint(BaseModel):
+class Checkpoint(pydantic.BaseModel):
     """
     A checkpoint of schedule simulation.
 
