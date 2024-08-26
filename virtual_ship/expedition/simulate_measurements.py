@@ -35,10 +35,10 @@ def simulate_measurements(
 
     if len(measurements.ship_underwater_sts) > 0:
         print("Simulating onboard salinity and temperature measurements.")
-        if input_data.ship_underwater_st_fieldset is None:
-            raise RuntimeError("No fieldset for ship underwater ST provided.")
         if ship_config.ship_underwater_st_config is None:
             raise RuntimeError("No configuration for ship underwater ST provided.")
+        if input_data.ship_underwater_st_fieldset is None:
+            raise RuntimeError("No fieldset for ship underwater ST provided.")
         simulate_ship_underwater_st(
             fieldset=input_data.ship_underwater_st_fieldset,
             out_path=expedition_dir.joinpath("results", "ship_underwater_st.zarr"),
@@ -48,10 +48,10 @@ def simulate_measurements(
 
     if len(measurements.adcps) > 0:
         print("Simulating onboard ADCP.")
-        if input_data.adcp_fieldset is None:
-            raise RuntimeError("No fieldset for ADCP provided.")
         if ship_config.adcp_config is None:
             raise RuntimeError("No configuration for ADCP provided.")
+        if input_data.adcp_fieldset is None:
+            raise RuntimeError("No fieldset for ADCP provided.")
         simulate_adcp(
             fieldset=input_data.adcp_fieldset,
             out_path=expedition_dir.joinpath("results", "adcp.zarr"),
@@ -63,10 +63,10 @@ def simulate_measurements(
 
     if len(measurements.ctds) > 0:
         print("Simulating CTD casts.")
-        if input_data.ctd_fieldset is None:
-            raise RuntimeError("No fieldset for CTD provided.")
         if ship_config.ctd_config is None:
             raise RuntimeError("No configuration for CTD provided.")
+        if input_data.ctd_fieldset is None:
+            raise RuntimeError("No fieldset for CTD provided.")
         simulate_ctd(
             out_path=expedition_dir.joinpath("results", "ctd.zarr"),
             fieldset=input_data.ctd_fieldset,
@@ -76,10 +76,10 @@ def simulate_measurements(
 
     if len(measurements.drifters) > 0:
         print("Simulating drifters")
-        if input_data.drifter_fieldset is None:
-            raise RuntimeError("No fieldset for drifters provided.")
         if ship_config.drifter_config is None:
             raise RuntimeError("No configuration for drifters provided.")
+        if input_data.drifter_fieldset is None:
+            raise RuntimeError("No fieldset for drifters provided.")
         simulate_drifters(
             out_path=expedition_dir.joinpath("results", "drifters.zarr"),
             fieldset=input_data.drifter_fieldset,
@@ -91,10 +91,10 @@ def simulate_measurements(
 
     if len(measurements.argo_floats) > 0:
         print("Simulating argo floats")
-        if input_data.argo_float_fieldset is None:
-            raise RuntimeError("No fieldset for argo floats provided.")
         if ship_config.argo_float_config is None:
             raise RuntimeError("No configuration for argo floats provided.")
+        if input_data.argo_float_fieldset is None:
+            raise RuntimeError("No fieldset for argo floats provided.")
         simulate_argo_floats(
             out_path=expedition_dir.joinpath("results", "argo_floats.zarr"),
             argo_floats=measurements.argo_floats,
