@@ -130,7 +130,7 @@ def _is_on_land_zero_uv(fieldset: FieldSet, waypoint: Waypoint) -> bool:
     """
     return fieldset.UV.eval(
         0,
-        -fieldset.U.depth[0],
+        fieldset.gridset.grids[0].depth[0],
         waypoint.location.lat,
         waypoint.location.lon,
         applyConversion=False,
