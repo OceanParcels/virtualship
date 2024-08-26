@@ -22,7 +22,7 @@ def simulate_measurements(
     """
     Simulate measurements using parcels.
 
-    Saves everything the $expedition_dir/results.
+    Saves everything in expedition_dir/results.
 
     :param expedition_dir: Base directory of the expedition.
     :param ship_config: Ship configuration.
