@@ -20,7 +20,7 @@ def simulate_measurements(
     measurements: MeasurementsToSimulate,
 ) -> None:
     """
-    Simulate measurements using parcels.
+    Simulate measurements using Parcels.
 
     Saves everything in expedition_dir/results.
 
