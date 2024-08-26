@@ -104,28 +104,28 @@ class ShipConfig(BaseModel):
     If None, no argo floats can be deployed.
     """
 
-    adcp_config: ADCPConfig | None
+    adcp_config: ADCPConfig | None = None
     """
     ADCP configuration.
 
     If None, no ADCP measurements will be performed.
     """
 
-    ctd_config: CTDConfig | None
+    ctd_config: CTDConfig | None = None
     """
     CTD configuration.
 
     If None, no CTDs can be cast.
     """
 
-    ship_underwater_st_config: ShipUnderwaterSTConfig | None
+    ship_underwater_st_config: ShipUnderwaterSTConfig | None = None
     """
     Ship underwater salinity temperature measurementconfiguration.
 
     If None, no ST measurements will be performed.
     """
 
-    drifter_config: DrifterConfig | None
+    drifter_config: DrifterConfig | None = None
     """
     Drifter configuration.
 

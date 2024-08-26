@@ -105,6 +105,7 @@ def do_expedition(expedition_dir: str | Path) -> None:
     print("Done simulating measurements.")
 
     print("Your expedition has concluded successfully!")
+    print("Your measurements can be found in the results directory.")
 
 
 def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:

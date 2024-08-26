@@ -50,6 +50,8 @@ def verify_schedule(
     # check if all waypoints are in water
     # this is done by picking an arbitrary provided fieldset and checking if UV is not zero
 
+    print("Verifying all waypoints are on water..")
+
     # get all available fieldsets
     available_fieldsets = [
         fs
@@ -62,24 +64,28 @@ def verify_schedule(
         ]
         if fs is not None
     ]
+
     # check if there are any fieldsets, else its an error
     if len(available_fieldsets) == 0:
-        raise ValueError(
-            "No fieldsets provided to check if waypoints are on land. Assuming no provided fieldsets is an error."
+        print(
+            "Cannot verify because no fieldsets have been loaded. This is probably because you are not using any instruments in your schedule. This is not a problem, but carefully check your waypoint locations manually.."
         )
-    # pick any
-    fieldset = available_fieldsets[0]
-    # get waypoints with 0 UV
-    land_waypoints = [
-        (wp_i, wp)
-        for wp_i, wp in enumerate(schedule.waypoints)
-        if _is_on_land_zero_uv(fieldset, wp)
-    ]
-    # raise an error if there are any
-    if len(land_waypoints) > 0:
-        raise PlanningError(
-            f"The following waypoints are on land: {['#' + str(wp_i) + ' ' + str(wp) for (wp_i, wp) in land_waypoints]}"
-        )
+
+    else:
+        # pick any
+        fieldset = available_fieldsets[0]
+        # get waypoints with 0 UV
+        land_waypoints = [
+            (wp_i, wp)
+            for wp_i, wp in enumerate(schedule.waypoints)
+            if _is_on_land_zero_uv(fieldset, wp)
+        ]
+        # raise an error if there are any
+        if len(land_waypoints) > 0:
+            raise PlanningError(
+                f"The following waypoints are on land: {['#' + str(wp_i) + ' ' + str(wp) for (wp_i, wp) in land_waypoints]}"
+            )
+        print("Good, all waypoints are on water.")
 
     # check that ship will arrive on time at each waypoint (in case no unexpected event happen)
     time = schedule.waypoints[0].time
