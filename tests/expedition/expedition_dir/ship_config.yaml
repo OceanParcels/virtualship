@@ -1,3 +1,4 @@
+ship_speed_meter_per_second: 5.14
 adcp_config:
   num_bins: 40
   max_depth_meter: -1000.0
@@ -16,6 +17,5 @@ ctd_config:
 drifter_config:
   depth_meter: 0.0
   lifetime_minutes: 40320.0
-ship_speed_meter_per_second: 5.14
 ship_underwater_st_config:
   period_minutes: 5.0

@@ -113,6 +113,36 @@ def verify_schedule(
         else:
             time = wp_next.time
 
+    # verify instruments in schedule have configuration
+    for wp in schedule.waypoints:
+        if wp.instrument is not None:
+            for instrument in (
+                wp.instrument if isinstance(wp.instrument, list) else [wp.instrument]
+            ):
+                if (
+                    instrument == InstrumentType.ARGO_FLOAT
+                    and ship_config.argo_float_config is None
+                ):
+                    raise PlanningError(
+                        "Planning has waypoint with Argo float instrument, but configuration does not configure Argo floats."
+                    )
+                elif (
+                    instrument == InstrumentType.CTD
+                    and ship_config.argo_float_config is None
+                ):
+                    raise PlanningError(
+                        "Planning has waypoint with CTD instrument, but configuration does not configure CTDs."
+                    )
+                elif (
+                    instrument == InstrumentType.DRIFTER
+                    and ship_config.argo_float_config is None
+                ):
+                    raise PlanningError(
+                        "Planning has waypoint with drifter instrument, but configuration does not configure drifters."
+                    )
+                else:
+                    raise RuntimeError("Instrument not supported.")
+
 
 class PlanningError(RuntimeError):
     """An error in the schedule."""

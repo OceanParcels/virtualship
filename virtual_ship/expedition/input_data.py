@@ -139,6 +139,9 @@ class InputData:
         for g in fieldset.gridset.grids:
             g.depth = -g.depth
 
+        # read in data already
+        fieldset.computeTimeChunk(0, 1)
+
         return fieldset
 
     @classmethod
@@ -166,5 +169,8 @@ class InputData:
         for g in fieldset.gridset.grids:
             if max(g.depth) > 0:
                 g.depth = -g.depth
+
+        # read in data already
+        fieldset.computeTimeChunk(0, 1)
 
         return fieldset
