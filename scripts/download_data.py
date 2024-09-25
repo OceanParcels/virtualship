@@ -4,8 +4,9 @@ Download data required to run expeditions.
 This is a very crude script, here just as long as we do not properly incorporate it into the library.
 """
 
-import copernicusmarine
 import datetime
+
+import copernicusmarine
 
 if __name__ == "__main__":
     datadir = "input_data"

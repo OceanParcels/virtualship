@@ -47,13 +47,7 @@ local_scheme = "no-local-version"
 
 [project.optional-dependencies]
 dev = [
-    "black == 24.4.0",
-    "darglint == 1.8.1",
-    "flake8 == 7.0.0",
-    "Flake8-pyproject == 1.2.3",
-    "isort == 5.13.2",
-    "pydocstyle == 6.3.0",
-    "sort-all == 1.2.0",
+    "pre-commit",
     "pytest == 8.2.0",
     "pytest-cov == 5.0.0",
     "codecov == 2.1.13",
@@ -65,10 +59,34 @@ dev = [
 [project.scripts]
 do_expedition = "virtual_ship.cli.do_expedition:main"
 
-[tool.isort]
-profile = "black"
-skip_gitignore = true
 
-[tool.flake8]
-extend-ignore = "E501"     # Don't check line length.
-docstring_style = "sphinx" # Use sphinx docstring style for darglint plugin.
+[tool.ruff.lint]
+exclude = ["*.ipynb"]
+
+select = [
+    "E",  # Error
+    "F",  # pyflakes
+    "I",  # isort
+    "D", # pydocstyle
+    "DOC", # pydoclint
+    # "B",  # Bugbear
+    # "UP", # pyupgrade
+    # "LOG", # logging
+    # "ICN", # import conventions
+    # "G", # logging-format
+    "RUF", # ruff
+    "ISC001", # single-line-implicit-string-concatenation
+]
+ignore = [
+    # line too long (82 > 79 characters)
+    "E501",
+    # consider `[meta, header, *data]` instead of concatenation
+    "RUF005",
+    # multi-line-summary-first-line
+    "D212",
+    # one-blank-line-before-class
+    "D203",
+
+    # TODO: Remove later
+    "D100", "D103"
+]
