@@ -5,6 +5,10 @@ package:
 source:
   path: virtual_ship
 
+build:
+  entry_points:
+    - do_expedition = virtual_ship.cli.do_expedition:main
+
 requirements:
   run:
     - python >=3.8

@@ -10,24 +10,20 @@ from ..spacetime import Spacetime
 # there is some overhead with JITParticle and this ends up being significantly faster
 _ShipSTParticle = ScipyParticle.add_variables(
     [
-        Variable("salinity", dtype=np.float32, initial=np.nan),
-        Variable("temperature", dtype=np.float32, initial=np.nan),
+        Variable("S", dtype=np.float32, initial=np.nan),
+        Variable("T", dtype=np.float32, initial=np.nan),
     ]
 )
 
 
 # define function sampling Salinity
 def _sample_salinity(particle, fieldset, time):
-    particle.salinity = fieldset.salinity[
-        time, particle.depth, particle.lat, particle.lon
-    ]
+    particle.S = fieldset.S[time, particle.depth, particle.lat, particle.lon]
 
 
 # define function sampling Temperature
 def _sample_temperature(particle, fieldset, time):
-    particle.temperature = fieldset.temperature[
-        time, particle.depth, particle.lat, particle.lon
-    ]
+    particle.T = fieldset.T[time, particle.depth, particle.lat, particle.lon]
 
 
 def simulate_ship_underwater_st(

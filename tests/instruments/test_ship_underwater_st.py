@@ -27,15 +27,15 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
     # expected observations at sample points
     expected_obs = [
         {
-            "salinity": 5,
-            "temperature": 6,
+            "S": 5,
+            "T": 6,
             "lat": sample_points[0].location.lat,
             "lon": sample_points[0].location.lon,
             "time": base_time + datetime.timedelta(seconds=0),
         },
         {
-            "salinity": 7,
-            "temperature": 8,
+            "S": 7,
+            "T": 8,
             "lat": sample_points[1].location.lat,
             "lon": sample_points[1].location.lon,
             "time": base_time + datetime.timedelta(seconds=1),
@@ -45,19 +45,19 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
     # create fieldset based on the expected observations
     # indices are time, latitude, longitude
     salinity = np.zeros((2, 2, 2))
-    salinity[0, 0, 0] = expected_obs[0]["salinity"]
-    salinity[1, 1, 1] = expected_obs[1]["salinity"]
+    salinity[0, 0, 0] = expected_obs[0]["S"]
+    salinity[1, 1, 1] = expected_obs[1]["S"]
 
     temperature = np.zeros((2, 2, 2))
-    temperature[0, 0, 0] = expected_obs[0]["temperature"]
-    temperature[1, 1, 1] = expected_obs[1]["temperature"]
+    temperature[0, 0, 0] = expected_obs[0]["T"]
+    temperature[1, 1, 1] = expected_obs[1]["T"]
 
     fieldset = FieldSet.from_data(
         {
             "V": np.zeros((2, 2, 2)),
             "U": np.zeros((2, 2, 2)),
-            "salinity": salinity,
-            "temperature": temperature,
+            "S": salinity,
+            "T": temperature,
         },
         {
             "lat": np.array([expected_obs[0]["lat"], expected_obs[1]["lat"]]),
@@ -95,7 +95,7 @@ def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
         zip(results.sel(trajectory=traj).obs, expected_obs, strict=True)
     ):
         obs = results.sel(trajectory=traj, obs=obs_i)
-        for var in ["salinity", "temperature", "lat", "lon"]:
+        for var in ["S", "T", "lat", "lon"]:
             obs_value = obs[var].values.item()
             exp_value = exp[var]
             assert np.isclose(
