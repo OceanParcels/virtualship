@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from ..location import Location
 from .instrument_type import InstrumentType
-from .location import Location
 
 
 @dataclass
@@ -13,4 +13,4 @@ class Waypoint:
 
     location: Location
     time: datetime | None = None
-    instrument: InstrumentType | None = None
+    instrument: InstrumentType | list[InstrumentType] | None = None

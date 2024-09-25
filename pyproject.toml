@@ -30,6 +30,7 @@ dependencies = [
     "sortedcontainers == 2.4.0",
     "opensimplex == 0.4.5",
     "numpy >=1, < 2",
+    "pydantic >=2, <3",
 ]
 
 [project.urls]
@@ -60,6 +61,9 @@ dev = [
     "setuptools == 70.0.0",
     "sortedcontainers-stubs == 2.4.2",
 ]
+
+[project.scripts]
+do_expedition = "virtual_ship.cli.do_expedition:main"
 
 [tool.isort]
 profile = "black"
