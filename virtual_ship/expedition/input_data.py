@@ -164,6 +164,7 @@ class InputData:
             filenames, variables, dimensions, allow_time_extrapolation=False
         )
         fieldset.T.interp_method = "linear_invdist_land_tracer"
+        fieldset.S.interp_method = "linear_invdist_land_tracer"
 
         # make depth negative
         for g in fieldset.gridset.grids:
