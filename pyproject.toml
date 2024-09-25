@@ -69,11 +69,9 @@ select = [
     "I",  # isort
     "D", # pydocstyle
     "DOC", # pydoclint
-    # "B",  # Bugbear
-    # "UP", # pyupgrade
-    # "LOG", # logging
-    # "ICN", # import conventions
-    # "G", # logging-format
+    "B",  # Bugbear
+    "UP", # pyupgrade
+    "ICN", # import conventions
     "RUF", # ruff
     "ISC001", # single-line-implicit-string-concatenation
 ]

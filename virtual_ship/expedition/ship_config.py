@@ -151,6 +151,6 @@ class ShipConfig(pydantic.BaseModel):
         :param file_path: Path to the file to load from.
         :returns: The config.
         """
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             data = yaml.safe_load(file)
         return ShipConfig(**data)

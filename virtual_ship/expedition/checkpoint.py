@@ -46,6 +46,6 @@ class Checkpoint(pydantic.BaseModel):
         :param file_path: Path to the file to load from.
         :returns: The checkpoint.
         """
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             data = yaml.safe_load(file)
         return Checkpoint(**data)
