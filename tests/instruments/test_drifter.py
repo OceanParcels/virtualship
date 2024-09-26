@@ -4,7 +4,6 @@ import datetime
 from datetime import timedelta
 
 import numpy as np
-import py
 import xarray as xr
 from parcels import FieldSet
 
@@ -12,7 +11,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.drifter import Drifter, simulate_drifters
 
 
-def test_simulate_drifters(tmpdir: py.path.LocalPath) -> None:
+def test_simulate_drifters(tmpdir) -> None:
     # arbitrary time offset for the dummy fieldset
     base_time = datetime.datetime.strptime("1950-01-01", "%Y-%m-%d")
 

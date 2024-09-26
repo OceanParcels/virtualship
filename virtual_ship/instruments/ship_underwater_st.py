@@ -1,7 +1,8 @@
 """Ship salinity and temperature."""
 
+from pathlib import Path
+
 import numpy as np
-import py
 from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 
 from ..spacetime import Spacetime
@@ -28,7 +29,7 @@ def _sample_temperature(particle, fieldset, time):
 
 def simulate_ship_underwater_st(
     fieldset: FieldSet,
-    out_path: str | py.path.LocalPath,
+    out_path: str | Path,
     depth: float,
     sample_points: list[Spacetime],
 ) -> None:

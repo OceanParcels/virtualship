@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 from datetime import timedelta
+from pathlib import Path
 
 import numpy as np
-import py
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
 from ..spacetime import Spacetime
@@ -55,7 +55,7 @@ def _ctd_cast(particle, fieldset, time):
 
 def simulate_ctd(
     fieldset: FieldSet,
-    out_path: str | py.path.LocalPath,
+    out_path: str | Path,
     ctds: list[CTD],
     outputdt: timedelta,
 ) -> None:

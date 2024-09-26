@@ -3,7 +3,6 @@
 import datetime
 
 import numpy as np
-import py
 import xarray as xr
 from parcels import FieldSet
 
@@ -11,7 +10,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.ship_underwater_st import simulate_ship_underwater_st
 
 
-def test_simulate_ship_underwater_st(tmpdir: py.path.LocalPath) -> None:
+def test_simulate_ship_underwater_st(tmpdir) -> None:
     # depth at which the sampling will be done
     DEPTH = -2
 

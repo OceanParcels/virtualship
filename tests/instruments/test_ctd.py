@@ -8,7 +8,6 @@ import datetime
 from datetime import timedelta
 
 import numpy as np
-import py
 import xarray as xr
 from parcels import Field, FieldSet
 
@@ -16,7 +15,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.ctd import CTD, simulate_ctd
 
 
-def test_simulate_ctds(tmpdir: py.path.LocalPath) -> None:
+def test_simulate_ctds(tmpdir) -> None:
     # arbitrary time offset for the dummy fieldset
     base_time = datetime.datetime.strptime("1950-01-01", "%Y-%m-%d")
 

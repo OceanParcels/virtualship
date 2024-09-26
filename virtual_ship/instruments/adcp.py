@@ -1,7 +1,8 @@
 """ADCP instrument."""
 
+from pathlib import Path
+
 import numpy as np
-import py
 from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 
 from ..spacetime import Spacetime
@@ -24,7 +25,7 @@ def _sample_velocity(particle, fieldset, time):
 
 def simulate_adcp(
     fieldset: FieldSet,
-    out_path: str | py.path.LocalPath,
+    out_path: str | Path,
     max_depth: float,
     min_depth: float,
     num_bins: int,

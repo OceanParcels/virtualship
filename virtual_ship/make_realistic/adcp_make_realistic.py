@@ -1,15 +1,16 @@
 """adcp_make_realistic function."""
 
+from pathlib import Path
+
 import numpy as np
-import py
 import xarray as xr
 
 
 def adcp_make_realistic(
-    zarr_path: str | py.path.LocalPath,
-    out_dir: str | py.path.LocalPath,
+    zarr_path: str | Path,
+    out_dir: str | Path,
     prefix: str,
-) -> py.path.LocalPath:
+) -> Path:
     """
     Take simulated ADCP data, add noise, then save in (an inconvenient educational) CSV format.
 
@@ -30,11 +31,8 @@ def adcp_make_realistic(
     all_us, all_vs = _add_noise(times, depths, all_us, all_vs)
 
     csv = _to_csv(times, depths, lats, lons, all_us, all_vs)
-    out_file = (
-        out_dir.join(f"{prefix}.csv")
-        if isinstance(out_dir, py.path.LocalPath)
-        else f"{out_dir}/{prefix}.csv"
-    )
+    out_file = Path(out_dir) / f"{prefix}.csv"
+
     with open(out_file, "w") as out_cnv:
         out_cnv.write(csv)
 

@@ -3,7 +3,6 @@
 import datetime
 
 import numpy as np
-import py
 import xarray as xr
 from parcels import FieldSet
 
@@ -11,7 +10,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.adcp import simulate_adcp
 
 
-def test_simulate_adcp(tmpdir: py.path.LocalPath) -> None:
+def test_simulate_adcp(tmpdir) -> None:
     # maximum depth the ADCP can measure
     MAX_DEPTH = -1000  # -1000
     # minimum depth the ADCP can measure

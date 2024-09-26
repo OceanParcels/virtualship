@@ -3,9 +3,9 @@
 import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
-import py
 from parcels import (
     AdvectionRK4,
     FieldSet,
@@ -117,7 +117,7 @@ def _check_error(particle, fieldset, time):
 
 def simulate_argo_floats(
     fieldset: FieldSet,
-    out_path: str | py.path.LocalPath,
+    out_path: str | Path,
     argo_floats: list[ArgoFloat],
     outputdt: timedelta,
     endtime: datetime | None,
