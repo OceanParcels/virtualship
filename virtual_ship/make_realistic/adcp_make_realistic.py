@@ -58,8 +58,10 @@ def _to_csv(
     meta = "# depths (m): " + ",".join([str(d) for d in depths])
     header = f"time,lat,lon,{','.join(['u' + str(n) + ',v' + str(n) for n in range(len(depths))])}"
     data = [
-        f"{time!s},{lat},{lon},{','.join([str(u) + ',' + str(v) for u, v in zip(us, vs)])}"
-        for time, lat, lon, us, vs in zip(times, lats, lons, all_us.T, all_vs.T)
+        f"{time!s},{lat},{lon},{','.join([str(u) + ',' + str(v) for u, v in zip(us, vs, strict=False)])}"
+        for time, lat, lon, us, vs in zip(
+            times, lats, lons, all_us.T, all_vs.T, strict=False
+        )
     ]
 
     lines = [meta, header] + data
