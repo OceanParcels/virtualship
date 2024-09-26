@@ -196,7 +196,15 @@ def _to_cnv(
     rows = [
         f"{_i_col(13 + 24 * n)}{_f_col(time + random_time_offset, 3)}{_f_col(lat, 5)}{_f_col(lon, 5)}{_f_col(-depth, 3)}{_f_col(temp, 4)}{_f_col(sal, 4)}"
         for n, (time, temp, lat, lon, depth, sal) in enumerate(
-            zip(times, temperatures, latitudes, longitudes, depths, salinities)
+            zip(
+                times,
+                temperatures,
+                latitudes,
+                longitudes,
+                depths,
+                salinities,
+                strict=False,
+            )
         )
     ]
 

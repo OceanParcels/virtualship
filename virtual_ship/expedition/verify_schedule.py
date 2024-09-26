@@ -40,7 +40,7 @@ def verify_schedule(
     if not all(
         [
             next.time >= cur.time
-            for cur, next in zip(timed_waypoints, timed_waypoints[1:])
+            for cur, next in zip(timed_waypoints, timed_waypoints[1:], strict=False)
         ]
     ):
         raise PlanningError(
@@ -90,7 +90,7 @@ def verify_schedule(
     # check that ship will arrive on time at each waypoint (in case no unexpected event happen)
     time = schedule.waypoints[0].time
     for wp_i, (wp, wp_next) in enumerate(
-        zip(schedule.waypoints, schedule.waypoints[1:])
+        zip(schedule.waypoints, schedule.waypoints[1:], strict=False)
     ):
         if wp.instrument is InstrumentType.CTD:
             time += timedelta(minutes=20)
