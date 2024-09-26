@@ -1,5 +1,6 @@
 """verify_schedule function and supporting classes."""
 
+import itertools
 from datetime import timedelta
 
 import pyproj
@@ -38,10 +39,7 @@ def verify_schedule(
     # check waypoint times are in ascending order
     timed_waypoints = [wp for wp in schedule.waypoints if wp.time is not None]
     if not all(
-        [
-            next.time >= cur.time
-            for cur, next in zip(timed_waypoints, timed_waypoints[1:], strict=False)
-        ]
+        [next.time >= cur.time for cur, next in itertools.pairwise(timed_waypoints)]
     ):
         raise PlanningError(
             "Each waypoint should be timed after all previous waypoints"

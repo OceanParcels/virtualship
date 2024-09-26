@@ -76,6 +76,7 @@ addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
   "error",
+  "ignore:pkg_resources is deprecated as an API.*:DeprecationWarning" # seabird (used in one test) uses pkg_resources
 ]
 log_cli_level = "INFO"
 testpaths = [

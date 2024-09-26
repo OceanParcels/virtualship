@@ -15,9 +15,7 @@ nox.options.default_venv_backend = "uv|virtualenv"
 
 @nox.session
 def lint(session: nox.Session) -> None:
-    """
-    Run the linter.
-    """
+    """Run the linter."""
     session.install("pre-commit")
     session.run(
         "pre-commit", "run", "--all-files", "--show-diff-on-failure", *session.posargs
@@ -26,9 +24,7 @@ def lint(session: nox.Session) -> None:
 
 @nox.session
 def pylint(session: nox.Session) -> None:
-    """
-    Run PyLint.
-    """
+    """Run PyLint."""
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
     session.install(".", "pylint>=3.2")
@@ -37,18 +33,14 @@ def pylint(session: nox.Session) -> None:
 
 @nox.session
 def tests(session: nox.Session) -> None:
-    """
-    Run the unit and regular tests.
-    """
+    """Run the unit and regular tests."""
     session.install(".[dev]")
     session.run("pytest", *session.posargs)
 
 
 @nox.session(reuse_venv=True)
 def docs(session: nox.Session) -> None:
-    """
-    Build the docs. Pass --non-interactive to avoid serving. First positional argument is the target directory.
-    """
+    """Build the docs. Pass --non-interactive to avoid serving. First positional argument is the target directory."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-b", dest="builder", default="html", help="Build target (default: html)"
@@ -76,9 +68,7 @@ def docs(session: nox.Session) -> None:
 
 @nox.session
 def build_api_docs(session: nox.Session) -> None:
-    """
-    Build (regenerate) API docs.
-    """
+    """Build (regenerate) API docs."""
     session.install("sphinx")
     session.run(
         "sphinx-apidoc",
@@ -93,9 +83,7 @@ def build_api_docs(session: nox.Session) -> None:
 
 @nox.session
 def build(session: nox.Session) -> None:
-    """
-    Build an SDist and wheel.
-    """
+    """Build an SDist and wheel."""
     build_path = DIR.joinpath("build")
     if build_path.exists():
         shutil.rmtree(build_path)
