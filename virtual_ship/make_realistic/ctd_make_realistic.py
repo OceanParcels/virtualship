@@ -1,18 +1,18 @@
 """ctd_make_realistic function."""
 
 import random
+from pathlib import Path
 
 import numpy as np
 import opensimplex
-import py
 import xarray as xr
 
 
 def ctd_make_realistic(
-    zarr_path: str | py.path.LocalPath,
-    out_dir: str | py.path.LocalPath,
+    zarr_path: str | Path,
+    out_dir: str | Path,
     prefix: str,
-) -> list[py.path.LocalPath]:
+) -> list[Path]:
     """
     Take simulated CTD data, add noise, then save in CNV format (1 file per CTD).
 
@@ -36,11 +36,8 @@ def ctd_make_realistic(
         temperature = _add_temperature_noise(temperature, depth)
         salinity = _add_salinity_noise(salinity, depth)
 
-        out_file = (
-            out_dir.join(f"{prefix}{ctd_i}.cnv")
-            if isinstance(out_dir, py.path.LocalPath)
-            else f"{out_dir}/{prefix}{ctd_i}.cnv"
-        )
+        out_file = Path(out_dir) / f"{prefix}{ctd_i}.cnv"
+
         files.append(out_file)
 
         cnv = _to_cnv(

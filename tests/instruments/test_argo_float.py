@@ -3,7 +3,6 @@
 from datetime import datetime, timedelta
 
 import numpy as np
-import py
 import xarray as xr
 from parcels import FieldSet
 
@@ -11,7 +10,7 @@ from virtual_ship import Location, Spacetime
 from virtual_ship.instruments.argo_float import ArgoFloat, simulate_argo_floats
 
 
-def test_simulate_argo_floats(tmpdir: py.path.LocalPath) -> None:
+def test_simulate_argo_floats(tmpdir) -> None:
     # arbitrary time offset for the dummy fieldset
     base_time = datetime.strptime("1950-01-01", "%Y-%m-%d")
 
