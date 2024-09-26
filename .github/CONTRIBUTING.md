@@ -49,4 +49,3 @@ Now you can start with development. Unit tests can be run by typing the command 
 We use pre-commit to enforce code style and other checks. This can be run by the `nox -s lint` command above, or by installing pre-commit separately and running `pre-commit run --all-files`. If pre-commit is installed separately, you can also install the pre-commit hook into your git repository by running `pre-commit install` such that you don't need to manually run it (it will run when you make a commit).
 
 Either way, the repository is set up to automatically run pre-commit checks and fix errors on every commit, so you should not need to worry about it.
-

@@ -49,7 +49,6 @@ def docs(session: nox.Session) -> None:
     """
     Build the docs. Pass --non-interactive to avoid serving. First positional argument is the target directory.
     """
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-b", dest="builder", default="html", help="Build target (default: html)"
@@ -80,7 +79,6 @@ def build_api_docs(session: nox.Session) -> None:
     """
     Build (regenerate) API docs.
     """
-
     session.install("sphinx")
     session.run(
         "sphinx-apidoc",
@@ -98,7 +96,6 @@ def build(session: nox.Session) -> None:
     """
     Build an SDist and wheel.
     """
-
     build_path = DIR.joinpath("build")
     if build_path.exists():
         shutil.rmtree(build_path)
