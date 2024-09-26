@@ -31,7 +31,7 @@ source ./.venv/bin/activate
 ```
 or
 ```bash
-conda create -n virtual_ship python=3.8
+conda create -n virtual_ship python=3.10
 conda activate virtual_ship
 ```
 

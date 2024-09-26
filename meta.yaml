@@ -11,7 +11,7 @@ build:
 
 requirements:
   run:
-    - python >=3.8
+    - python >=3.10
     - parcels >=3,<4
     - pyproj >=3,<4
     - sortedcontainers ==2.4.0
