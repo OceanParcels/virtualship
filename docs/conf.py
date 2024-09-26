@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib.metadata
 from typing import Any
 
-project = "virtual_ship"
+project = "Virtual Ship Parcels"
 copyright = "2024, Emma Daniëls"
 author = "Emma Daniëls"
 version = release = importlib.metadata.version("virtual_ship")
@@ -46,6 +46,13 @@ html_theme_options: dict[str, Any] = {
     "source_repository": "https://github.com/OceanParcels/Virtual_ship_classroom",
     "source_branch": "main",
     "source_directory": "docs/",
+}
+
+html_static_path = ["_static"]
+html_theme_options = {
+    "light_logo": "virtual_ship_logo.png",
+    "dark_logo": "virtual_ship_logo_inverted.png",
+    "sidebar_hide_name": True,
 }
 
 myst_enable_extensions = [
