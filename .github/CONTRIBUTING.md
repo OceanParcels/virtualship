@@ -29,7 +29,9 @@ You can set up a development environment by first setting up a virtual environme
 python3 -m venv .venv
 source ./.venv/bin/activate
 ```
+
 or
+
 ```bash
 conda create -n virtual_ship python=3.10
 conda activate virtual_ship
@@ -42,7 +44,6 @@ pip install -v -e .[dev]
 ```
 
 Now you can start with development. Unit tests can be run by typing the command `pytest`, and coverage can be seen by running `pytest --cov=virtual_ship`
-
 
 # Pre-commit
 
