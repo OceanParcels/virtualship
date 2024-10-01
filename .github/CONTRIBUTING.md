@@ -19,7 +19,7 @@ $ nox -s build  # Make an SDist and wheel
 ```
 
 Nox handles everything for you, including setting up an temporary virtual
-environment for each run.
+environment for each run. Run `nox --list` to see all available jobs.
 
 # Setting up a development environment manually
 
