@@ -2,9 +2,9 @@ from datetime import datetime, timedelta
 
 import pyproj
 
-from virtual_ship import Location
-from virtual_ship.expedition import Schedule, ShipConfig, Waypoint
-from virtual_ship.expedition.simulate_schedule import (
+from virtualship import Location
+from virtualship.expedition import Schedule, ShipConfig, Waypoint
+from virtualship.expedition.simulate_schedule import (
     ScheduleOk,
     ScheduleProblem,
     simulate_schedule,

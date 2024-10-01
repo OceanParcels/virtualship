@@ -33,8 +33,8 @@ source ./.venv/bin/activate
 or
 
 ```bash
-conda create -n virtual_ship python=3.10
-conda activate virtual_ship
+conda create -n virtualship python=3.10
+conda activate virtualship
 ```
 
 Then install the dependencies:
@@ -43,7 +43,7 @@ Then install the dependencies:
 pip install -v -e .[dev]
 ```
 
-Now you can start with development. Unit tests can be run by typing the command `pytest`, and coverage can be seen by running `pytest --cov=virtual_ship`
+Now you can start with development. Unit tests can be run by typing the command `pytest`, and coverage can be seen by running `pytest --cov=virtualship`
 
 # Pre-commit
 

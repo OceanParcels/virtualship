@@ -1,13 +1,13 @@
 package:
-  name: virtual_ship
+  name: virtualship
   version: 0.0.2
 
 source:
-  path: virtual_ship
+  path: virtualship
 
 build:
   entry_points:
-    - do_expedition = virtual_ship.cli.do_expedition:main
+    - do_expedition = virtualship.cli.do_expedition:main
 
 requirements:
   run:

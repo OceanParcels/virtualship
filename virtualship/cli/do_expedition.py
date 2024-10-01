@@ -7,7 +7,7 @@ See --help for usage.
 import argparse
 from pathlib import Path
 
-from virtual_ship.expedition.do_expedition import do_expedition
+from virtualship.expedition.do_expedition import do_expedition
 
 
 def main() -> None:

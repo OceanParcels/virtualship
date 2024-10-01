@@ -6,7 +6,7 @@ from .location import Location
 from .spacetime import Spacetime
 
 try:
-    __version__ = _version("virtual_ship")
+    __version__ = _version("virtualship")
 except Exception:
     # Local copy or not installed with setuptools
     __version__ = "unknown"
