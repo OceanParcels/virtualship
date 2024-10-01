@@ -6,7 +6,7 @@ from typing import Any
 project = "Virtual Ship Parcels"
 copyright = "2024, Emma Daniëls"
 author = "Emma Daniëls"
-version = release = importlib.metadata.version("virtual_ship")
+version = release = importlib.metadata.version("virtualship")
 
 extensions = [
     "myst_parser",

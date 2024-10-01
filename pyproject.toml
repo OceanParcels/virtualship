@@ -3,7 +3,7 @@ requires = ["setuptools >= 61.0", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "virtual_ship"
+name = "virtualship"
 description = "Code for the Virtual Ship Classroom, where Marine Scientists can combine Copernicus Marine Data with an OceanParcels ship to go on a virtual expedition."
 readme = "README.md"
 dynamic = ["version"]
@@ -36,16 +36,16 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://oceanparcels.org/" # TODO: Update this to just be repo?
-Repository = "https://github.com/OceanParcels/Virtual_ship_classroom"
-"Bug Tracker" = "https://github.com/OceanParcels/Virtual_ship_classroom/issues"
-Changelog = "https://github.com/OceanParcels/Virtual_ship_classroom/releases"
+Repository = "https://github.com/OceanParcels/virtualship"
+"Bug Tracker" = "https://github.com/OceanParcels/virtualship/issues"
+Changelog = "https://github.com/OceanParcels/virtualship/releases"
 
 
 [tool.setuptools]
-packages = ["virtual_ship"]
+packages = ["virtualship"]
 
 [tool.setuptools_scm]
-write_to = "virtual_ship/_version_setup.py"
+write_to = "virtualship/_version_setup.py"
 local_scheme = "no-local-version"
 
 [project.optional-dependencies]
@@ -67,7 +67,7 @@ docs = [
 ]
 
 [project.scripts]
-do_expedition = "virtual_ship.cli.do_expedition:main"
+do_expedition = "virtualship.cli.do_expedition:main"
 
 
 [tool.pytest.ini_options]
@@ -86,7 +86,7 @@ testpaths = [
 
 
 [tool.coverage]
-run.source = ["virtual_ship"]
+run.source = ["virtualship"]
 report.exclude_also = [
   '\.\.\.',
   'if typing.TYPE_CHECKING:',
