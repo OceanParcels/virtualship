@@ -1,27 +1,57 @@
-# Virtual_ship_classroom
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/_static/virtual_ship_logo_inverted.png">
+  <img alt="VirtualShipParcels logo'" width="200" src="./docs/_static/virtual_ship_logo.png">
+</picture>
+</p>
 
-Emma's work for the MSc student material
-Please contact me at e.e.daniels1@uu.nl with any questions.
+<!-- Badges -->
 
-This is a python tool that will allow students to virtually sample the ocean as if the measurements were coming from an actual oceanographic mission. At the moment we mimic ADCP, CTD, and simple underwaydata measurements and allow surface drifters and argo float deployments. We might add gliders and meteorological data in the future.
+---
 
-### Installation
+<!-- SPHINX-START -->
+<table>
+    <tr>
+        <th>Project Owner</th>
+        <td>Emma Daniels (e.e.daniels1@uu.nl)</td>
+    </tr>
+    <tr>
+        <!-- Should mirror pyproject.toml. Use one of the "Development status" flags from https://pypi.org/classifiers/-->
+        <th>Development status</th>
+        <td>Alpha</td>
+    </tr>
+</table>
 
-Please follow the installation instructions detailed in the [contributing page](.github/CONTRIBUTING.md).
+<!-- Insert catchy summary -->
 
-### Input data
+VirtualShipParcels is a command line simulator allowing students to plan and conduct a virtual research expedition, receiving measurements as if they were coming from actual oceanographic instruments including:
 
-The scripts are written to work with A-grid ocean data, specifically that from CMEMS.
-Data can be downloaded with the download_data.py script. For now a different conda env is needed for downloading, see comments in the script.
+- ADCP (for currents)
+- CTD (for conductivity, and temperature)
+- underwater measurements (salinity and temperature)
+- surface drifters
+- argo float deployments
 
-### Sailing the ship
+<!-- TODO: future. Along the way students will encounter difficulties such as: -->
 
-Fill in the accompanying JSON file and run virtualship.py to start measuring. You can also use Sail_the_ship.ipynb
+## Installation
 
-### Ideas for improvements to be made
+For a normal installation do:
 
-- ACDP #bins instead of max_depth
-- bug when argo(/drifter?) deployed at final location? depth=(len(time))
-- documentation that ships sails great circle path
-- CTDs op land?
-- Argo's/drifters that collide with land. Chance to break?
+```bash
+conda create -n my_env python=3.12
+conda activate my_env
+conda install -c conda-forge virtualship
+```
+
+For a development installation, please follow the instructions detailed in the [contributing page](.github/CONTRIBUTING.md).
+
+## Usage
+
+Copy the expedition directory, and fill in the accompanying YAML file. Then run `virtualship run <dir>` to start measuring.
+
+<!-- TODO: once virtualship cli endpoint is done, just copy paste `virtualship --help` output here. -->
+
+## Input data
+
+The scripts are written to work with A-grid ocean data from CMEMS.
