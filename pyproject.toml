@@ -59,17 +59,6 @@ dev = [
     "sortedcontainers-stubs == 2.4.2",
 ]
 
-docs = [
-  "sphinx>=7.0",
-  "myst_parser>=0.13",
-  "nbsphinx",
-  "ipykernel",
-  "pandoc",
-  "sphinx_copybutton",
-  "sphinx_autodoc_typehints",
-  "furo>=2023.08.17",
-]
-
 [project.scripts]
 virtualship = "virtualship.cli.main:cli"
 

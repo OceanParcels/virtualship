@@ -38,7 +38,7 @@ def tests(session: nox.Session) -> None:
     session.run("pytest", *session.posargs)
 
 
-@nox.session(reuse_venv=True)
+@nox.session(venv_backend="conda", reuse_venv=True)
 def docs(session: nox.Session) -> None:
     """Build the docs. Pass --non-interactive to avoid serving. First positional argument is the target directory."""
     parser = argparse.ArgumentParser()
@@ -49,7 +49,10 @@ def docs(session: nox.Session) -> None:
     args, posargs = parser.parse_known_args(session.posargs)
     serve = args.builder == "html" and session.interactive
 
-    session.install("-e.[docs]", "sphinx-autobuild")
+    session.conda_install(
+        "--file", "docs/conda_requirements.txt", channel="conda-forge"
+    )
+    session.install("-e.")
 
     shared_args = (
         "-n",  # nitpicky mode
