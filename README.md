@@ -48,9 +48,55 @@ For a development installation, please follow the instructions detailed in the [
 
 ## Usage
 
-Copy the expedition directory, and fill in the accompanying YAML file. Then run `virtualship run <dir>` to start measuring.
+```console
+$ virtualship --help
+Usage: virtualship [OPTIONS] COMMAND [ARGS]...
 
-<!-- TODO: once virtualship cli endpoint is done, just copy paste `virtualship --help` output here. -->
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  fetch  Download the relevant data specified in an expedition directory...
+  init   Initialize a directory for a new expedition, with an example...
+  run    Do the expedition.
+```
+
+```console
+$ virtualship init --help
+Usage: virtualship init [OPTIONS] PATH
+
+  Initialize a directory for a new expedition, with an example configuration.
+
+Options:
+  --help  Show this message and exit.
+```
+
+```console
+
+$ virtualship fetch --help
+Usage: virtualship fetch [OPTIONS] PATH
+
+  Download the relevant data specified in an expedition directory (i.e., by
+  the expedition config).
+
+Options:
+  --help  Show this message and exit.
+```
+
+```console
+$ virtualship run --help
+Usage: virtualship run [OPTIONS] PATH
+
+  Do the expedition.
+
+Options:
+  --help  Show this message and exit.
+
+```
+
+For examples, see LINK_TO_TURORIALS.
+
+<!-- TODO: Link to tutorials -->
 
 ## Input data
 
