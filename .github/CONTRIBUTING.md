@@ -62,3 +62,16 @@ conda install --file docs/conda_requirements.txt
 We use pre-commit to enforce code style and other checks. This can be run by the `nox -s lint` command above, or by installing pre-commit separately and running `pre-commit run --all-files`. If pre-commit is installed separately, you can also install the pre-commit hook into your git repository by running `pre-commit install` such that you don't need to manually run it (it will run when you make a commit).
 
 Either way, the repository is set up to automatically run pre-commit checks and fix errors on every commit, so you should not need to worry about it.
+
+---
+
+---
+
+## For maintainers
+
+### Release checklist
+
+- Go to GitHub, draft new release. Enter name of version and "create new tag" if it doesn't already exist. Click "Generate Release Notes". Currate release notes as needed. Look at a previous version release to match the format (title, header, section organisation etc.)
+- Go to [conda-forge/virtualship-feedstock](https://github.com/conda-forge/virtualship-feedstock), create a new issue (select the "Bot Commands" issue from the menu) with title `@conda-forge-admin, please update version`. This will prompt a build, otherwise there can be a delay in the build.
+  - Approve PR and merge on green
+- Check "publish to PyPI" workflow succeeded
