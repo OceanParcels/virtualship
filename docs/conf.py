@@ -10,6 +10,7 @@ version = release = importlib.metadata.version("virtualship")
 
 extensions = [
     "myst_parser",
+    "nbsphinx",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",

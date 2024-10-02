@@ -1,9 +1,13 @@
 # Virtual Ship Parcels
 
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
 :hidden:
 
+Home <self>
+quickstart
+tutorials/index
+contributing
 ```
 
 ```{include} ../README.md

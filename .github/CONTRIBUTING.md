@@ -1,4 +1,6 @@
-# Quick development
+# Contributing
+
+## Quick development
 
 The fastest way to start with development is to use nox. If you don't have nox,
 you can use `pipx run nox` to run it without installing, or `pipx install nox`.
@@ -21,7 +23,7 @@ $ nox -s build  # Make an SDist and wheel
 Nox handles everything for you, including setting up an temporary virtual
 environment for each run. Run `nox --list` to see all available jobs.
 
-# Setting up a development environment manually
+## Setting up a development environment manually
 
 You can set up a development environment by first setting up a virtual environment using:
 
@@ -45,7 +47,7 @@ pip install -v -e ".[dev]"
 
 Now you can start with development. Unit tests can be run by typing the command `pytest`, and coverage can be seen by running `pytest --cov=virtualship`
 
-# Pre-commit
+## Pre-commit
 
 We use pre-commit to enforce code style and other checks. This can be run by the `nox -s lint` command above, or by installing pre-commit separately and running `pre-commit run --all-files`. If pre-commit is installed separately, you can also install the pre-commit hook into your git repository by running `pre-commit install` such that you don't need to manually run it (it will run when you make a commit).
 
