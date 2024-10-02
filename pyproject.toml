@@ -26,6 +26,7 @@ classifiers = [
     "Intended Audience :: Education",
 ]
 dependencies = [
+    "click",
     "parcels >= 3, < 4",
     "pyproj >= 3, < 4",
     "sortedcontainers == 2.4.0",
@@ -67,7 +68,7 @@ docs = [
 ]
 
 [project.scripts]
-do_expedition = "virtualship.cli.do_expedition:main"
+virtualshi = "virtualship.cli.main:cli" # We probably need to switch to a source layout since the folder name is colliding with this.
 
 
 [tool.pytest.ini_options]
