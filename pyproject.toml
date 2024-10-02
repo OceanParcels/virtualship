@@ -41,12 +41,12 @@ Repository = "https://github.com/OceanParcels/virtualship"
 "Bug Tracker" = "https://github.com/OceanParcels/virtualship/issues"
 Changelog = "https://github.com/OceanParcels/virtualship/releases"
 
+[tool.setuptools.packages.find]
+where = ["src"]
 
-[tool.setuptools]
-packages = ["virtualship"]
 
 [tool.setuptools_scm]
-write_to = "virtualship/_version_setup.py"
+version_file = "src/virtualship/_version_setup.py"
 local_scheme = "no-local-version"
 
 [project.optional-dependencies]
@@ -68,7 +68,7 @@ docs = [
 ]
 
 [project.scripts]
-virtualshi = "virtualship.cli.main:cli" # We probably need to switch to a source layout since the folder name is colliding with this.
+virtualship = "virtualship.cli.main:cli"
 
 
 [tool.pytest.ini_options]
