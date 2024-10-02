@@ -21,7 +21,7 @@ $ nox -s build  # Make an SDist and wheel
 ```
 
 Nox handles everything for you, including setting up an temporary virtual
-environment for each run. Run `nox --list` to see all available jobs.
+environment for each run. Run `nox --list` to see all available jobs. The docs environment is re-used between runs, so if adding new dependencies, you may need to run `nox -s docs --reuse-venv=no` to ensure the environment is up to date.
 
 ## Setting up a development environment manually
 
@@ -46,6 +46,16 @@ pip install -v -e ".[dev]"
 ```
 
 Now you can start with development. Unit tests can be run by typing the command `pytest`, and coverage can be seen by running `pytest --cov=virtualship`
+
+---
+
+For documentation, we use a conda environment. Due to limitations with `nox` being unable to read YAML files, we use a `conda_requirements.txt` file instead.
+
+```bash
+conda create -n ship-docs python=3.10
+conda activate ship-docs
+conda install --file docs/conda_requirements.txt
+```
 
 ## Pre-commit
 
