@@ -77,7 +77,7 @@ def build_api_docs(session: nox.Session) -> None:
         "--module-first",
         "--no-toc",
         "--force",
-        "virtualship",
+        "src/virtualship",
     )
 
 
