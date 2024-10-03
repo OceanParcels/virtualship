@@ -1,67 +1,41 @@
 # Contributing
 
-## Quick development
+All contributions are welcome no matter your background or experience! We collaborate on GitHub using issues to track bugs, features, and discuss future development. We use pull requests to collaborate on changes to the codebase (and modifications to the tutorials).
 
-The fastest way to start with development is to use nox. If you don't have nox,
-you can use `pipx run nox` to run it without installing, or `pipx install nox`.
-If you don't have pipx (pip for applications), then you can install with
-`pip install pipx` (the only case were installing an application with regular
-pip is reasonable). If you use macOS, then pipx and nox are both in brew, use
-`brew install pipx nox`.
+## For developers
 
-To use, run `nox`. This will lint and test using every installed version of
-Python on your system, skipping ones that are not installed. You can also run
-specific jobs:
+### Development installation
 
-```console
-$ nox -s lint   # Lint only
-$ nox -s tests  # Python tests
-$ nox -s docs   # Build and serve the documentation
-$ nox -s build  # Make an SDist and wheel
-```
-
-Nox handles everything for you, including setting up an temporary virtual
-environment for each run. Run `nox --list` to see all available jobs. The docs environment is re-used between runs, so if adding new dependencies, you may need to run `nox -s docs --reuse-venv=no` to ensure the environment is up to date.
-
-## Setting up a development environment manually
-
-You can set up a development environment by first setting up a virtual environment using:
-
-```bash
-python3 -m venv .venv
-source ./.venv/bin/activate
-```
-
-or
+We use `conda` to manage our development installation. Make sure you have `conda` installed by following [the instructions here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) and then run the following commands:
 
 ```bash
 conda create -n ship python=3.10
 conda activate ship
+conda env update --file environment.yml
+pip install -e . --no-deps --no-build-isolation
 ```
 
-Then install the dependencies:
+This creates an environment, and installs all the dependencies that you need for development, including:
 
-```bash
-pip install -v -e ".[dev]"
-```
+- core dependencies
+- development dependencies (e.g., for testing)
+- documentation dependencies
 
-Now you can start with development. Unit tests can be run by typing the command `pytest`, and coverage can be seen by running `pytest --cov=virtualship`
+then installs the package in editable mode.
 
----
+### Useful commands
 
-For documentation, we use a conda environment. Due to limitations with `nox` being unable to read YAML files, we use a `conda_requirements.txt` file instead.
+The following commands are useful for local development:
 
-```bash
-conda create -n ship-docs python=3.10
-conda activate ship-docs
-conda install --file docs/conda_requirements.txt
-```
+- `pytest` to run tests
+- `pre-commit run --all-files` to run pre-commit checks
+- `pre-commit install` (optional) to install pre-commit hooks
+  - this means that every time you commit, pre-commit checks will run on the files you changed
+- `sphinx-autobuild docs docs/_build` to build and serve the documentation
+- `sphinx-apidoc -o docs/api/ --module-first --no-toc --force src/virtualship` (optional) to generate the API documentation
+- `sphinx-build -b linkcheck docs/ _build/linkcheck` to check for broken links in the documentation
 
-## Pre-commit
-
-We use pre-commit to enforce code style and other checks. This can be run by the `nox -s lint` command above, or by installing pre-commit separately and running `pre-commit run --all-files`. If pre-commit is installed separately, you can also install the pre-commit hook into your git repository by running `pre-commit install` such that you don't need to manually run it (it will run when you make a commit).
-
-Either way, the repository is set up to automatically run pre-commit checks and fix errors on every commit, so you should not need to worry about it.
+The running of these commands is useful for local development and quick iteration, but not _vital_ as they will be run automatically in the CI pipeline (`pre-commit` by pre-commit.ci, `pytest` by GitHub Actions, and `sphinx` by ReadTheDocs).
 
 ---
 

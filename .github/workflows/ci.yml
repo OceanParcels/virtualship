@@ -38,13 +38,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-
-      - name: Install package
-        run: python -m pip install .[dev]
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}}
+          channels: conda-forge
 
       - name: Test package
         run: >-
