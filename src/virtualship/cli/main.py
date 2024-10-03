@@ -4,6 +4,7 @@ from . import commands
 
 
 @click.group()
+@click.version_option()
 def cli():
     pass
 

@@ -53,6 +53,7 @@ $ virtualship --help
 Usage: virtualship [OPTIONS] COMMAND [ARGS]...
 
 Options:
+  --version  Show the version and exit.
   --help  Show this message and exit.
 
 Commands:
