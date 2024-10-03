@@ -58,7 +58,8 @@ addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
   "error",
-  "ignore:.*pkg_resources.*:DeprecationWarning", # seabird (used in one test) uses pkg_resources
+  "default::DeprecationWarning",
+  "error::DeprecationWarning:virtualship",
   "ignore:ParticleSet is empty.*:RuntimeWarning" # TODO: Probably should be ignored in the source code
 ]
 log_cli_level = "INFO"
