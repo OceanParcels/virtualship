@@ -48,7 +48,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
 
-      - run: pip install .
+      - run: pip install . --no-deps --no-build-isolation
 
       - name: Test package
         run: >-
