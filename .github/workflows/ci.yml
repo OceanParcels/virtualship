@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash -el {0}
+
 env:
   # Many color libraries just need this to be set to any value, but at least
   # one distinguishes color depth, where "3" -> "256-bit color".
@@ -43,6 +47,8 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
+
+      - run: pip install .
 
       - name: Test package
         run: >-
