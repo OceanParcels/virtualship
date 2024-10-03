@@ -41,7 +41,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v3
         with:
           environment-file: environment.yml
-          python-version: ${{ matrix.python-version }}}
+          python-version: ${{ matrix.python-version }}
           channels: conda-forge
 
       - name: Test package
