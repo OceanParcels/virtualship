@@ -49,16 +49,6 @@ where = ["src"]
 version_file = "src/virtualship/_version_setup.py"
 local_scheme = "no-local-version"
 
-[project.optional-dependencies]
-dev = [
-    "pytest == 8.2.0",
-    "pytest-cov == 5.0.0",
-    "codecov == 2.1.13",
-    "seabird == 0.12.0",
-    "setuptools == 70.0.0",
-    "sortedcontainers-stubs == 2.4.2",
-]
-
 [project.scripts]
 virtualship = "virtualship.cli.main:cli"
 
