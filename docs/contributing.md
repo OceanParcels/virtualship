@@ -51,5 +51,4 @@ The running of these commands is useful for local development and quick iteratio
 When adding a dependency, make sure to modify the following files where relevant:
 
 - `environment.yml` for core and development dependencies (important for the development environment, and CI)
-- `pyproject.toml` for core dependencies (important for the pypi package)
-- `recipe/meta.yml` in the conda-forge feedstock for core dependencies
+- `pyproject.toml` for core dependencies (important for the pypi package, this should propogate through automatically to `recipe/meta.yml` in the conda-forge feedstock)
