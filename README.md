@@ -101,4 +101,4 @@ For examples, see LINK_TO_TURORIALS.
 
 ## Input data
 
-The scripts are written to work with A-grid ocean data from CMEMS.
+The scripts are written to work with [A-grid ocean data from the Copernicus Marine Service](https://data.marine.copernicus.eu/product/GLOBAL_ANALYSISFORECAST_PHY_001_024/description).
