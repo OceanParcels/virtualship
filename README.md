@@ -39,10 +39,11 @@ VirtualShipParcels is a command line simulator allowing students to plan and con
 For a normal installation do:
 
 ```bash
-conda create -n my_env python=3.12
-conda activate my_env
-conda install -c conda-forge virtualship
+conda create -n ship -c conda-forge virtualship
+conda activate ship
 ```
+
+which creates an environment named `ship` with the latest version of `virtualship`. You can replace `ship` with any name you like.
 
 For a development installation, please follow the instructions detailed in the [contributing page](.github/CONTRIBUTING.md).
 
