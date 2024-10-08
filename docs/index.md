@@ -8,6 +8,7 @@ Home <self>
 quickstart
 tutorials/index
 contributing
+OceanParcels <https://oceanparcels.org>
 ```
 
 ```{include} ../README.md
