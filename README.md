@@ -45,7 +45,7 @@ conda activate ship
 
 which creates an environment named `ship` with the latest version of `virtualship`. You can replace `ship` with any name you like.
 
-For a development installation, please follow the instructions detailed in the [contributing page](.github/CONTRIBUTING.md).
+For a development installation, please follow the instructions detailed in the [contributing page](https://virtualship.oceanparcels.org/en/latest/contributing.html).
 
 ## Usage
 

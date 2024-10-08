@@ -1,1 +1,1 @@
-See the following [contributing guide](../docs/contributing.md).
+See the following [contributing guide](https://virtualship.oceanparcels.org/en/latest/contributing.html).
