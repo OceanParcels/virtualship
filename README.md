@@ -96,9 +96,7 @@ Options:
 
 ```
 
-For examples, see LINK_TO_TURORIALS.
-
-<!-- TODO: Link to tutorials -->
+For examples, see [the tutorials section of our documentation](https://virtualship.readthedocs.io/en/latest/tutorials/index.html).
 
 ## Input data
 
