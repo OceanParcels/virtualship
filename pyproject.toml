@@ -37,6 +37,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://oceanparcels.org/" # TODO: Update this to just be repo?
 Repository = "https://github.com/OceanParcels/virtualship"
+Documentation = "https://virtualship.oceanparcels.org/"
 "Bug Tracker" = "https://github.com/OceanParcels/virtualship/issues"
 Changelog = "https://github.com/OceanParcels/virtualship/releases"
 

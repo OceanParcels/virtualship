@@ -96,7 +96,7 @@ Options:
 
 ```
 
-For examples, see [the tutorials section of our documentation](https://virtualship.readthedocs.io/en/latest/tutorials/index.html).
+For examples, see [the tutorials section of our documentation](https://virtualship.oceanparcels.org/en/latest/tutorials/index.html).
 
 ## Input data
 
