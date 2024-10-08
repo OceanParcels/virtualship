@@ -1,6 +1,5 @@
 name: ship
 channels:
-  - defaults
   - conda-forge
 dependencies:
   - click
@@ -10,6 +9,7 @@ dependencies:
   - opensimplex == 0.4.5
   - numpy >=1, < 2
   - pydantic >=2, <3
+  - pip
 
   # linting
   - pre-commit
