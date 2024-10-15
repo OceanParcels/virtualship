@@ -47,14 +47,12 @@ html_theme_options: dict[str, Any] = {
     "source_repository": "https://github.com/OceanParcels/virtualship",
     "source_branch": "main",
     "source_directory": "docs/",
-}
-
-html_static_path = ["_static"]
-html_theme_options = {
     "light_logo": "virtual_ship_logo.png",
     "dark_logo": "virtual_ship_logo_inverted.png",
     "sidebar_hide_name": True,
 }
+
+html_static_path = ["_static"]
 
 myst_enable_extensions = [
     "colon_fence",

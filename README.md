@@ -101,3 +101,7 @@ For examples, see [the tutorials section of our documentation](https://virtualsh
 ## Input data
 
 The scripts are written to work with [A-grid ocean data from the Copernicus Marine Service](https://data.marine.copernicus.eu/product/GLOBAL_ANALYSISFORECAST_PHY_001_024/description).
+
+## Source code
+
+The code for this project is [hosted on GitHub](https://github.com/OceanParcels/virtualship).
