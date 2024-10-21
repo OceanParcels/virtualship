@@ -7,6 +7,13 @@
 
 <!-- Badges -->
 
+[![Anaconda-release](https://anaconda.org/conda-forge/virtualship/badges/version.svg)](https://anaconda.org/conda-forge/virtualship/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/virtualship)
+[![unit-tests](https://github.com/OceanParcels/virtualship/actions/workflows/ci.yml/badge.svg)](https://github.com/OceanParcels/virtualship/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/OceanParcels/virtualship/graph/badge.svg?token=SLGLN8QBLW)](https://codecov.io/gh/OceanParcels/virtualship)
+
+<!-- Zenodo badge -->
+
 ---
 
 <!-- SPHINX-START -->
