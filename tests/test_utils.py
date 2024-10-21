@@ -11,7 +11,7 @@ def test_get_example_schedule():
 
 
 def test_valid_example_config(tmp_path):
-    path = tmp_path / "ship_config.yaml"
+    path = tmp_path / "test.yaml"
     with open(path, "w") as file:
         file.write(get_example_config())
 
@@ -19,7 +19,7 @@ def test_valid_example_config(tmp_path):
 
 
 def test_valid_example_schedule(tmp_path):
-    path = tmp_path / "schedule.yaml"
+    path = tmp_path / "test.yaml"
     with open(path, "w") as file:
         file.write(get_example_schedule())
 
