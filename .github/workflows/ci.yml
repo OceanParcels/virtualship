@@ -41,7 +41,7 @@ jobs:
           create-args: >-
             python=${{matrix.python-version}}
 
-      - run: pip install . --no-deps --no-build-isolation
+      - run: pip install . --no-deps
 
       - name: Test package
         run: >-
