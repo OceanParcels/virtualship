@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pyproj
 
+from virtualship.utils import CHECKPOINT, SCHEDULE, SHIP_CONFIG
+
 from .checkpoint import Checkpoint
 from .expedition_cost import expedition_cost
 from .input_data import InputData
@@ -109,7 +111,7 @@ def do_expedition(expedition_dir: str | Path) -> None:
 
 
 def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
-    file_path = expedition_dir.joinpath("ship_config.yaml")
+    file_path = expedition_dir.joinpath(SHIP_CONFIG)
     try:
         return ShipConfig.from_yaml(file_path)
     except FileNotFoundError:
@@ -129,7 +131,7 @@ def _load_input_data(expedition_dir: Path, ship_config: ShipConfig) -> InputData
 
 
 def _get_schedule(expedition_dir: Path) -> Schedule | None:
-    file_path = expedition_dir.joinpath("schedule.yaml")
+    file_path = expedition_dir.joinpath(SCHEDULE)
     try:
         return Schedule.from_yaml(file_path)
     except FileNotFoundError:
@@ -138,7 +140,7 @@ def _get_schedule(expedition_dir: Path) -> Schedule | None:
 
 
 def _load_checkpoint(expedition_dir: Path) -> Checkpoint | None:
-    file_path = expedition_dir.joinpath("checkpoint.yaml")
+    file_path = expedition_dir.joinpath(CHECKPOINT)
     try:
         return Checkpoint.from_yaml(file_path)
     except FileNotFoundError:
@@ -146,5 +148,5 @@ def _load_checkpoint(expedition_dir: Path) -> Checkpoint | None:
 
 
 def _save_checkpoint(checkpoint: Checkpoint, expedition_dir: Path) -> None:
-    file_path = expedition_dir.joinpath("checkpoint.yaml")
+    file_path = expedition_dir.joinpath(CHECKPOINT)
     checkpoint.to_yaml(file_path)

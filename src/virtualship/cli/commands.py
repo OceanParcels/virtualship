@@ -4,9 +4,7 @@ import click
 
 from virtualship import utils
 from virtualship.expedition.do_expedition import do_expedition
-
-CONFIG_FILE = "ship_config.yaml"
-SCHEDULE_FILE = "schedule.yaml"
+from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
 
 @click.command(
@@ -22,8 +20,8 @@ def init(path):
     path = Path(path)
     path.mkdir(exist_ok=True)
 
-    config = path / CONFIG_FILE
-    schedule = path / SCHEDULE_FILE
+    config = path / SHIP_CONFIG
+    schedule = path / SCHEDULE
 
     if config.exists():
         raise FileExistsError(
