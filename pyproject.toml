@@ -42,9 +42,12 @@ Documentation = "https://virtualship.oceanparcels.org/"
 "Bug Tracker" = "https://github.com/OceanParcels/virtualship/issues"
 Changelog = "https://github.com/OceanParcels/virtualship/releases"
 
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+virtualship = ["*.yaml"]
 
 [tool.setuptools_scm]
 version_file = "src/virtualship/_version_setup.py"
