@@ -13,7 +13,6 @@ from virtualship.utils import SCHEDULE, SHIP_CONFIG
 @click.argument(
     "path",
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
-    # help="Expedition directory",
 )
 def init(path):
     """Entrypoint for the tool."""

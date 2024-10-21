@@ -175,3 +175,4 @@ cython_debug/
 src/virtualship/_version_setup.py
 
 .vscode/
+.DS_Store
