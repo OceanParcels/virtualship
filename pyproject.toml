@@ -32,6 +32,7 @@ dependencies = [
     "opensimplex == 0.4.5",
     "numpy >=1, < 2",
     "pydantic >=2, <3",
+    "PyYAML",
 ]
 
 [project.urls]
