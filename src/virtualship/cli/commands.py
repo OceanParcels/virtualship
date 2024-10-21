@@ -2,7 +2,11 @@ from pathlib import Path
 
 import click
 
+from virtualship import utils
 from virtualship.expedition.do_expedition import do_expedition
+
+CONFIG_FILE = "ship_config.yaml"
+SCHEDULE_FILE = "schedule.yaml"
 
 
 @click.command(
@@ -15,7 +19,26 @@ from virtualship.expedition.do_expedition import do_expedition
 )
 def init(path):
     """Entrypoint for the tool."""
-    raise NotImplementedError("Not implemented yet.")
+    path = Path(path)
+    path.mkdir(exist_ok=True)
+
+    config = path / CONFIG_FILE
+    schedule = path / SCHEDULE_FILE
+
+    if config.exists():
+        raise FileExistsError(
+            f"File '{config}' already exist. Please remove it or choose another directory."
+        )
+
+    if schedule.exists():
+        raise FileExistsError(
+            f"File '{schedule}' already exist. Please remove it or choose another directory."
+        )
+
+    config.write_text(utils.get_example_config())
+    schedule.write_text(utils.get_example_schedule())
+
+    click.echo(f"Created '{config.name}' and '{schedule.name}' at {path}.")
 
 
 @click.command(
