@@ -79,7 +79,7 @@ def test_simulate_xbts(tmpdir) -> None:
     t[:, 0, 1, 0] = xbt_exp[1]["maxdepth"]["temperature"]
 
     fieldset = FieldSet.from_data(
-        {"V": v, "U": u, "T": t, "S": s},
+        {"V": v, "U": u, "T": t},
         {
             "time": [
                 np.datetime64(base_time + datetime.timedelta(hours=0)),
