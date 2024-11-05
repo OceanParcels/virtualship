@@ -78,7 +78,6 @@ def test_simulate_xbts(tmpdir) -> None:
     t[:, 1, 1, 0] = xbt_exp[1]["surface"]["temperature"]
     t[:, 0, 1, 0] = xbt_exp[1]["maxdepth"]["temperature"]
 
-
     fieldset = FieldSet.from_data(
         {"V": v, "U": u, "T": t, "S": s},
         {
