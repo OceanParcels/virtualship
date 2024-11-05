@@ -32,6 +32,7 @@ _XBTParticle = JITParticle.add_variables(
 def _sample_temperature(particle, fieldset, time):
     particle.temperature = fieldset.T[time, particle.depth, particle.lat, particle.lon]
 
+
 def _xbt_cast(particle, fieldset, time):
     # lowering
     particle_ddepth = -particle.winch_speed * particle.dt
