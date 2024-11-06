@@ -93,7 +93,7 @@ def simulate_xbt(
             f"XBT max_depth or bathymetry shallower than maximum {-DT * WINCH_SPEED}"
         )
 
-    # define parcel particles
+    # define xbt particles
     xbt_particleset = ParticleSet(
         fieldset=fieldset,
         pclass=_XBTParticle,
