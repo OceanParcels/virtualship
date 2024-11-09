@@ -43,9 +43,11 @@ def _xbt_cast(particle, fieldset, time):
     # delete particle when it reaches the maximum depth
     if particle.depth + particle_ddepth < particle.max_depth:
         particle.delete()
-        
+
     # updates the fall speed from the quadractic fall-rate equation
-    particle.fall_speed = particle.fall_speed - particle.deceleration_coefficient * particle.dt
+    particle.fall_speed = (
+        particle.fall_speed - particle.deceleration_coefficient * particle.dt
+    )
 
 
 def simulate_xbt(
@@ -97,7 +99,14 @@ def simulate_xbt(
 
     # XBT depth can not be too shallow, because kernel would break.
     # This shallow is not useful anyway, no need to support.
-    if not all([max_depth <= -DT * fall_speed for max_depth, fall_speed in zip(max_depths, initial_fall_speeds)]):
+    if not all(
+        [
+            max_depth <= -DT * fall_speed
+            for max_depth, fall_speed in zip(
+                max_depths, initial_fall_speeds, strict=False
+            )
+        ]
+    ):
         raise ValueError(
             f"XBT max_depth or bathymetry shallower than maximum {-DT * fall_speed}"
         )
