@@ -17,6 +17,8 @@ class XBT:
     spacetime: Spacetime
     min_depth: float
     max_depth: float
+    initial_fall_speed: float
+    deceleration_coefficient: float
 
 
 _XBTParticle = JITParticle.add_variables(
@@ -24,7 +26,9 @@ _XBTParticle = JITParticle.add_variables(
         Variable("temperature", dtype=np.float32, initial=np.nan),
         Variable("max_depth", dtype=np.float32),
         Variable("min_depth", dtype=np.float32),
-        Variable("winch_speed", dtype=np.float32),
+        Variable("fall_speed", dtype=np.float32),
+        Variable("initial_fall_speed", dtype=np.float32),
+        Variable("deceleration_coefficient", dtype=np.float32),
     ]
 )
 
@@ -34,11 +38,14 @@ def _sample_temperature(particle, fieldset, time):
 
 
 def _xbt_cast(particle, fieldset, time):
-    # lowering
-    particle_ddepth = -particle.winch_speed * particle.dt
+    particle_ddepth = -particle.fall_speed * particle.dt
+
+    # delete particle when it reaches the maximum depth
     if particle.depth + particle_ddepth < particle.max_depth:
-        particle.raising = 1
-        particle_ddepth = -particle_ddepth
+        particle.delete()
+        
+    # updates the fall speed from the quadractic fall-rate equation
+    particle.fall_speed = particle.fall_speed - particle.deceleration_coefficient * particle.dt
 
 
 def simulate_xbt(
@@ -56,7 +63,6 @@ def simulate_xbt(
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     :raises ValueError: Whenever provided XBTs, fieldset, are not compatible with this function.
     """
-    WINCH_SPEED = 1.0  # sink and rise speed in m/s
     DT = 10.0  # dt of XBT simulation integrator
 
     if len(xbts) == 0:
@@ -86,11 +92,14 @@ def simulate_xbt(
         for xbt in xbts
     ]
 
+    # initial fall speeds
+    initial_fall_speeds = [xbt.initial_fall_speed for xbt in xbts]
+
     # XBT depth can not be too shallow, because kernel would break.
     # This shallow is not useful anyway, no need to support.
-    if not all([max_depth <= -DT * WINCH_SPEED for max_depth in max_depths]):
+    if not all([max_depth <= -DT * fall_speed for max_depth, fall_speed in zip(max_depths, initial_fall_speeds)]):
         raise ValueError(
-            f"XBT max_depth or bathymetry shallower than maximum {-DT * WINCH_SPEED}"
+            f"XBT max_depth or bathymetry shallower than maximum {-DT * fall_speed}"
         )
 
     # define xbt particles
@@ -103,7 +112,7 @@ def simulate_xbt(
         time=[xbt.spacetime.time for xbt in xbts],
         max_depth=max_depths,
         min_depth=[xbt.min_depth for xbt in xbts],
-        winch_speed=[WINCH_SPEED for _ in xbts],
+        fall_speed=[xbt.initial_fall_speed for xbt in xbts],
     )
 
     # define output file for the simulation
