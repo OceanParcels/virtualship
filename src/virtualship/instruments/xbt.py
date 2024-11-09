@@ -97,10 +97,11 @@ def simulate_xbt(
 
     # XBT depth can not be too shallow, because kernel would break.
     # This shallow is not useful anyway, no need to support.
-    if not all([max_depth <= -DT * fall_speed for max_depth, fall_speed in zip(max_depths, initial_fall_speeds)]):
-        raise ValueError(
-            f"XBT max_depth or bathymetry shallower than maximum {-DT * fall_speed}"
-        )
+    for max_depth, fall_speed in zip(max_depths, initial_fall_speeds): 
+        if not max_depth <= -DT * fall_speed
+            raise ValueError(
+                f"XBT max_depth or bathymetry shallower than maximum {-DT * fall_speed}"
+            )
 
     # define xbt particles
     xbt_particleset = ParticleSet(
