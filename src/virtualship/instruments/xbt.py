@@ -40,14 +40,16 @@ def _sample_temperature(particle, fieldset, time):
 def _xbt_cast(particle, fieldset, time):
     particle_ddepth = -particle.fall_speed * particle.dt
 
+    # update the fall speed from the quadractic fall-rate equation
+    particle.fall_speed = (
+        particle.fall_speed - particle.deceleration_coefficient * particle.dt
+    )
+    
     # delete particle when it reaches the maximum depth
     if particle.depth + particle_ddepth < particle.max_depth:
         particle.delete()
 
-    # updates the fall speed from the quadractic fall-rate equation
-    particle.fall_speed = (
-        particle.fall_speed - particle.deceleration_coefficient * particle.dt
-    )
+
 
 
 def simulate_xbt(
