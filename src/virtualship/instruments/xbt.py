@@ -40,8 +40,9 @@ def _xbt_cast(particle, fieldset, time):
     particle_ddepth = -particle.fall_speed * particle.dt
 
     # update the fall speed from the quadractic fall-rate equation
+    # check https://doi.org/10.5194/os-7-231-2011
     particle.fall_speed = (
-        particle.fall_speed - particle.deceleration_coefficient * particle.dt
+        particle.fall_speed - 2 * particle.deceleration_coefficient * particle.dt
     )
 
     # delete particle when it reaches the maximum depth
