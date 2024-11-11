@@ -17,7 +17,7 @@ class XBT:
     spacetime: Spacetime
     min_depth: float
     max_depth: float
-    initial_fall_speed: float
+    fall_speed: float
     deceleration_coefficient: float
 
 
@@ -27,7 +27,6 @@ _XBTParticle = JITParticle.add_variables(
         Variable("max_depth", dtype=np.float32),
         Variable("min_depth", dtype=np.float32),
         Variable("fall_speed", dtype=np.float32),
-        Variable("initial_fall_speed", dtype=np.float32),
         Variable("deceleration_coefficient", dtype=np.float32),
     ]
 )
@@ -115,7 +114,7 @@ def simulate_xbt(
         time=[xbt.spacetime.time for xbt in xbts],
         max_depth=max_depths,
         min_depth=[xbt.min_depth for xbt in xbts],
-        fall_speed=[xbt.initial_fall_speed for xbt in xbts],
+        fall_speed=[xbt.fall_speed for xbt in xbts],
     )
 
     # define output file for the simulation

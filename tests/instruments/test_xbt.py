@@ -28,7 +28,7 @@ def test_simulate_xbts(tmpdir) -> None:
             ),
             min_depth=0,
             max_depth=float("-inf"),
-            initial_fall_speed=6.553,
+            fall_speed=6.553,
             deceleration_coefficient=0.00242,
         ),
         XBT(
@@ -38,7 +38,7 @@ def test_simulate_xbts(tmpdir) -> None:
             ),
             min_depth=0,
             max_depth=float("-inf"),
-            initial_fall_speed=6.553,
+            fall_speed=6.553,
             deceleration_coefficient=0.00242,
         ),
     ]
