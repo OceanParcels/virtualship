@@ -95,7 +95,7 @@ def simulate_xbt(
     ]
 
     # initial fall speeds
-    initial_fall_speeds = [xbt.initial_fall_speed for xbt in xbts]
+    initial_fall_speeds = [xbt.fall_speed for xbt in xbts]
 
     # XBT depth can not be too shallow, because kernel would break.
     # This shallow is not useful anyway, no need to support.
