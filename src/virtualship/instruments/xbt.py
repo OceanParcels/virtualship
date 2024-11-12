@@ -45,10 +45,13 @@ def _xbt_cast(particle, fieldset, time):
         particle.fall_speed - 2 * particle.deceleration_coefficient * particle.dt
     )
 
-    # delete particle when it reaches the maximum depth
-    if particle.depth + particle_ddepth < particle.max_depth:
+    # delete particle if depth is exactly max_depth
+    if particle.depth + particle_ddepth == particle.max_depth:
         particle.delete()
-
+    
+    # set particle depth to max depth if it's too deep
+    if particle.depth + particle_ddepth < particle.max_depth:
+        particle_ddepth = particle.max_depth - particle.depth
 
 def simulate_xbt(
     fieldset: FieldSet,
