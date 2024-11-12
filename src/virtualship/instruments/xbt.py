@@ -51,9 +51,7 @@ def _xbt_cast(particle, fieldset, time):
 
     # set particle depth to max depth if it's too deep
     if particle.depth + particle_ddepth < particle.max_depth:
-        particle_ddepth = particle.max_depth - particle.depth 
-
-
+        particle_ddepth = particle.max_depth - particle.depth
 
 
 def simulate_xbt(
