@@ -97,9 +97,7 @@ class InputData:
 
         # make depth negative
         for g in fieldset.gridset.grids:
-            g._depth = (
-                -g._depth
-            )  # TODO maybe add a grid.negate_depth() method in Parcels?
+            g.depth = -g.depth
 
         # add bathymetry data
         bathymetry_file = directory.joinpath("bathymetry.nc")
@@ -139,7 +137,7 @@ class InputData:
 
         # make depth negative
         for g in fieldset.gridset.grids:
-            g._depth = -g._depth
+            g.depth = -g.depth
 
         # read in data already
         fieldset.computeTimeChunk(0, 1)
@@ -171,7 +169,7 @@ class InputData:
         # make depth negative
         for g in fieldset.gridset.grids:
             if max(g.depth) > 0:
-                g._depth = -g._depth
+                g.depth = -g.depth
 
         # read in data already
         fieldset.computeTimeChunk(0, 1)
