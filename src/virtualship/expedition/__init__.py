@@ -24,6 +24,6 @@ __all__ = [
     "ShipConfig",
     "ShipUnderwaterSTConfig",
     "Waypoint",
-    "AreaOfInterest" "do_expedition",
+    "AreaOfInterestdo_expedition",
     "instruments",
 ]

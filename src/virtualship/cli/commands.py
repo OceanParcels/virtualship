@@ -1,13 +1,13 @@
+from datetime import datetime
 from pathlib import Path
 
 import click
+import copernicusmarine
 
 from virtualship import utils
 from virtualship.expedition.do_expedition import _get_schedule, do_expedition
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
-from datetime import datetime
-import copernicusmarine
 
 @click.command(
     help="Initialize a directory for a new expedition, with an example configuration."
