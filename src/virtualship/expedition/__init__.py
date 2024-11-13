@@ -13,7 +13,6 @@ from .ship_config import (
     ShipUnderwaterSTConfig,
 )
 from .waypoint import Waypoint
-from .area_of_interest import AreaOfInterest
 
 __all__ = [
     "ADCPConfig",
