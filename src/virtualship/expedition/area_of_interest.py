@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+
 @dataclass
 class SpatialRange:
     """Defines the geographic boundaries for an area of interest."""
@@ -12,12 +13,14 @@ class SpatialRange:
     minimum_latitude: float
     maximum_latitude: float
 
+
 @dataclass
 class TimeRange:
     """Defines the temporal boundaries for an area of interest."""
 
     start_time: datetime
     end_time: datetime
+
 
 @dataclass
 class AreaOfInterest:
