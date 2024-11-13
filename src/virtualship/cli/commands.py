@@ -6,6 +6,7 @@ from virtualship import utils
 from virtualship.expedition.do_expedition import do_expedition, _get_schedule
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
+import copernicusmarine
 
 @click.command(
     help="Initialize a directory for a new expedition, with an example configuration."
