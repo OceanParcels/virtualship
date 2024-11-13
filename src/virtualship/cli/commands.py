@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 
 from virtualship import utils
-from virtualship.expedition.do_expedition import do_expedition, _get_schedule
+from virtualship.expedition.do_expedition import _get_schedule, do_expedition
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
 from datetime import datetime
@@ -49,7 +49,6 @@ def init(path):
 )
 def fetch(expedition_dir: str | Path) -> None:
     """Entrypoint for the tool to download data based on area of interest."""
-
     if isinstance(expedition_dir, str):
         expedition_dir = Path(expedition_dir)
 
@@ -75,7 +74,7 @@ def fetch(expedition_dir: str | Path) -> None:
             "dataset_id": "cmems_mod_glo_phy_my_0.083deg_static",
             "variables": ["deptho"],
             "output_filename": "bathymetry.nc",
-            "force_dataset_part": "bathy"
+            "force_dataset_part": "bathy",
         },
         "UVdata": {
             "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
@@ -112,7 +111,9 @@ def fetch(expedition_dir: str | Path) -> None:
             username=username,
             password=password,
             force_download=True,
-            force_dataset_part=dataset.get("force_dataset_part")  # Only used if specified in dataset
+            force_dataset_part=dataset.get(
+                "force_dataset_part"
+            ),  # Only used if specified in dataset
         )
 
     click.echo("Data download based on area of interest completed.")
