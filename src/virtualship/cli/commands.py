@@ -6,6 +6,7 @@ from virtualship import utils
 from virtualship.expedition.do_expedition import do_expedition, _get_schedule
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
+from datetime import datetime
 import copernicusmarine
 
 @click.command(
@@ -61,8 +62,8 @@ def fetch(expedition_dir: str | Path) -> None:
     # Extract area_of_interest details from the schedule
     spatial_range = schedule.area_of_interest.spatial_range
     time_range = schedule.area_of_interest.time_range
-    start_datetime = datetime.datetime.strptime(time_range.start_time, "%Y-%m-%d %H:%M:%S")
-    end_datetime = datetime.datetime.strptime(time_range.end_time, "%Y-%m-%d %H:%M:%S")
+    start_datetime = datetime.strptime(time_range.start_time, "%Y-%m-%d %H:%M:%S")
+    end_datetime = datetime.strptime(time_range.end_time, "%Y-%m-%d %H:%M:%S")
 
     # Prompt for user credentials
     username = input("username: ")
