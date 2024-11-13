@@ -33,8 +33,9 @@
 
 VirtualShipParcels is a command line simulator allowing students to plan and conduct a virtual research expedition, receiving measurements as if they were coming from actual oceanographic instruments including:
 
-- ADCP (for currents)
-- CTD (for conductivity, and temperature)
+- ADCP (currents)
+- CTD (conductivity and temperature)
+- XBT (temperature)
 - underwater measurements (salinity and temperature)
 - surface drifters
 - argo float deployments
