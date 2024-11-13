@@ -1,19 +1,18 @@
 """Schedule class."""
 
 from __future__ import annotations
-
 from pathlib import Path
-
 import pydantic
 import yaml
 
 from .waypoint import Waypoint
-
+from .area_of_interest import AreaOfInterest
 
 class Schedule(pydantic.BaseModel):
     """Schedule of the virtual ship."""
 
     waypoints: list[Waypoint]
+    area_of_interest: AreaOfInterest
 
     model_config = pydantic.ConfigDict(extra="forbid")
 
