@@ -1,7 +1,7 @@
 # Tutorials
 
 ```{nbgallery}
-my_tutorial.ipynb
+Research_Proposal_only.ipynb
 ADCP_data_tutorial.ipynb
 CTD_data_tutorial.ipynb
 ```
