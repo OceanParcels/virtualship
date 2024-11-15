@@ -52,7 +52,6 @@ def fetch(expedition_dir: str | Path) -> None:
     if isinstance(expedition_dir, str):
         expedition_dir = Path(expedition_dir)
 
-    # Load schedule
     schedule = _get_schedule(expedition_dir)
     if schedule is None:
         print("Error: Schedule file not found.")
