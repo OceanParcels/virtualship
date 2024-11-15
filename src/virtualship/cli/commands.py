@@ -49,8 +49,7 @@ def init(path):
 )
 def fetch(expedition_dir: str | Path) -> None:
     """Entrypoint for the tool to download data based on area of interest."""
-    if isinstance(expedition_dir, str):
-        expedition_dir = Path(expedition_dir)
+    expedition_dir = Path(expedition_dir)
 
     schedule = _get_schedule(expedition_dir)
     if schedule is None:
