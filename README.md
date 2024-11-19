@@ -9,6 +9,7 @@
 
 [![Anaconda-release](https://anaconda.org/conda-forge/virtualship/badges/version.svg)](https://anaconda.org/conda-forge/virtualship/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/virtualship)
+[![DOI](https://zenodo.org/badge/682478059.svg)](https://doi.org/10.5281/zenodo.14013931)
 [![unit-tests](https://github.com/OceanParcels/virtualship/actions/workflows/ci.yml/badge.svg)](https://github.com/OceanParcels/virtualship/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/OceanParcels/virtualship/graph/badge.svg?token=SLGLN8QBLW)](https://codecov.io/gh/OceanParcels/virtualship)
 
@@ -33,8 +34,9 @@
 
 VirtualShipParcels is a command line simulator allowing students to plan and conduct a virtual research expedition, receiving measurements as if they were coming from actual oceanographic instruments including:
 
-- ADCP (for currents)
-- CTD (for conductivity, and temperature)
+- ADCP (currents)
+- CTD (conductivity and temperature)
+- XBT (temperature)
 - underwater measurements (salinity and temperature)
 - surface drifters
 - argo float deployments
