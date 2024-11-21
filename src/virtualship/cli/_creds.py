@@ -83,12 +83,13 @@ def get_credentials_flow(
     if username and password:
         if creds_path.exists():
             click.echo(
-                f"Credentials file exists at {creds_path}, but username and password are already provided.\nIgnoring credentials file."
+                f"Credentials file exists at '{creds_path}', but username and password are already provided. Ignoring credentials file."
             )
         return username, password
 
     try:
         creds = Credentials.from_yaml(creds_path)
+        click.echo(f"Loaded credentials from '{creds_path}'.")
         return creds.COPERNICUS_USERNAME, creds.COPERNICUS_PASSWORD
     except FileNotFoundError:
         msg = f"""Credentials not provided. Credentials can be obtained from https://data.marine.copernicus.eu/register. Either pass in via `--username` and `--password` arguments, or via config file at '{creds_path}'. Config file should be YAML along following format:
