@@ -52,9 +52,6 @@ def fetch(path: str | Path) -> None:
     path = Path(path)
 
     schedule = _get_schedule(path)
-    if schedule is None:
-        print("Error: Schedule file not found.")
-        return
 
     # Extract area_of_interest details from the schedule
     spatial_range = schedule.area_of_interest.spatial_range
