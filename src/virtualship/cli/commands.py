@@ -4,6 +4,7 @@ from pathlib import Path
 import click
 import copernicusmarine
 
+import virtualship.cli._creds as creds
 from virtualship import utils
 from virtualship.expedition.do_expedition import _get_schedule, do_expedition
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
@@ -47,21 +48,33 @@ def init(path):
     "path",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
 )
-def fetch(path: str | Path) -> None:
+@click.option(
+    "--username",
+    type=str,
+    default=None,
+)
+@click.option(
+    "--password",
+    type=str,
+    default=None,
+)
+def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     """Entrypoint for the tool to download data based on area of interest."""
+    if sum([username is None, password is None]) == 1:
+        raise ValueError("Both username and password must be provided.")
+
     path = Path(path)
 
     schedule = _get_schedule(path)
+
+    creds_path = path / creds.CREDENTIALS_FILE
+    username, password = creds.get_credentials_flow(username, password, creds_path)
 
     # Extract area_of_interest details from the schedule
     spatial_range = schedule.area_of_interest.spatial_range
     time_range = schedule.area_of_interest.time_range
     start_datetime = datetime.strptime(time_range.start_time, "%Y-%m-%d %H:%M:%S")
     end_datetime = datetime.strptime(time_range.end_time, "%Y-%m-%d %H:%M:%S")
-
-    # Prompt for user credentials
-    username = input("username: ")
-    password = input("password: ")
 
     # Define all datasets to download, including bathymetry
     download_dict = {
@@ -118,6 +131,11 @@ def fetch(path: str | Path) -> None:
 @click.argument(
     "path",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
+)
+@click.option(
+    "--username",
+    prompt=True,
+    type=str,
 )
 def run(path):
     """Entrypoint for the tool."""
