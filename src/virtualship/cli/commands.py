@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 
 import click
@@ -73,8 +72,8 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     # Extract area_of_interest details from the schedule
     spatial_range = schedule.area_of_interest.spatial_range
     time_range = schedule.area_of_interest.time_range
-    start_datetime = datetime.strptime(time_range.start_time, "%Y-%m-%d %H:%M:%S")
-    end_datetime = datetime.strptime(time_range.end_time, "%Y-%m-%d %H:%M:%S")
+    start_datetime = time_range.start_time
+    end_datetime = time_range.end_time
 
     # Define all datasets to download, including bathymetry
     download_dict = {
