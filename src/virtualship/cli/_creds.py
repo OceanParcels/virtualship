@@ -91,7 +91,7 @@ def get_credentials_flow(
         creds = Credentials.from_yaml(creds_path)
         return creds.COPERNICUS_USERNAME, creds.COPERNICUS_PASSWORD
     except FileNotFoundError:
-        msg = f"""Credentials not provided. Either pass in via `--username` and `--password` arguments, or via config file at '{creds_path}'. Config file should be YAML along following format:
+        msg = f"""Credentials not provided. Credentials can be obtained from https://data.marine.copernicus.eu/register. Either pass in via `--username` and `--password` arguments, or via config file at '{creds_path}'. Config file should be YAML along following format:
 ### {creds_path}
 
 {get_dummy_credentials_yaml().strip()}
