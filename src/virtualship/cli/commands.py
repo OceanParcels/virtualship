@@ -47,11 +47,11 @@ def init(path):
     "path",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
 )
-def fetch(expedition_dir: str | Path) -> None:
+def fetch(path: str | Path) -> None:
     """Entrypoint for the tool to download data based on area of interest."""
-    expedition_dir = Path(expedition_dir)
+    path = Path(path)
 
-    schedule = _get_schedule(expedition_dir)
+    schedule = _get_schedule(path)
     if schedule is None:
         print("Error: Schedule file not found.")
         return
@@ -105,7 +105,7 @@ def fetch(expedition_dir: str | Path) -> None:
             minimum_depth=0.49402499198913574,
             maximum_depth=5727.9169921875,
             output_filename=dataset["output_filename"],
-            output_directory=expedition_dir,
+            output_directory=path,
             username=username,
             password=password,
             force_download=True,
