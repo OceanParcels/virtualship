@@ -12,6 +12,8 @@ class SpatialRange:
     maximum_longitude: float
     minimum_latitude: float
     maximum_latitude: float
+    minimum_depth: float
+    maximum_depth: float
 
 
 @dataclass
