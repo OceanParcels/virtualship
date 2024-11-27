@@ -3,5 +3,5 @@
 ```{nbgallery}
 ADCP_data_tutorial.ipynb
 CTD_data_tutorial.ipynb
-sciencecommunication_assignment.ipynb
+Drifter_data_tutorial.ipynb
 ```
