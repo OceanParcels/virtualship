@@ -1,5 +1,6 @@
 """Everything for simulating an expedition."""
 
+from .area_of_interest import AreaOfInterest
 from .do_expedition import do_expedition
 from .instrument_type import InstrumentType
 from .schedule import Schedule
@@ -23,6 +24,7 @@ __all__ = [
     "ShipConfig",
     "ShipUnderwaterSTConfig",
     "Waypoint",
+    "AreaOfInterest",
     "do_expedition",
     "instruments",
 ]
