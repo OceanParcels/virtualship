@@ -16,4 +16,5 @@ caption: Tutorials
 ADCP_data_tutorial.ipynb
 CTD_data_tutorial.ipynb
 Argo-float_tutorial.ipynb
+Drifter_data_tutorial.ipynb
 ```
