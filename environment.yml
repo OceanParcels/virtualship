@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - click
-  - parcels >3, <3.1.0
+  - parcels >3.1.0
   - pyproj >= 3, < 4
   - sortedcontainers == 2.4.0
   - opensimplex == 0.4.5
