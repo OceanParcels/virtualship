@@ -46,7 +46,7 @@ def simulate_drifters(
     drifters: list[Drifter],
     outputdt: timedelta,
     dt: timedelta,
-    endtime: datetime | None,
+    endtime: datetime | None = None,
 ) -> None:
     """
     Use Parcels to simulate a set of drifters in a fieldset.
