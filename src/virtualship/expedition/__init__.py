@@ -1,6 +1,5 @@
 """Everything for simulating an expedition."""
 
-from .area_of_interest import SpaceTimeRegion
 from .do_expedition import do_expedition
 from .instrument_type import InstrumentType
 from .schedule import Schedule
@@ -12,6 +11,7 @@ from .ship_config import (
     ShipConfig,
     ShipUnderwaterSTConfig,
 )
+from .space_time_region import SpaceTimeRegion
 from .waypoint import Waypoint
 
 __all__ = [

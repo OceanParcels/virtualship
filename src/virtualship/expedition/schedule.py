@@ -7,7 +7,7 @@ from pathlib import Path
 import pydantic
 import yaml
 
-from .area_of_interest import SpaceTimeRegion
+from .space_time_region import SpaceTimeRegion
 from .waypoint import Waypoint
 
 
