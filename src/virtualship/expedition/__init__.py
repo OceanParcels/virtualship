@@ -16,7 +16,6 @@ from .waypoint import Waypoint
 
 __all__ = [
     "ADCPConfig",
-    "SpaceTimeRegion",
     "ArgoFloatConfig",
     "CTDConfig",
     "DrifterConfig",
@@ -24,6 +23,7 @@ __all__ = [
     "Schedule",
     "ShipConfig",
     "ShipUnderwaterSTConfig",
+    "SpaceTimeRegion",
     "Waypoint",
     "do_expedition",
     "instruments",
