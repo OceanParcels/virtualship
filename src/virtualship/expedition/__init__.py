@@ -1,6 +1,6 @@
 """Everything for simulating an expedition."""
 
-from .area_of_interest import AreaOfInterest
+from .area_of_interest import SpaceTimeRegion
 from .do_expedition import do_expedition
 from .instrument_type import InstrumentType
 from .schedule import Schedule
@@ -16,7 +16,7 @@ from .waypoint import Waypoint
 
 __all__ = [
     "ADCPConfig",
-    "AreaOfInterest",
+    "SpaceTimeRegion",
     "ArgoFloatConfig",
     "CTDConfig",
     "DrifterConfig",

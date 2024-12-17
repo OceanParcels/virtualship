@@ -1,4 +1,4 @@
-"""AreaOfInterest class."""
+"""SpaceTimeRegion class."""
 
 from datetime import datetime
 from typing import Annotated
@@ -52,7 +52,7 @@ class TimeRange(BaseModel):
         return self
 
 
-class AreaOfInterest(BaseModel):
+class SpaceTimeRegion(BaseModel):
     """An area of interest with spatial and temporal boundaries."""
 
     spatial_range: SpatialRange
