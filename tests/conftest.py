@@ -3,6 +3,13 @@
 import pytest
 
 
+@pytest.fixture
+def tmp_file(tmp_path):
+    file = tmp_path / "test.txt"
+    file.touch()
+    return file
+
+
 @pytest.fixture(autouse=True)
 def test_in_working_dir(request, monkeypatch):
     """

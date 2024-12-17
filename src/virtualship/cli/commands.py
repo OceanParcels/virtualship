@@ -1,9 +1,11 @@
 from pathlib import Path
 
 import click
+import copernicusmarine
 
+import virtualship.cli._creds as creds
 from virtualship import utils
-from virtualship.expedition.do_expedition import do_expedition
+from virtualship.expedition.do_expedition import _get_schedule, do_expedition
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
 
@@ -45,15 +47,94 @@ def init(path):
     "path",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
 )
-def fetch(path):
-    """Entrypoint for the tool."""
-    raise NotImplementedError("Not implemented yet.")
+@click.option(
+    "--username",
+    type=str,
+    default=None,
+)
+@click.option(
+    "--password",
+    type=str,
+    default=None,
+)
+def fetch(path: str | Path, username: str | None, password: str | None) -> None:
+    """Entrypoint for the tool to download data based on area of interest."""
+    if sum([username is None, password is None]) == 1:
+        raise ValueError("Both username and password must be provided.")
+
+    path = Path(path)
+
+    schedule = _get_schedule(path)
+
+    creds_path = path / creds.CREDENTIALS_FILE
+    username, password = creds.get_credentials_flow(username, password, creds_path)
+
+    # Extract area_of_interest details from the schedule
+    spatial_range = schedule.space_time_region.spatial_range
+    time_range = schedule.space_time_region.time_range
+    start_datetime = time_range.start_time
+    end_datetime = time_range.end_time
+
+    # Define all datasets to download, including bathymetry
+    download_dict = {
+        "Bathymetry": {
+            "dataset_id": "cmems_mod_glo_phy_my_0.083deg_static",
+            "variables": ["deptho"],
+            "output_filename": "bathymetry.nc",
+            "force_dataset_part": "bathy",
+        },
+        "UVdata": {
+            "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
+            "variables": ["uo", "vo"],
+            "output_filename": "default_uv.nc",
+        },
+        "Sdata": {
+            "dataset_id": "cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i",
+            "variables": ["so"],
+            "output_filename": "default_s.nc",
+        },
+        "Tdata": {
+            "dataset_id": "cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i",
+            "variables": ["thetao"],
+            "output_filename": "default_t.nc",
+        },
+    }
+
+    # Iterate over all datasets and download each based on area_of_interest
+    for dataset in download_dict.values():
+        copernicusmarine.subset(
+            dataset_id=dataset["dataset_id"],
+            variables=dataset["variables"],
+            minimum_longitude=spatial_range.minimum_longitude,
+            maximum_longitude=spatial_range.maximum_longitude,
+            minimum_latitude=spatial_range.minimum_latitude,
+            maximum_latitude=spatial_range.maximum_latitude,
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            minimum_depth=abs(spatial_range.minimum_depth),
+            maximum_depth=abs(spatial_range.maximum_depth),
+            output_filename=dataset["output_filename"],
+            output_directory=path,
+            username=username,
+            password=password,
+            force_download=True,
+            force_dataset_part=dataset.get(
+                "force_dataset_part"
+            ),  # Only used if specified in dataset
+        )
+
+    click.echo("Data download based on area of interest completed.")
 
 
 @click.command(help="Do the expedition.")
 @click.argument(
     "path",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
+)
+@click.option(
+    "--username",
+    prompt=True,
+    type=str,
 )
 def run(path):
     """Entrypoint for the tool."""
