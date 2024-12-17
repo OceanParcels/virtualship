@@ -18,15 +18,22 @@ class SpatialRange(BaseModel):
     maximum_longitude: Longitude
     minimum_latitude: Latitude
     maximum_latitude: Latitude
-    minimum_depth: Depth
-    maximum_depth: Depth
+    minimum_depth: Depth | None = None
+    maximum_depth: Depth | None = None
 
     @model_validator(mode="after")
-    def _check_spatial_domain(self) -> Self:
+    def _check_lon_lat_domain(self) -> Self:
         if not self.minimum_longitude < self.maximum_longitude:
             raise ValueError("minimum_longitude must be less than maximum_longitude")
         if not self.minimum_latitude < self.maximum_latitude:
             raise ValueError("minimum_latitude must be less than maximum_latitude")
+
+        if sum([self.minimum_depth is None, self.maximum_depth is None]) == 1:
+            raise ValueError("Both minimum_depth and maximum_depth must be provided.")
+
+        if self.minimum_depth is None:
+            return self
+
         if not self.minimum_depth < self.maximum_depth:
             raise ValueError("minimum_depth must be less than maximum_depth")
         return self
