@@ -10,11 +10,6 @@ import yaml
 from .space_time_region import SpaceTimeRegion
 from .waypoint import Waypoint
 
-# import sys, os
-# sys.path.append(os.path.abspath(__file__))
-# from space_time_region import SpaceTimeRegion
-# from waypoint import Waypoint
-
 
 class Schedule(pydantic.BaseModel): 
     """Schedule of the virtual ship."""
@@ -49,11 +44,5 @@ class Schedule(pydantic.BaseModel):
         with open(file_path) as file:
             data = yaml.safe_load(file)
         return Schedule(**data)
-
-if __name__=="__main__":
-
-    import sys
-    sys.path.append('/home/iury/projects/active/virtualship/src/virtualship/src')
-    from virtualship.expedition.schedule import Schedule
 
 
