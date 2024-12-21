@@ -8,6 +8,7 @@ from virtualship import utils
 from virtualship.expedition.do_expedition import _get_schedule, do_expedition
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
+from getpass import getpass
 
 @click.command(
     help="Initialize a directory for a new expedition, with an example configuration."
@@ -59,8 +60,11 @@ def init(path):
 )
 def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     """Entrypoint for the tool to download data based on area of interest."""
-    if sum([username is None, password is None]) == 1:
-        raise ValueError("Both username and password must be provided.")
+    if username is None:
+        username = str(input("Username:"))
+    
+    if (password is None):
+        password = getpass("Password:")
 
     path = Path(path)
 
