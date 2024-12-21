@@ -8,6 +8,7 @@ from virtualship import utils
 from virtualship.expedition.do_expedition import _get_schedule, do_expedition
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
+import os
 from getpass import getpass
 
 @click.command(
@@ -68,8 +69,14 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
 
     path = Path(path)
 
+    path.joinpath("data/").mkdir(exist_ok=True)
+    
     schedule = _get_schedule(path)
 
+    aoi_hash = utils.create_string_hash(schedule.dict()["area_of_interest"])
+    
+    path.joinpath(f"data/{aoi_hash}/").mkdir(exist_ok=True)
+    
     creds_path = path / creds.CREDENTIALS_FILE
     username, password = creds.get_credentials_flow(username, password, creds_path)
 
@@ -118,10 +125,11 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
             minimum_depth=abs(spatial_range.minimum_depth),
             maximum_depth=abs(spatial_range.maximum_depth),
             output_filename=dataset["output_filename"],
-            output_directory=path,
+            output_directory=path.joinpath(f"data/{aoi_hash}/"),
             username=username,
             password=password,
             force_download=True,
+            overwrite_output_data=True,
             force_dataset_part=dataset.get(
                 "force_dataset_part"
             ),  # Only used if specified in dataset
