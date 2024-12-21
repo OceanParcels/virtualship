@@ -7,6 +7,7 @@ from pathlib import Path
 import pydantic
 import yaml
 
+from .space_time_region import SpaceTimeRegion
 from .waypoint import Waypoint
 
 
@@ -14,6 +15,7 @@ class Schedule(pydantic.BaseModel):
     """Schedule of the virtual ship."""
 
     waypoints: list[Waypoint]
+    area_of_interest: SpaceTimeRegion | None = None
 
     model_config = pydantic.ConfigDict(extra="forbid")
 

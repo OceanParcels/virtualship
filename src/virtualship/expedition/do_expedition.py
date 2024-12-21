@@ -27,15 +27,8 @@ def do_expedition(expedition_dir: str | Path) -> None:
     if isinstance(expedition_dir, str):
         expedition_dir = Path(expedition_dir)
 
-    # load ship configuration
     ship_config = _get_ship_config(expedition_dir)
-    if ship_config is None:
-        return
-
-    # load schedule
     schedule = _get_schedule(expedition_dir)
-    if schedule is None:
-        return
 
     # load last checkpoint
     checkpoint = _load_checkpoint(expedition_dir)
@@ -114,9 +107,10 @@ def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
     file_path = expedition_dir.joinpath(SHIP_CONFIG)
     try:
         return ShipConfig.from_yaml(file_path)
-    except FileNotFoundError:
-        print(f'Schedule not found. Save it to "{file_path}".')
-        return None
+    except FileNotFoundError as e:
+        raise FileNotFoundError(
+            f'Ship config not found. Save it to "{file_path}".'
+        ) from e
 
 
 def _load_input_data(expedition_dir: Path, ship_config: ShipConfig) -> InputData:
@@ -130,13 +124,13 @@ def _load_input_data(expedition_dir: Path, ship_config: ShipConfig) -> InputData
     )
 
 
-def _get_schedule(expedition_dir: Path) -> Schedule | None:
+def _get_schedule(expedition_dir: Path) -> Schedule:
+    """Load Schedule object from yaml config file in `expedition_dir`."""
     file_path = expedition_dir.joinpath(SCHEDULE)
     try:
         return Schedule.from_yaml(file_path)
-    except FileNotFoundError:
-        print(f'Schedule not found. Save it to "{file_path}".')
-        return None
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f'Schedule not found. Save it to "{file_path}".') from e
 
 
 def _load_checkpoint(expedition_dir: Path) -> Checkpoint | None:

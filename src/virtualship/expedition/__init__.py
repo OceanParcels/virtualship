@@ -11,6 +11,7 @@ from .ship_config import (
     ShipConfig,
     ShipUnderwaterSTConfig,
 )
+from .space_time_region import SpaceTimeRegion
 from .waypoint import Waypoint
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "Schedule",
     "ShipConfig",
     "ShipUnderwaterSTConfig",
+    "SpaceTimeRegion",
     "Waypoint",
     "do_expedition",
     "instruments",
