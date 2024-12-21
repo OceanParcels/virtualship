@@ -28,9 +28,11 @@ def get_example_schedule() -> str:
 
 def create_string_hash(data):
     """
+    
     Creates a hash string from a nested dictionary or any data.
     :param data: Dictionary or other serializable object.
     :return: A string hash (e.g., SHA256).
+    
     """
 
     # Custom serialization function for non-serializable types
