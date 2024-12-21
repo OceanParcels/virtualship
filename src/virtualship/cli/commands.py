@@ -9,9 +9,6 @@ from virtualship import utils
 from virtualship.expedition.do_expedition import _get_schedule, do_expedition
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
-import os
-from getpass import getpass
-
 
 @click.command(
     help="Initialize a directory for a new expedition, with an example configuration."
@@ -72,13 +69,13 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     path = Path(path)
 
     path.joinpath("data/").mkdir(exist_ok=True)
-    
+
     schedule = _get_schedule(path)
 
     aoi_hash = utils.create_string_hash(schedule.dict()["area_of_interest"])
-    
+
     path.joinpath(f"data/{aoi_hash}/").mkdir(exist_ok=True)
-    
+
     creds_path = path / creds.CREDENTIALS_FILE
     username, password = creds.get_credentials_flow(username, password, creds_path)
 

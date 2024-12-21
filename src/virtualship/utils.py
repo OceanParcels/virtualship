@@ -1,8 +1,8 @@
+import hashlib
+import json
+from datetime import datetime
 from functools import lru_cache
 from importlib.resources import files
-import json
-import hashlib
-from datetime import datetime
 
 SCHEDULE = "schedule.yaml"
 SHIP_CONFIG = "ship_config.yaml"
@@ -32,6 +32,7 @@ def create_string_hash(data):
     :param data: Dictionary or other serializable object.
     :return: A string hash (e.g., SHA256).
     """
+
     # Custom serialization function for non-serializable types
     def custom_serializer(obj):
         if isinstance(obj, datetime):
@@ -43,6 +44,6 @@ def create_string_hash(data):
 
     # Create a hash using SHA256
     hash_obj = hashlib.sha256(data_str.encode())
-    
+
     # Return the hash as a string of letters (hexadecimal)
     return hash_obj.hexdigest()
