@@ -44,4 +44,3 @@ class Schedule(pydantic.BaseModel):
         with open(file_path) as file:
             data = yaml.safe_load(file)
         return Schedule(**data)
-
