@@ -1,3 +1,4 @@
+from getpass import getpass
 from pathlib import Path
 
 import click
@@ -10,6 +11,7 @@ from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
 import os
 from getpass import getpass
+
 
 @click.command(
     help="Initialize a directory for a new expedition, with an example configuration."
@@ -63,8 +65,8 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     """Entrypoint for the tool to download data based on area of interest."""
     if username is None:
         username = str(input("Username:"))
-    
-    if (password is None):
+
+    if password is None:
         password = getpass("Password:")
 
     path = Path(path)
