@@ -11,7 +11,7 @@ from .space_time_region import SpaceTimeRegion
 from .waypoint import Waypoint
 
 
-class Schedule(pydantic.BaseModel): 
+class Schedule(pydantic.BaseModel):
     """Schedule of the virtual ship."""
 
     waypoints: list[Waypoint]
@@ -44,5 +44,4 @@ class Schedule(pydantic.BaseModel):
         with open(file_path) as file:
             data = yaml.safe_load(file)
         return Schedule(**data)
-
 
