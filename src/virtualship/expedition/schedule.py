@@ -16,7 +16,7 @@ from .waypoint import Waypoint
 # from waypoint import Waypoint
 
 
-class Schedule(pydantic.BaseModel): 
+class Schedule(pydantic.BaseModel):
     """Schedule of the virtual ship."""
 
     waypoints: list[Waypoint]
@@ -50,10 +50,9 @@ class Schedule(pydantic.BaseModel):
             data = yaml.safe_load(file)
         return Schedule(**data)
 
-if __name__=="__main__":
 
+if __name__ == "__main__":
     import sys
-    sys.path.append('/home/iury/projects/active/virtualship/src/virtualship/src')
+
+    sys.path.append("/home/iury/projects/active/virtualship/src/virtualship/src")
     from virtualship.expedition.schedule import Schedule
-
-
