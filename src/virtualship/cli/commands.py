@@ -70,8 +70,8 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     username, password = creds.get_credentials_flow(username, password, creds_path)
 
     # Extract area_of_interest details from the schedule
-    spatial_range = schedule.space_time_region.spatial_range
-    time_range = schedule.space_time_region.time_range
+    spatial_range = schedule.area_of_interest.spatial_range
+    time_range = schedule.area_of_interest.time_range
     start_datetime = time_range.start_time
     end_datetime = time_range.end_time
 
