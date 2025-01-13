@@ -84,7 +84,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     existing_download = get_existing_download(data_folder, aoi_hash)
     if existing_download is not None:
         click.echo(
-            f"Data download based on area of interest already completed at {existing_download}."
+            f"Data download for area of interest already completed ('{existing_download}')."
         )
         return
 
@@ -110,23 +110,23 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
         "Bathymetry": {
             "dataset_id": "cmems_mod_glo_phy_my_0.083deg_static",
             "variables": ["deptho"],
-            "output_filename": str(download_folder / "bathymetry.nc"),
+            "output_filename": "bathymetry.nc",
             "force_dataset_part": "bathy",
         },
         "UVdata": {
             "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
             "variables": ["uo", "vo"],
-            "output_filename": str(download_folder / "default_uv.nc"),
+            "output_filename": "default_uv.nc",
         },
         "Sdata": {
             "dataset_id": "cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i",
             "variables": ["so"],
-            "output_filename": str(download_folder / "default_s.nc"),
+            "output_filename": "default_s.nc",
         },
         "Tdata": {
             "dataset_id": "cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i",
             "variables": ["thetao"],
-            "output_filename": str(download_folder / "default_t.nc"),
+            "output_filename": "default_t.nc",
         },
     }
 
@@ -145,7 +145,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
                 minimum_depth=abs(spatial_range.minimum_depth),
                 maximum_depth=abs(spatial_range.maximum_depth),
                 output_filename=dataset["output_filename"],
-                output_directory=path.joinpath(f"data/{aoi_hash}/"),
+                output_directory=download_folder,
                 username=username,
                 password=password,
                 force_download=True,
@@ -158,7 +158,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
         shutil.rmtree(download_folder)
         raise e
 
-    complete_download()
+    complete_download(download_folder)
     click.echo("Data download based on area of interest completed.")
 
 

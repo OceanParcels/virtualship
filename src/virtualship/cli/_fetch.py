@@ -93,7 +93,7 @@ def check_complete_download(download_path: Path) -> bool:
     except (FileNotFoundError, AssertionError) as e:
         raise IncompleteDownloadError(
             f"Download at {download_path} was found, but looks to be incomplete "
-            f"(likely due to interupting it mid-download). Please delete this and retry."
+            f"(likely due to interupting it mid-download). Please delete this folder and retry."
         ) from e
     return True
 
