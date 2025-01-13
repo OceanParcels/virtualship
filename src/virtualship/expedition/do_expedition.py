@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pyproj
 
+from virtualship.cli._fetch import get_existing_download, hash_model
 from virtualship.utils import CHECKPOINT, SCHEDULE, SHIP_CONFIG
 
 from .checkpoint import Checkpoint
@@ -50,7 +51,7 @@ def do_expedition(expedition_dir: str | Path) -> None:
 
     # load fieldsets
     input_data = _load_input_data(
-        expedition_dir=expedition_dir, ship_config=ship_config
+        expedition_dir=expedition_dir, schedule=schedule, ship_config=ship_config
     )
 
     # verify schedule makes sense
@@ -113,9 +114,14 @@ def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
         ) from e
 
 
-def _load_input_data(expedition_dir: Path, ship_config: ShipConfig) -> InputData:
+def _load_input_data(
+    expedition_dir: Path, schedule: Schedule, ship_config: ShipConfig
+) -> InputData:
+    aoi_hash = hash_model(schedule.area_of_interest)
+    download_directory = get_existing_download(expedition_dir, aoi_hash)
+
     return InputData.load(
-        directory=expedition_dir.joinpath("input_data"),
+        directory=download_directory,
         load_adcp=ship_config.adcp_config is not None,
         load_argo_float=ship_config.argo_float_config is not None,
         load_ctd=ship_config.ctd_config is not None,
