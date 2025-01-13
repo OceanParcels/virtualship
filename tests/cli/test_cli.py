@@ -8,6 +8,19 @@ from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
 
 @pytest.fixture
+def copernicus_subset_no_download(monkeypatch):
+    """Mock the download function."""
+
+    def fake_download(output_filename, output_directory, **_):
+        Path(output_directory).joinpath(output_filename).touch()
+
+    monkeypatch.setattr(
+        "virtualship.cli.commands.copernicusmarine.subset", fake_download
+    )
+    yield
+
+
+@pytest.fixture
 def runner():
     """An example expedition."""
     runner = CliRunner()
@@ -57,7 +70,15 @@ def test_init_existing_schedule():
         [".", "--password", "test"],
     ],
 )
+@pytest.mark.usefixtures("copernicus_subset_no_download")
 def test_fetch_both_creds_via_cli(runner, fetch_args):
     result = runner.invoke(fetch, fetch_args)
     assert result.exit_code == 1
     assert "Both username and password" in result.exc_info[1].args[0]
+
+
+@pytest.mark.usefixtures("copernicus_subset_no_download")
+def test_fetch(runner):
+    """Test the fetch command, but mock the download."""
+    result = runner.invoke(fetch, [".", "--username", "test", "--password", "test"])
+    assert result.exit_code == 0
