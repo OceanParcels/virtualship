@@ -33,7 +33,7 @@ dependencies = [
     "numpy >=1, < 2",
     "pydantic >=2, <3",
     "PyYAML",
-    "copernicusmarine < 2",
+    "copernicusmarine >= 2",
 ]
 
 [project.urls]
