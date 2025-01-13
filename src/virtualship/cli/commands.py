@@ -103,6 +103,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     DownloadMetadata(download_complete=False).to_yaml(
         download_folder / DOWNLOAD_METADATA
     )
+    shutil.copyfile(path / SCHEDULE, download_folder / SCHEDULE)
 
     # Define all datasets to download, including bathymetry
     download_dict = {
