@@ -85,14 +85,13 @@ def get_existing_download(data_folder: Path, aoi_hash: str) -> Path | None:
             continue
 
         if hash == aoi_hash:
-            check_complete_download(download_path)
+            assert_complete_download(download_path)
             return download_path
 
     return None
 
 
-def check_complete_download(download_path: Path) -> bool:
-    """Check if a download is complete."""
+def assert_complete_download(download_path: Path) -> None:
     download_metadata = download_path / DOWNLOAD_METADATA
     try:
         with open(download_metadata) as file:
@@ -102,7 +101,7 @@ def check_complete_download(download_path: Path) -> bool:
             f"Download at {download_path} was found, but looks to be incomplete "
             f"(likely due to interupting it mid-download). Please delete this folder and retry."
         ) from e
-    return True
+    return
 
 
 def complete_download(download_path: Path) -> None:

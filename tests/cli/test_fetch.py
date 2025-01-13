@@ -7,7 +7,7 @@ from virtualship.cli._fetch import (
     DOWNLOAD_METADATA,
     DownloadMetadata,
     IncompleteDownloadError,
-    check_complete_download,
+    assert_complete_download,
     complete_download,
     create_hash,
     filename_to_hash,
@@ -42,27 +42,27 @@ def test_complete_download(tmp_path):
 
     complete_download(tmp_path)
 
-    assert check_complete_download(tmp_path)
+    assert_complete_download(tmp_path)
 
 
-def test_check_complete_download_complete(tmp_path):
+def test_assert_complete_download_complete(tmp_path):
     # Setup
     DownloadMetadata(download_complete=True).to_yaml(tmp_path / DOWNLOAD_METADATA)
 
-    assert check_complete_download(tmp_path)
+    assert_complete_download(tmp_path)
 
 
-def test_check_complete_download_incomplete(tmp_path):
+def test_assert_complete_download_incomplete(tmp_path):
     # Setup
     DownloadMetadata(download_complete=False).to_yaml(tmp_path / DOWNLOAD_METADATA)
 
     with pytest.raises(IncompleteDownloadError):
-        check_complete_download(tmp_path)
+        assert_complete_download(tmp_path)
 
 
-def test_check_complete_download_missing(tmp_path):
+def test_assert_complete_download_missing(tmp_path):
     with pytest.raises(IncompleteDownloadError):
-        assert not check_complete_download(tmp_path)
+        assert_complete_download(tmp_path)
 
 
 @pytest.fixture
@@ -76,7 +76,7 @@ def existing_data_folder(tmp_path, monkeypatch):
     ]
     data_folder = tmp_path
     monkeypatch.setattr(
-        "virtualship.cli._fetch.check_complete_download", lambda x: True
+        "virtualship.cli._fetch.assert_complete_download", lambda x: None
     )
     for f in folders:
         (data_folder / f).mkdir()
