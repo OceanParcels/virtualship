@@ -3,8 +3,17 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from virtualship.cli.commands import init
+from virtualship.cli.commands import fetch, init
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
+
+
+@pytest.fixture
+def runner():
+    """An example expedition."""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        runner.invoke(init, ["."])
+        yield runner
 
 
 def test_init():
@@ -39,3 +48,16 @@ def test_init_existing_schedule():
         with pytest.raises(FileExistsError):
             result = runner.invoke(init, ["."])
             raise result.exception
+
+
+@pytest.mark.parametrize(
+    "fetch_args",
+    [
+        [".", "--username", "test"],
+        [".", "--password", "test"],
+    ],
+)
+def test_fetch_both_creds_via_cli(runner, fetch_args):
+    result = runner.invoke(fetch, fetch_args)
+    assert result.exit_code == 1
+    assert "Both username and password" in result.exc_info[1].args[0]
