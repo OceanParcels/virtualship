@@ -37,11 +37,18 @@ def hash_model(model: BaseModel) -> str:
 
 def filename_to_hash(filename: str) -> str:
     """Extract hash from filename of the format YYYYMMDD_HHMMSS_{hash}."""
-    return filename.split("_")[-1]
+    parts = filename.split("_")
+    if len(parts) != 3:
+        raise ValueError(
+            f"Filename '{filename}' must have 3 parts delimited with underscores."
+        )
+    return parts[-1]
 
 
 def hash_to_filename(hash: str) -> str:
     """Return a filename of the format YYYYMMDD_HHMMSS_{hash}."""
+    if "_" in hash:
+        raise ValueError("Hash cannot contain underscores.")
     return f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{hash}"
 
 
