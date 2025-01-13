@@ -1,4 +1,3 @@
-from getpass import getpass
 from pathlib import Path
 
 import click
@@ -65,11 +64,8 @@ def init(path):
 )
 def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     """Entrypoint for the tool to download data based on area of interest."""
-    if username is None:
-        username = str(input("Username:"))
-
-    if password is None:
-        password = getpass("Password:")
+    if sum([username is None, password is None]) == 1:
+        raise ValueError("Both username and password must be provided when using CLI.")
 
     path = Path(path)
 
