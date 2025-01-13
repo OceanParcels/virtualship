@@ -5,8 +5,11 @@ import copernicusmarine
 
 import virtualship.cli._creds as creds
 from virtualship import utils
-from virtualship.cli._fetch import (  # noqa: F401
-    filename_to_hash,
+from virtualship.cli._fetch import (
+    DOWNLOAD_METADATA,
+    DownloadMetadata,
+    complete_download,
+    get_existing_download,
     hash_model,
     hash_to_filename,
 )
@@ -69,15 +72,19 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
 
     path = Path(path)
 
-    path.joinpath("data/").mkdir(exist_ok=True)
+    data_folder = path / "data"
+    data_folder.mkdir(exist_ok=True)
 
     schedule = _get_schedule(path)
 
     aoi_hash = hash_model(schedule.area_of_interest)
-    data_folder = path / "data"
-    data_folder.mkdir(exist_ok=True)
-    download_folder = data_folder / hash_to_filename(aoi_hash)
-    download_folder.mkdir()
+
+    existing_download = get_existing_download(data_folder, aoi_hash)
+    if existing_download is not None:
+        click.echo(
+            f"Data download based on area of interest already completed at {existing_download}."
+        )
+        return
 
     creds_path = path / creds.CREDENTIALS_FILE
     username, password = creds.get_credentials_flow(username, password, creds_path)
@@ -88,28 +95,35 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     start_datetime = time_range.start_time
     end_datetime = time_range.end_time
 
+    # Create download folder and set download metadata
+    download_folder = data_folder / hash_to_filename(aoi_hash)
+    download_folder.mkdir()
+    DownloadMetadata(download_complete=False).to_yaml(
+        download_folder / DOWNLOAD_METADATA
+    )
+
     # Define all datasets to download, including bathymetry
     download_dict = {
         "Bathymetry": {
             "dataset_id": "cmems_mod_glo_phy_my_0.083deg_static",
             "variables": ["deptho"],
-            "output_filename": "bathymetry.nc",
+            "output_filename": str(download_folder / "bathymetry.nc"),
             "force_dataset_part": "bathy",
         },
         "UVdata": {
             "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
             "variables": ["uo", "vo"],
-            "output_filename": "default_uv.nc",
+            "output_filename": str(download_folder / "default_uv.nc"),
         },
         "Sdata": {
             "dataset_id": "cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i",
             "variables": ["so"],
-            "output_filename": "default_s.nc",
+            "output_filename": str(download_folder / "default_s.nc"),
         },
         "Tdata": {
             "dataset_id": "cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i",
             "variables": ["thetao"],
-            "output_filename": "default_t.nc",
+            "output_filename": str(download_folder / "default_t.nc"),
         },
     }
 
@@ -137,6 +151,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
             ),  # Only used if specified in dataset
         )
 
+    complete_download()
     click.echo("Data download based on area of interest completed.")
 
 
