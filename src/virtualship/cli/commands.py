@@ -1,7 +1,9 @@
+import shutil
 from pathlib import Path
 
 import click
 import copernicusmarine
+from copernicusmarine.core_functions.credentials_utils import InvalidUsernameOrPassword
 
 import virtualship.cli._creds as creds
 from virtualship import utils
@@ -128,28 +130,32 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     }
 
     # Iterate over all datasets and download each based on area_of_interest
-    for dataset in download_dict.values():
-        copernicusmarine.subset(
-            dataset_id=dataset["dataset_id"],
-            variables=dataset["variables"],
-            minimum_longitude=spatial_range.minimum_longitude,
-            maximum_longitude=spatial_range.maximum_longitude,
-            minimum_latitude=spatial_range.minimum_latitude,
-            maximum_latitude=spatial_range.maximum_latitude,
-            start_datetime=start_datetime,
-            end_datetime=end_datetime,
-            minimum_depth=abs(spatial_range.minimum_depth),
-            maximum_depth=abs(spatial_range.maximum_depth),
-            output_filename=dataset["output_filename"],
-            output_directory=path.joinpath(f"data/{aoi_hash}/"),
-            username=username,
-            password=password,
-            force_download=True,
-            overwrite_output_data=True,
-            force_dataset_part=dataset.get(
-                "force_dataset_part"
-            ),  # Only used if specified in dataset
-        )
+    try:
+        for dataset in download_dict.values():
+            copernicusmarine.subset(
+                dataset_id=dataset["dataset_id"],
+                variables=dataset["variables"],
+                minimum_longitude=spatial_range.minimum_longitude,
+                maximum_longitude=spatial_range.maximum_longitude,
+                minimum_latitude=spatial_range.minimum_latitude,
+                maximum_latitude=spatial_range.maximum_latitude,
+                start_datetime=start_datetime,
+                end_datetime=end_datetime,
+                minimum_depth=abs(spatial_range.minimum_depth),
+                maximum_depth=abs(spatial_range.maximum_depth),
+                output_filename=dataset["output_filename"],
+                output_directory=path.joinpath(f"data/{aoi_hash}/"),
+                username=username,
+                password=password,
+                force_download=True,
+                overwrite_output_data=True,
+                force_dataset_part=dataset.get(
+                    "force_dataset_part"
+                ),  # Only used if specified in dataset
+            )
+    except InvalidUsernameOrPassword as e:
+        shutil.rmtree(download_folder)
+        raise e
 
     complete_download()
     click.echo("Data download based on area of interest completed.")
