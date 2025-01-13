@@ -111,7 +111,6 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
             "dataset_id": "cmems_mod_glo_phy_my_0.083deg_static",
             "variables": ["deptho"],
             "output_filename": "bathymetry.nc",
-            "force_dataset_part": "bathy",
         },
         "UVdata": {
             "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
@@ -149,10 +148,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
                 username=username,
                 password=password,
                 force_download=True,
-                overwrite_output_data=True,
-                force_dataset_part=dataset.get(
-                    "force_dataset_part"
-                ),  # Only used if specified in dataset
+                overwrite=True,
             )
     except InvalidUsernameOrPassword as e:
         shutil.rmtree(download_folder)
