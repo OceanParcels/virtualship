@@ -97,6 +97,6 @@ def test_simulate_ship_underwater_st(tmpdir) -> None:
         for var in ["S", "T", "lat", "lon"]:
             obs_value = obs[var].values.item()
             exp_value = exp[var]
-            assert np.isclose(
-                obs_value, exp_value
-            ), f"Observation incorrect {i=} {var=} {obs_value=} {exp_value=}."
+            assert np.isclose(obs_value, exp_value), (
+                f"Observation incorrect {i=} {var=} {obs_value=} {exp_value=}."
+            )
