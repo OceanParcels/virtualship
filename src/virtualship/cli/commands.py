@@ -6,6 +6,11 @@ import copernicusmarine
 
 import virtualship.cli._creds as creds
 from virtualship import utils
+from virtualship.cli._fetch import (  # noqa: F401
+    filename_to_hash,
+    hash_model,
+    hash_to_filename,
+)
 from virtualship.expedition.do_expedition import _get_schedule, do_expedition
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
@@ -72,9 +77,11 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
 
     schedule = _get_schedule(path)
 
-    aoi_hash = utils.create_string_hash(schedule.dict()["area_of_interest"])
-
-    path.joinpath(f"data/{aoi_hash}/").mkdir(exist_ok=True)
+    aoi_hash = hash_model(schedule.area_of_interest)
+    data_folder = path / "data"
+    data_folder.mkdir(exist_ok=True)
+    download_folder = data_folder / hash_to_filename(aoi_hash)
+    download_folder.mkdir()
 
     creds_path = path / creds.CREDENTIALS_FILE
     username, password = creds.get_credentials_flow(username, password, creds_path)
