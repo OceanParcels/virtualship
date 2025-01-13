@@ -19,11 +19,12 @@ from .simulate_schedule import ScheduleProblem, simulate_schedule
 from .verify_schedule import verify_schedule
 
 
-def do_expedition(expedition_dir: str | Path) -> None:
+def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) -> None:
     """
     Perform an expedition, providing terminal feedback and file output.
 
     :param expedition_dir: The base directory for the expedition.
+    :param input_data: Input data folder folder (override used for testing).
     """
     if isinstance(expedition_dir, str):
         expedition_dir = Path(expedition_dir)
@@ -51,7 +52,10 @@ def do_expedition(expedition_dir: str | Path) -> None:
 
     # load fieldsets
     input_data = _load_input_data(
-        expedition_dir=expedition_dir, schedule=schedule, ship_config=ship_config
+        expedition_dir=expedition_dir,
+        schedule=schedule,
+        ship_config=ship_config,
+        input_data=input_data,
     )
 
     # verify schedule makes sense
@@ -115,13 +119,31 @@ def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
 
 
 def _load_input_data(
-    expedition_dir: Path, schedule: Schedule, ship_config: ShipConfig
+    expedition_dir: Path,
+    schedule: Schedule,
+    ship_config: ShipConfig,
+    input_data: Path | None,
 ) -> InputData:
-    aoi_hash = hash_model(schedule.area_of_interest)
-    download_directory = get_existing_download(expedition_dir, aoi_hash)
+    """
+    Load the input data.
+
+    :param expedition_dir: Directory of the expedition.
+    :type expedition_dir: Path
+    :param schedule: Schedule object.
+    :type schedule: Schedule
+    :param ship_config: Ship configuration.
+    :type ship_config: ShipConfig
+    :param input_data: Folder containing input data.
+    :type input_data: Path | None
+    :return: InputData object.
+    :rtype: InputData
+    """
+    if input_data is None:
+        aoi_hash = hash_model(schedule.area_of_interest)
+        input_data = get_existing_download(expedition_dir, aoi_hash)
 
     return InputData.load(
-        directory=download_directory,
+        directory=input_data,
         load_adcp=ship_config.adcp_config is not None,
         load_argo_float=ship_config.argo_float_config is not None,
         load_ctd=ship_config.ctd_config is not None,
