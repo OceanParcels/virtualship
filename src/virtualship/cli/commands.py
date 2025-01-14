@@ -79,6 +79,11 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
 
     schedule = _get_schedule(path)
 
+    if schedule.area_of_interest is None:
+        raise ValueError(
+            "Area of interest not found in schedule, please define it to fetch the data."
+        )
+
     aoi_hash = hash_model(schedule.area_of_interest)
 
     existing_download = get_existing_download(data_folder, aoi_hash)
