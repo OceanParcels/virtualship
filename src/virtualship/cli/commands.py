@@ -11,8 +11,8 @@ from virtualship.cli._fetch import (
     DOWNLOAD_METADATA,
     DownloadMetadata,
     complete_download,
+    get_area_of_interest_hash,
     get_existing_download,
-    hash_model,
     hash_to_filename,
 )
 from virtualship.expedition.do_expedition import _get_schedule, do_expedition
@@ -84,7 +84,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
             "Area of interest not found in schedule, please define it to fetch the data."
         )
 
-    aoi_hash = hash_model(schedule.area_of_interest)
+    aoi_hash = get_area_of_interest_hash(schedule.area_of_interest)
 
     existing_download = get_existing_download(data_folder, aoi_hash)
     if existing_download is not None:

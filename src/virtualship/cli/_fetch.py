@@ -7,6 +7,7 @@ from pathlib import Path
 import click
 from pydantic import BaseModel
 
+from virtualship.expedition.space_time_region import SpaceTimeRegion
 from virtualship.utils import _dump_yaml, _generic_load_yaml
 
 DOWNLOAD_METADATA = "download_metadata.yaml"
@@ -25,14 +26,23 @@ def create_hash(s: str) -> str:
     return _hash(s, length=8)
 
 
-def hash_model(model: BaseModel) -> str:
+def hash_model(model: BaseModel, salt: int = 0) -> str:
     """
     Hash a Pydantic model.
 
     :param region: The region to hash.
+    :param salt: Salt to add to the hash.
     :returns: The hash.
     """
-    return create_hash(model.model_dump_json())
+    return create_hash(model.model_dump_json() + str(salt))
+
+
+def get_area_of_interest_hash(area_of_interest: SpaceTimeRegion) -> str:
+    """Get the hash of the area of interest."""
+    # Increment salt in the event of breaking data fetching changes with prior versions
+    # of virtualship where you want to force new hashes (i.e., new data downloads)
+    salt = 0
+    return hash_model(area_of_interest, salt=salt)
 
 
 def filename_to_hash(filename: str) -> str:

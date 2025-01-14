@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pyproj
 
-from virtualship.cli._fetch import get_existing_download, hash_model
+from virtualship.cli._fetch import get_area_of_interest_hash, get_existing_download
 from virtualship.utils import CHECKPOINT, SCHEDULE, SHIP_CONFIG
 
 from .checkpoint import Checkpoint
@@ -139,7 +139,7 @@ def _load_input_data(
     :rtype: InputData
     """
     if input_data is None:
-        aoi_hash = hash_model(schedule.area_of_interest)
+        aoi_hash = get_area_of_interest_hash(schedule.area_of_interest)
         input_data = get_existing_download(expedition_dir, aoi_hash)
 
     return InputData.load(
