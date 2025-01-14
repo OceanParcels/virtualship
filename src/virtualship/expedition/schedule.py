@@ -15,7 +15,7 @@ class Schedule(pydantic.BaseModel):
     """Schedule of the virtual ship."""
 
     waypoints: list[Waypoint]
-    area_of_interest: SpaceTimeRegion | None = None
+    space_time_region: SpaceTimeRegion | None = None
 
     model_config = pydantic.ConfigDict(extra="forbid")
 

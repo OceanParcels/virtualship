@@ -12,7 +12,7 @@ Depth = float  # TODO: insert a minimum depth here? e.g., `Annotated[float, Fiel
 
 
 class SpatialRange(BaseModel):
-    """Defines the geographic boundaries for an area of interest."""
+    """Defines geographic boundaries."""
 
     minimum_longitude: Longitude
     maximum_longitude: Longitude
@@ -40,7 +40,7 @@ class SpatialRange(BaseModel):
 
 
 class TimeRange(BaseModel):
-    """Defines the temporal boundaries for an area of interest."""
+    """Defines the temporal boundaries for a space-time region."""
 
     start_time: datetime
     end_time: datetime
@@ -53,7 +53,7 @@ class TimeRange(BaseModel):
 
 
 class SpaceTimeRegion(BaseModel):
-    """An area of interest with spatial and temporal boundaries."""
+    """An space-time region with spatial and temporal boundaries."""
 
     spatial_range: SpatialRange
     time_range: TimeRange

@@ -11,8 +11,8 @@ from virtualship.cli._fetch import (
     DOWNLOAD_METADATA,
     DownloadMetadata,
     complete_download,
-    get_area_of_interest_hash,
     get_existing_download,
+    get_space_time_region_hash,
     hash_to_filename,
 )
 from virtualship.expedition.do_expedition import _get_schedule, do_expedition
@@ -68,7 +68,7 @@ def init(path):
     default=None,
 )
 def fetch(path: str | Path, username: str | None, password: str | None) -> None:
-    """Entrypoint for the tool to download data based on area of interest."""
+    """Entrypoint for the tool to download data based on space-time region."""
     if sum([username is None, password is None]) == 1:
         raise ValueError("Both username and password must be provided when using CLI.")
 
@@ -79,31 +79,31 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
 
     schedule = _get_schedule(path)
 
-    if schedule.area_of_interest is None:
+    if schedule.space_time_region is None:
         raise ValueError(
-            "Area of interest not found in schedule, please define it to fetch the data."
+            "space_time_region not found in schedule, please define it to fetch the data."
         )
 
-    aoi_hash = get_area_of_interest_hash(schedule.area_of_interest)
+    space_time_region_hash = get_space_time_region_hash(schedule.space_time_region)
 
-    existing_download = get_existing_download(data_folder, aoi_hash)
+    existing_download = get_existing_download(data_folder, space_time_region_hash)
     if existing_download is not None:
         click.echo(
-            f"Data download for area of interest already completed ('{existing_download}')."
+            f"Data download for space-time region already completed ('{existing_download}')."
         )
         return
 
     creds_path = path / creds.CREDENTIALS_FILE
     username, password = creds.get_credentials_flow(username, password, creds_path)
 
-    # Extract area_of_interest details from the schedule
-    spatial_range = schedule.area_of_interest.spatial_range
-    time_range = schedule.area_of_interest.time_range
+    # Extract space_time_region details from the schedule
+    spatial_range = schedule.space_time_region.spatial_range
+    time_range = schedule.space_time_region.time_range
     start_datetime = time_range.start_time
     end_datetime = time_range.end_time
 
     # Create download folder and set download metadata
-    download_folder = data_folder / hash_to_filename(aoi_hash)
+    download_folder = data_folder / hash_to_filename(space_time_region_hash)
     download_folder.mkdir()
     DownloadMetadata(download_complete=False).to_yaml(
         download_folder / DOWNLOAD_METADATA
@@ -134,7 +134,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
         },
     }
 
-    # Iterate over all datasets and download each based on area_of_interest
+    # Iterate over all datasets and download each based on space_time_region
     try:
         for dataset in download_dict.values():
             copernicusmarine.subset(
@@ -160,7 +160,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
         raise e
 
     complete_download(download_folder)
-    click.echo("Data download based on area of interest completed.")
+    click.echo("Data download based on space-time region completed.")
 
 
 @click.command(help="Do the expedition.")

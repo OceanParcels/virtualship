@@ -37,12 +37,11 @@ def hash_model(model: BaseModel, salt: int = 0) -> str:
     return create_hash(model.model_dump_json() + str(salt))
 
 
-def get_area_of_interest_hash(area_of_interest: SpaceTimeRegion) -> str:
-    """Get the hash of the area of interest."""
+def get_space_time_region_hash(space_time_region: SpaceTimeRegion) -> str:
     # Increment salt in the event of breaking data fetching changes with prior versions
     # of virtualship where you want to force new hashes (i.e., new data downloads)
     salt = 0
-    return hash_model(area_of_interest, salt=salt)
+    return hash_model(space_time_region, salt=salt)
 
 
 def filename_to_hash(filename: str) -> str:
@@ -83,7 +82,9 @@ class DownloadMetadata(BaseModel):
         return _generic_load_yaml(file_path, cls)
 
 
-def get_existing_download(data_folder: Path, aoi_hash: str) -> Path | None:
+def get_existing_download(
+    data_folder: Path, space_time_region_hash: str
+) -> Path | None:
     """Check if a download has already been completed. If so, return the path for existing download."""
     for download_path in data_folder.iterdir():
         try:
@@ -94,7 +95,7 @@ def get_existing_download(data_folder: Path, aoi_hash: str) -> Path | None:
             )
             continue
 
-        if hash == aoi_hash:
+        if hash == space_time_region_hash:
             assert_complete_download(download_path)
             return download_path
 
