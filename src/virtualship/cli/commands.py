@@ -19,15 +19,13 @@ from virtualship.expedition.do_expedition import _get_schedule, do_expedition
 from virtualship.utils import SCHEDULE, SHIP_CONFIG
 
 
-@click.command(
-    help="Initialize a directory for a new expedition, with an example configuration."
-)
+@click.command()
 @click.argument(
     "path",
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
 def init(path):
-    """Entrypoint for the tool."""
+    """Initialize a directory for a new expedition, with an example schedule and ship config files."""
     path = Path(path)
     path.mkdir(exist_ok=True)
 
@@ -50,9 +48,7 @@ def init(path):
     click.echo(f"Created '{config.name}' and '{schedule.name}' at {path}.")
 
 
-@click.command(
-    help="Download the relevant data specified in an expedition directory (i.e., by the expedition config)."
-)
+@click.command()
 @click.argument(
     "path",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
@@ -173,7 +169,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     click.echo("Data download based on space-time region completed.")
 
 
-@click.command(help="Do the expedition.")
+@click.command()
 @click.argument(
     "path",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
@@ -184,5 +180,5 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     type=str,
 )
 def run(path):
-    """Entrypoint for the tool."""
+    """Run the expedition."""
     do_expedition(Path(path))
