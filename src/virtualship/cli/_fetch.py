@@ -3,12 +3,15 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 from pydantic import BaseModel
 
-from virtualship.expedition.space_time_region import SpaceTimeRegion
 from virtualship.utils import _dump_yaml, _generic_load_yaml
+
+if TYPE_CHECKING:
+    from virtualship.expedition.space_time_region import SpaceTimeRegion
 
 DOWNLOAD_METADATA = "download_metadata.yaml"
 
