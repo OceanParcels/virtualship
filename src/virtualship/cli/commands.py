@@ -61,14 +61,24 @@ def init(path):
     "--username",
     type=str,
     default=None,
+    help="Copernicus Marine username.",
 )
 @click.option(
     "--password",
     type=str,
     default=None,
+    help="Copernicus Marine password.",
 )
 def fetch(path: str | Path, username: str | None, password: str | None) -> None:
-    """Entrypoint for the tool to download data based on space-time region."""
+    """
+    Download input data for an expedition.
+
+    Entrypoint for the tool to download data based on space-time region provided in the
+    schedule file. Data is downloaded from Copernicus Marine, credentials for which can be
+    obtained via registration: https://data.marine.copernicus.eu/register . Credentials can
+    be provided on prompt, via command line arguments, or via a YAML config file. Run
+    `virtualship fetch` on a expedition for more info.
+    """
     if sum([username is None, password is None]) == 1:
         raise ValueError("Both username and password must be provided when using CLI.")
 
