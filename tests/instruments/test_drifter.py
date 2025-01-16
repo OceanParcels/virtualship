@@ -1,7 +1,6 @@
 """Test the simulation of drifters."""
 
 import datetime
-from datetime import timedelta
 
 import numpy as np
 import xarray as xr
@@ -60,8 +59,8 @@ def test_simulate_drifters(tmpdir) -> None:
         fieldset=fieldset,
         out_path=out_path,
         drifters=drifters,
-        outputdt=timedelta(hours=1),
-        dt=timedelta(minutes=5),
+        outputdt=datetime.timedelta(hours=1),
+        dt=datetime.timedelta(minutes=5),
         endtime=None,
     )
 

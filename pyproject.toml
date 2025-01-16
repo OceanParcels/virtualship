@@ -33,6 +33,7 @@ dependencies = [
     "numpy >=1, < 2",
     "pydantic >=2, <3",
     "PyYAML",
+    "copernicusmarine >= 2",
 ]
 
 [project.urls]
@@ -104,6 +105,8 @@ ignore = [
     "D212",
     # one-blank-line-before-class
     "D203",
+    # First line of docstring should be in imperative mood
+    "D401",
 
     # TODO: Remove later
     "D100", "D103"

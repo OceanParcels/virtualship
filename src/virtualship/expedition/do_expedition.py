@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pyproj
 
+from virtualship.cli._fetch import get_existing_download, get_space_time_region_hash
 from virtualship.utils import CHECKPOINT, SCHEDULE, SHIP_CONFIG
 
 from .checkpoint import Checkpoint
@@ -18,24 +19,18 @@ from .simulate_schedule import ScheduleProblem, simulate_schedule
 from .verify_schedule import verify_schedule
 
 
-def do_expedition(expedition_dir: str | Path) -> None:
+def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) -> None:
     """
     Perform an expedition, providing terminal feedback and file output.
 
     :param expedition_dir: The base directory for the expedition.
+    :param input_data: Input data folder folder (override used for testing).
     """
     if isinstance(expedition_dir, str):
         expedition_dir = Path(expedition_dir)
 
-    # load ship configuration
     ship_config = _get_ship_config(expedition_dir)
-    if ship_config is None:
-        return
-
-    # load schedule
     schedule = _get_schedule(expedition_dir)
-    if schedule is None:
-        return
 
     # load last checkpoint
     checkpoint = _load_checkpoint(expedition_dir)
@@ -57,7 +52,10 @@ def do_expedition(expedition_dir: str | Path) -> None:
 
     # load fieldsets
     input_data = _load_input_data(
-        expedition_dir=expedition_dir, ship_config=ship_config
+        expedition_dir=expedition_dir,
+        schedule=schedule,
+        ship_config=ship_config,
+        input_data=input_data,
     )
 
     # verify schedule makes sense
@@ -114,14 +112,38 @@ def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
     file_path = expedition_dir.joinpath(SHIP_CONFIG)
     try:
         return ShipConfig.from_yaml(file_path)
-    except FileNotFoundError:
-        print(f'Schedule not found. Save it to "{file_path}".')
-        return None
+    except FileNotFoundError as e:
+        raise FileNotFoundError(
+            f'Ship config not found. Save it to "{file_path}".'
+        ) from e
 
 
-def _load_input_data(expedition_dir: Path, ship_config: ShipConfig) -> InputData:
+def _load_input_data(
+    expedition_dir: Path,
+    schedule: Schedule,
+    ship_config: ShipConfig,
+    input_data: Path | None,
+) -> InputData:
+    """
+    Load the input data.
+
+    :param expedition_dir: Directory of the expedition.
+    :type expedition_dir: Path
+    :param schedule: Schedule object.
+    :type schedule: Schedule
+    :param ship_config: Ship configuration.
+    :type ship_config: ShipConfig
+    :param input_data: Folder containing input data.
+    :type input_data: Path | None
+    :return: InputData object.
+    :rtype: InputData
+    """
+    if input_data is None:
+        space_time_region_hash = get_space_time_region_hash(schedule.space_time_region)
+        input_data = get_existing_download(expedition_dir, space_time_region_hash)
+
     return InputData.load(
-        directory=expedition_dir.joinpath("input_data"),
+        directory=input_data,
         load_adcp=ship_config.adcp_config is not None,
         load_argo_float=ship_config.argo_float_config is not None,
         load_ctd=ship_config.ctd_config is not None,
@@ -130,13 +152,13 @@ def _load_input_data(expedition_dir: Path, ship_config: ShipConfig) -> InputData
     )
 
 
-def _get_schedule(expedition_dir: Path) -> Schedule | None:
+def _get_schedule(expedition_dir: Path) -> Schedule:
+    """Load Schedule object from yaml config file in `expedition_dir`."""
     file_path = expedition_dir.joinpath(SCHEDULE)
     try:
         return Schedule.from_yaml(file_path)
-    except FileNotFoundError:
-        print(f'Schedule not found. Save it to "{file_path}".')
-        return None
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f'Schedule not found. Save it to "{file_path}".') from e
 
 
 def _load_checkpoint(expedition_dir: Path) -> Checkpoint | None:

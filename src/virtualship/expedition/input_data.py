@@ -33,7 +33,7 @@ class InputData:
 
         For now this function makes a lot of assumption about file location and contents.
 
-        :param directory: Base directory of the expedition.
+        :param directory: Input data directory.
         :param load_adcp: Whether to load the ADCP fieldset.
         :param load_argo_float: Whether to load the argo float fieldset.
         :param load_ctd: Whether to load the CTD fieldset.
@@ -73,7 +73,7 @@ class InputData:
         )
 
     @classmethod
-    def _load_default_fieldset(cls, directory: str | Path) -> FieldSet:
+    def _load_default_fieldset(cls, directory: Path) -> FieldSet:
         filenames = {
             "U": directory.joinpath("default_uv.nc"),
             "V": directory.joinpath("default_uv.nc"),
@@ -116,7 +116,7 @@ class InputData:
         return fieldset
 
     @classmethod
-    def _load_drifter_fieldset(cls, directory: str | Path) -> FieldSet:
+    def _load_drifter_fieldset(cls, directory: Path) -> FieldSet:
         filenames = {
             "U": directory.joinpath("drifter_uv.nc"),
             "V": directory.joinpath("drifter_uv.nc"),
