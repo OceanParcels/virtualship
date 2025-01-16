@@ -114,3 +114,12 @@ The scripts are written to work with [A-grid ocean data from the Copernicus Mari
 ## Source code
 
 The code for this project is [hosted on GitHub](https://github.com/OceanParcels/virtualship).
+
+### Contributors
+
+<a href="https://github.com/oceanparcels/virtualship/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=oceanparcels/virtualship" />
+</a>
+
+**All contributions are welcome! See the [contributing page](https://virtualship.oceanparcels.org/en/latest/contributing.html) in our documentation to see how to get involved.**
+Image made with [contrib.rocks](https://contrib.rocks).
