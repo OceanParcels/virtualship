@@ -174,11 +174,6 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     "path",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
 )
-@click.option(
-    "--username",
-    prompt=True,
-    type=str,
-)
 def run(path):
     """Run the expedition."""
     do_expedition(Path(path))
