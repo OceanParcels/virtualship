@@ -64,19 +64,20 @@ Usage: virtualship [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --version  Show the version and exit.
-  --help  Show this message and exit.
+  --help     Show this message and exit.
 
 Commands:
-  fetch  Download the relevant data specified in an expedition directory...
+  fetch  Download input data for an expedition.
   init   Initialize a directory for a new expedition, with an example...
-  run    Do the expedition.
+  run    Run the expedition.
 ```
 
 ```console
 $ virtualship init --help
 Usage: virtualship init [OPTIONS] PATH
 
-  Initialize a directory for a new expedition, with an example configuration.
+  Initialize a directory for a new expedition, with an example schedule and
+  ship config files.
 
 Options:
   --help  Show this message and exit.
@@ -87,22 +88,29 @@ Options:
 $ virtualship fetch --help
 Usage: virtualship fetch [OPTIONS] PATH
 
-  Download the relevant data specified in an expedition directory (i.e., by
-  the expedition config).
+  Download input data for an expedition.
+
+  Entrypoint for the tool to download data based on space-time region provided
+  in the schedule file. Data is downloaded from Copernicus Marine, credentials
+  for which can be obtained via registration:
+  https://data.marine.copernicus.eu/register . Credentials can be provided on
+  prompt, via command line arguments, or via a YAML config file. Run
+  `virtualship fetch` on a expedition for more info.
 
 Options:
-  --help  Show this message and exit.
+  --username TEXT  Copernicus Marine username.
+  --password TEXT  Copernicus Marine password.
+  --help           Show this message and exit.
 ```
 
 ```console
 $ virtualship run --help
 Usage: virtualship run [OPTIONS] PATH
 
-  Do the expedition.
+  Run the expedition.
 
 Options:
   --help  Show this message and exit.
-
 ```
 
 For examples, see [the tutorials section of our documentation](https://virtualship.oceanparcels.org/en/latest/tutorials/index.html).
