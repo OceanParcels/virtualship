@@ -1,0 +1,52 @@
+# For the classroom, virtualship is deployed using Jupyter Notebook instances on
+# SURF Research Cloud. Custom environments (aka. iPython kernels) can be created
+# by populating a configuration YAML file as done below, and following the process documented here:
+# https://gitlab.com/rsc-surf-nl/plugins/plugin-custom-packages/-/blob/main/README.md
+# The original example config can be found here:
+# https://gitlab.com/rsc-surf-nl/plugins/plugin-custom-packages/-/blob/main/files/sample-requirements.yml
+# Using the SURF Research Cloud dashboard, you can look at the metadata for the Jupyter instance.
+
+# In general, you can look at the miniconda section of this YAML file to see which dependencies
+# are used in addition to virtualship for analysis.
+---
+apt:
+  repo_keys: []
+  #   # for example: key for mongodb repo
+  # - 9DA31620334BD75D9DCB49F368818C72E52529D4
+  #   # or for R-repo
+  # - E298A3A825C0D65DFD57CBB651716619E084DAB9
+  repos:
+    - "deb http://archive.ubuntu.com/ubuntu focal main multiverse universe restricted"
+    - "deb http://archive.ubuntu.com/ubuntu focal-security main multiverse universe restricted"
+  # - 'deb [arch=amd64] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse'
+  # - 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/'
+  packages:
+    - ncdu
+  # deb:
+  # # xxdiff
+  # - 'http://nl.archive.ubuntu.com/ubuntu/pool/universe/x/xxdiff/xxdiff_4.0.1+hg487+dfsg-1_amd64.deb'
+  # # libnetcdf
+  # - 'http://nl.archive.ubuntu.com/ubuntu/pool/universe/n/netcdf-cxx/libnetcdf-c++4-1_4.3.1-2build1_amd64.deb'
+  # # - 'https://download2.rstudio.org/server/bionic/amd64/rstudio-server-2021.09.0-351-amd64.deb'
+miniconda:
+  name: custom-kernel
+  channels:
+    - conda-forge
+    - defaults
+  dependencies:
+    - python=3.10
+    - virtualship
+    - xarray
+    - numpy
+    - scipy
+    - pandas
+    # to create ipython-kernels you will always need the package ipykernel
+    - ipykernel
+    # After conda-packages pip-packages can still be installed
+    # so install pip ...
+    - pip
+  # ... and tell conda to use it:
+  # - pip:
+  #   - requests
+  #   - ...
+  prefix: /etc/miniconda/envs
