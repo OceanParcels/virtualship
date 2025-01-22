@@ -40,6 +40,11 @@ miniconda:
     - numpy
     - scipy
     - pandas
+    - matplotlib
+    - cartopy
+    - cmocean
+    - geopy
+    - gsw
     # to create ipython-kernels you will always need the package ipykernel
     - ipykernel
     # After conda-packages pip-packages can still be installed
