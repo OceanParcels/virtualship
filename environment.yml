@@ -31,5 +31,5 @@ dependencies:
   - pandoc
   - sphinx-copybutton
   - sphinx-autodoc-typehints
-  - furo
+  - pydata-sphinx-theme
   - sphinx-autobuild
