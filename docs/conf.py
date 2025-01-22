@@ -32,8 +32,9 @@ html_theme = "pydata_sphinx_theme"
 
 html_theme_options = {
     "logo": {
-        "image_light": "virtual_ship_logo.png",
-        "image_dark": "virtual_ship_logo_inverted.png",
+        "text": "Virtual Ship Parcels",
+        "image_light": "virtual_ship_logo_no_text.png",
+        "image_dark": "virtual_ship_logo_inverted_no_text.png",
     },
     "use_edit_page_button": True,
     "github_url": "https://github.com/OceanParcels/virtualship",
