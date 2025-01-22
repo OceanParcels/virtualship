@@ -5,9 +5,9 @@
 :hidden:
 
 Home <self>
-quickstart
-tutorials/index
-contributing
+user-guide/index
+api/index
+contributing/index
 OceanParcels <https://oceanparcels.org>
 ```
 
