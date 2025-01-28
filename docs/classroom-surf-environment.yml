@@ -29,7 +29,7 @@ apt:
   # - 'http://nl.archive.ubuntu.com/ubuntu/pool/universe/n/netcdf-cxx/libnetcdf-c++4-1_4.3.1-2build1_amd64.deb'
   # # - 'https://download2.rstudio.org/server/bionic/amd64/rstudio-server-2021.09.0-351-amd64.deb'
 miniconda:
-  name: custom-kernel
+  name: virtualship
   channels:
     - conda-forge
     - defaults
