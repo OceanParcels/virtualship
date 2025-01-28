@@ -47,6 +47,7 @@ miniconda:
     - gsw
     # to create ipython-kernels you will always need the package ipykernel
     - ipykernel
+    - jupyter-collaboration
     # After conda-packages pip-packages can still be installed
     # so install pip ...
     - pip
