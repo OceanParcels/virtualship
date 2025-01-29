@@ -6,6 +6,7 @@ maxdepth: 2
 caption: Assignments
 ---
 Research_Proposal_only.ipynb
+Virtualship_research_proposal.ipynb
 ```
 
 ```{nbgallery}
