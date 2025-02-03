@@ -28,7 +28,7 @@ from virtualship.utils import SCHEDULE, SHIP_CONFIG, mfp_to_yaml
     "--mfp_file",
     type=str,
     default=None,
-    help="Partially initialise a project from an exported xlsx or csv file from NIOZ' Marine Facilities Planning tool (specifically the \"Export Coordinates > DD\" option). User edits are required after initialisation.",
+    help='Partially initialise a project from an exported xlsx or csv file from NIOZ\' Marine Facilities Planning tool (specifically the "Export Coordinates > DD" option). User edits are required after initialisation.',
 )
 def init(path, mfp_file):
     """
@@ -53,11 +53,13 @@ def init(path, mfp_file):
         )
 
     config.write_text(utils.get_example_config())
-    
+
     if mfp_file:
         # Generate schedule.yaml from the MPF file
         click.echo(f"Generating schedule from {mfp_file}...")
-        mfp_to_yaml(mfp_file, str(path))  # Pass the path to save in the correct directory
+        mfp_to_yaml(
+            mfp_file, str(path)
+        )  # Pass the path to save in the correct directory
     else:
         # Create a default example schedule
         schedule.write_text(utils.get_example_schedule())
