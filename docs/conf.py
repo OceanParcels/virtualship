@@ -72,8 +72,8 @@ nitpick_ignore = [
 always_document_param_types = True
 
 nbsphinx_thumbnails = {
-    "user-guide/tutorials/Research_proposal_intro": "user-guide/tutorials/_images/MFPtimeline.jpg",
-    "user-guide/tutorials/Research_Proposal_only": "user-guide/tutorials/_images/MFP.jpg",
-    "user-guide/tutorials/Virtualship_research_proposal": "user-guide/tutorials/_images/AnnaWeber.jpeg",
-    "user-guide/tutorials/sciencecommunication_assignment": "user-guide/tutorials/_images/marine_ss.jpg",
+    "user-guide/tutorials/Research_proposal_intro": "user-guide/_images/MFPtimeline.jpg",
+    "user-guide/tutorials/Research_Proposal_only": "user-guide/_images/MFP.jpg",
+    "user-guide/tutorials/Virtualship_research_proposal": "user-guide/_images/AnnaWeber.jpeg",
+    "user-guide/tutorials/sciencecommunication_assignment": "user-guide/_images/marine_ss.jpg",
 }
