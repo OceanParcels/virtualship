@@ -85,9 +85,9 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     os.makedirs(expedition_dir.joinpath("results"))
 
     # calculate expedition cost in US$
-    assert (
-        schedule.waypoints[0].time is not None
-    ), "First waypoint has no time. This should not be possible as it should have been verified before."
+    assert schedule.waypoints[0].time is not None, (
+        "First waypoint has no time. This should not be possible as it should have been verified before."
+    )
     time_past = schedule_results.time - schedule.waypoints[0].time
     cost = expedition_cost(schedule_results, time_past)
     with open(expedition_dir.joinpath("results", "cost.txt"), "w") as file:
