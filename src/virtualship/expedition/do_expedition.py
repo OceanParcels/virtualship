@@ -148,6 +148,7 @@ def _load_input_data(
         load_argo_float=ship_config.argo_float_config is not None,
         load_ctd=ship_config.ctd_config is not None,
         load_drifter=ship_config.drifter_config is not None,
+        load_xbt=ship_config.xbt_config is not None,
         load_ship_underwater_st=ship_config.ship_underwater_st_config is not None,
     )
 

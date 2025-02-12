@@ -8,6 +8,7 @@ from ..instruments.argo_float import simulate_argo_floats
 from ..instruments.ctd import simulate_ctd
 from ..instruments.drifter import simulate_drifters
 from ..instruments.ship_underwater_st import simulate_ship_underwater_st
+from ..instruments.xbt import simulate_xbt
 from .input_data import InputData
 from .ship_config import ShipConfig
 from .simulate_schedule import MeasurementsToSimulate
@@ -100,5 +101,19 @@ def simulate_measurements(
             argo_floats=measurements.argo_floats,
             fieldset=input_data.argo_float_fieldset,
             outputdt=timedelta(minutes=5),
+            endtime=None,
+        )
+
+    if len(measurements.xbts) > 0:
+        print("Simulating XBTs")
+        if ship_config.xbt_config is None:
+            raise RuntimeError("No configuration for XBTs provided.")
+        if input_data.xbt_fieldset is None:
+            raise RuntimeError("No fieldset for XBTs provided.")
+        simulate_xbt(
+            out_path=expedition_dir.joinpath("results", "xbts.zarr"),
+            fieldset=input_data.xbt_fieldset,
+            xbts=measurements.xbts,
+            outputdt=timedelta(seconds=1),
             endtime=None,
         )

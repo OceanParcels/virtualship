@@ -88,6 +88,14 @@ class DrifterConfig(pydantic.BaseModel):
     def _serialize_lifetime(self, value: timedelta, _info):
         return value.total_seconds() / 60.0
 
+class XBTConfig(pydantic.BaseModel):
+    """Configuration for xbt instrument."""
+
+    min_depth_meter: float = pydantic.Field(le=0.0)
+    max_depth_meter: float = pydantic.Field(le=0.0)
+    fall_speed_meter_per_second: float = pydantic.Field(gt=0.0)
+    deceleration_coefficient: float = pydantic.Field(gt=0.0)
+
 
 class ShipConfig(pydantic.BaseModel):
     """Configuration of the virtual ship."""
@@ -130,6 +138,13 @@ class ShipConfig(pydantic.BaseModel):
     Drifter configuration.
 
     If None, no drifters can be deployed.
+    """
+
+    xbt_config: XBTConfig | None = None
+    """
+    XBT configuration.
+
+    If None, no XBTs can be cast.
     """
 
     model_config = pydantic.ConfigDict(extra="forbid")
