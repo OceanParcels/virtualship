@@ -88,6 +88,7 @@ class DrifterConfig(pydantic.BaseModel):
     def _serialize_lifetime(self, value: timedelta, _info):
         return value.total_seconds() / 60.0
 
+
 class XBTConfig(pydantic.BaseModel):
     """Configuration for xbt instrument."""
 
