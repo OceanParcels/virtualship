@@ -41,7 +41,7 @@ def _generic_load_yaml(data: str, model: BaseModel) -> BaseModel:
     return model.model_validate(yaml.safe_load(data))
 
 
-def mfp_to_yaml(excel_file_path: str):
+def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
     """
     Generates a YAML file with spatial and temporal information based on instrument data from MFP excel file.
 
@@ -56,6 +56,13 @@ def mfp_to_yaml(excel_file_path: str):
     4. returns the yaml information.
 
     """
+
+    # Importing Schedule and related models from expedition module
+    from virtualship.expedition.schedule import Schedule
+    from virtualship.expedition.space_time_region import SpaceTimeRegion, SpatialRange, TimeRange
+    from virtualship.expedition.waypoint import Waypoint, Location
+    from virtualship.expedition.instrument_type import InstrumentType
+    
     # Read data from Excel
     coordinates_data = pd.read_excel(
         excel_file_path,
@@ -63,21 +70,24 @@ def mfp_to_yaml(excel_file_path: str):
     )
     coordinates_data = coordinates_data.dropna()
 
-    # Define maximum depth and buffer for each instrument
+    # Define maximum depth (in meters) and buffer (in degrees) for each instrument
     instrument_properties = {
-        "CTD": {"depth": 5000, "buffer": 1},
-        "DRIFTER": {"depth": 1, "buffer": 5},
-        "ARGO_FLOAT": {"depth": 2000, "buffer": 5},
+        "XBT": {"maximum_depth": 2000, "buffer": 1},
+        "CTD": {"maximum_depth": 5000, "buffer": 1},
+        "DRIFTER": {"maximum_depth": 1, "buffer": 5},
+        "ARGO_FLOAT": {"maximum_depth": 2000, "buffer": 5},
     }
 
-    # Extract unique instruments from dataset
-    unique_instruments = np.unique(
-        np.hstack(coordinates_data["Instrument"].apply(lambda a: a.split(", ")).values)
-    )
+    # Extract unique instruments from dataset using a set
+    unique_instruments = set()
+    
+    for instrument_list in coordinates_data["Instrument"]:
+        instruments = instrument_list.split(", ")  # Split by ", " to get individual instruments
+        unique_instruments |= set(instruments)  # Union update with set of instruments
 
     # Determine the maximum depth based on the unique instruments
     maximum_depth = max(
-        instrument_properties.get(inst, {"depth": 0})["depth"]
+        instrument_properties.get(inst, {"maximum_depth": 0})["maximum_depth"]
         for inst in unique_instruments
     )
     minimum_depth = 0
@@ -94,37 +104,42 @@ def mfp_to_yaml(excel_file_path: str):
     min_latitude = coordinates_data["Latitude"].min() - buffer
     max_latitude = coordinates_data["Latitude"].max() + buffer
 
-    # Template for the YAML output
-    yaml_output = {
-        "space_time_region": {
-            "spatial_range": {
-                "minimum_longitude": min_longitude,
-                "maximum_longitude": max_longitude,
-                "minimum_latitude": min_latitude,
-                "maximum_latitude": max_latitude,
-                "minimum_depth": minimum_depth,
-                "maximum_depth": maximum_depth,
-            },
-            "time_range": {
-                "start_time": "",  # Blank start time
-                "end_time": "",  # Blank end time
-            },
-        },
-        "waypoints": [],
-    }
 
-    # Populate waypoints
+    spatial_range = SpatialRange(
+        minimum_longitude=coordinates_data["Longitude"].min() - buffer,
+        maximum_longitude=coordinates_data["Longitude"].max() + buffer,
+        minimum_latitude=coordinates_data["Latitude"].min() - buffer,
+        maximum_latitude=coordinates_data["Latitude"].max() + buffer,
+        minimum_depth=0,
+        maximum_depth=maximum_depth,
+    )
+
+
+    # Create space-time region object
+    space_time_region = SpaceTimeRegion(
+        spatial_range=spatial_range,
+        time_range=TimeRange(),
+    )
+
+    # Generate waypoints
+    waypoints = []
     for _, row in coordinates_data.iterrows():
-        instruments = row["Instrument"].split(", ")
-        for instrument in instruments:
-            waypoint = {
-                "instrument": instrument,
-                "location": {
-                    "latitude": row["Latitude"],
-                    "longitude": row["Longitude"],
-                },
-                "time": "",  # Blank time
-            }
-            yaml_output["waypoints"].append(waypoint)
+        instruments = [InstrumentType(instrument) for instrument in row["Instrument"].split(", ")]
+        waypoints.append(
+            Waypoint(
+                instrument=instruments,
+                location=Location(latitude=row["Latitude"], longitude=row["Longitude"]),
+            )
+        )
 
-    return yaml.dump(yaml_output, default_flow_style=False)
+    # Create Schedule object
+    schedule = Schedule(
+        waypoints=waypoints,
+        space_time_region=space_time_region,
+    )
+
+    # Save to YAML file
+    schedule.to_yaml(yaml_output_path)
+
+
+    
