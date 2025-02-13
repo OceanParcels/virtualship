@@ -42,20 +42,19 @@ def _generic_load_yaml(data: str, model: BaseModel) -> BaseModel:
     return model.model_validate(yaml.safe_load(data))
 
 
-def mfp_to_yaml(excel_file_path: str, save_directory: str):
+def mfp_to_yaml(excel_file_path: str):
     """
-    Generates a YAML file (`schedule.yaml`) with spatial and temporal information based on instrument data from MFP excel file.
+    Generates a YAML file with spatial and temporal information based on instrument data from MFP excel file.
 
     Parameters
     ----------
     - excel_file_path (str): Path to the Excel file containing coordinate and instrument data.
-    - save_directory (str): Directory where `schedule.yaml` will be saved.
 
     The function:
     1. Reads instrument and location data from the Excel file.
     2. Determines the maximum depth and buffer based on the instruments present.
     3. Ensures longitude and latitude values remain valid after applying buffer adjustments.
-    4. Saves `schedule.yaml` in the specified directory.
+    4. returns the yaml information.
 
     """
     # Read data from Excel
@@ -129,10 +128,6 @@ def mfp_to_yaml(excel_file_path: str, save_directory: str):
             }
             yaml_output["waypoints"].append(waypoint)
 
-    # Ensure save directory exists
-    os.makedirs(save_directory, exist_ok=True)
+    return yaml.dump(yaml_output, default_flow_style=False)
+    
 
-    # Save the YAML file
-    yaml_file_path = os.path.join(save_directory, SCHEDULE)
-    with open(yaml_file_path, "w") as file:
-        yaml.dump(yaml_output, file, default_flow_style=False)
