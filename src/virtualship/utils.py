@@ -1,4 +1,3 @@
-import os
 from functools import lru_cache
 from importlib.resources import files
 from typing import TextIO
@@ -129,5 +128,3 @@ def mfp_to_yaml(excel_file_path: str):
             yaml_output["waypoints"].append(waypoint)
 
     return yaml.dump(yaml_output, default_flow_style=False)
-    
-
