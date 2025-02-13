@@ -2,7 +2,6 @@ from functools import lru_cache
 from importlib.resources import files
 from typing import TextIO
 
-import numpy as np
 import pandas as pd
 import yaml
 from pydantic import BaseModel
@@ -56,13 +55,16 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
     4. returns the yaml information.
 
     """
-
     # Importing Schedule and related models from expedition module
-    from virtualship.expedition.schedule import Schedule
-    from virtualship.expedition.space_time_region import SpaceTimeRegion, SpatialRange, TimeRange
-    from virtualship.expedition.waypoint import Waypoint, Location
     from virtualship.expedition.instrument_type import InstrumentType
-    
+    from virtualship.expedition.schedule import Schedule
+    from virtualship.expedition.space_time_region import (
+        SpaceTimeRegion,
+        SpatialRange,
+        TimeRange,
+    )
+    from virtualship.expedition.waypoint import Location, Waypoint
+
     # Read data from Excel
     coordinates_data = pd.read_excel(
         excel_file_path,
@@ -80,9 +82,11 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
 
     # Extract unique instruments from dataset using a set
     unique_instruments = set()
-    
+
     for instrument_list in coordinates_data["Instrument"]:
-        instruments = instrument_list.split(", ")  # Split by ", " to get individual instruments
+        instruments = instrument_list.split(
+            ", "
+        )  # Split by ", " to get individual instruments
         unique_instruments |= set(instruments)  # Union update with set of instruments
 
     # Determine the maximum depth based on the unique instruments
@@ -104,7 +108,6 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
     min_latitude = coordinates_data["Latitude"].min() - buffer
     max_latitude = coordinates_data["Latitude"].max() + buffer
 
-
     spatial_range = SpatialRange(
         minimum_longitude=coordinates_data["Longitude"].min() - buffer,
         maximum_longitude=coordinates_data["Longitude"].max() + buffer,
@@ -113,7 +116,6 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
         minimum_depth=0,
         maximum_depth=maximum_depth,
     )
-
 
     # Create space-time region object
     space_time_region = SpaceTimeRegion(
@@ -124,7 +126,9 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
     # Generate waypoints
     waypoints = []
     for _, row in coordinates_data.iterrows():
-        instruments = [InstrumentType(instrument) for instrument in row["Instrument"].split(", ")]
+        instruments = [
+            InstrumentType(instrument) for instrument in row["Instrument"].split(", ")
+        ]
         waypoints.append(
             Waypoint(
                 instrument=instruments,
@@ -140,6 +144,3 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
 
     # Save to YAML file
     schedule.to_yaml(yaml_output_path)
-
-
-    

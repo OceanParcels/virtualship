@@ -10,4 +10,3 @@ class InstrumentType(Enum):
     DRIFTER = "DRIFTER"
     ARGO_FLOAT = "ARGO_FLOAT"
     XBT = "XBT"
-

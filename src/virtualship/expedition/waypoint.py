@@ -1,8 +1,8 @@
 """Waypoint class."""
 
-from pydantic import BaseModel, field_serializer
-from dataclasses import dataclass
 from datetime import datetime
+
+from pydantic import BaseModel, field_serializer
 
 from ..location import Location
 from .instrument_type import InstrumentType
