@@ -38,19 +38,18 @@ class SpatialRange(BaseModel):
             raise ValueError("minimum_depth must be less than maximum_depth")
         return self
 
-
 class TimeRange(BaseModel):
     """Defines the temporal boundaries for a space-time region."""
 
-    start_time: datetime
-    end_time: datetime
+    start_time: datetime | None = None
+    end_time: datetime | None = None
 
     @model_validator(mode="after")
     def _check_time_range(self) -> Self:
-        if not self.start_time < self.end_time:
-            raise ValueError("start_time must be before end_time")
+        if self.start_time and self.end_time:
+            if not self.start_time < self.end_time:
+                raise ValueError("start_time must be before end_time")
         return self
-
 
 class SpaceTimeRegion(BaseModel):
     """An space-time region with spatial and temporal boundaries."""
