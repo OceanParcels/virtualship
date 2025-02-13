@@ -57,11 +57,16 @@ def init(path, mfp_file):
     if mfp_file:
         # Generate schedule.yaml from the MPF file
         click.echo(f"Generating schedule from {mfp_file}...")
-        schedule_body = mfp_to_yaml(mfp_file)
+        schedule_body = mfp_to_yaml(mfp_file, schedule)
+        click.echo(
+            "\n⚠️  The generated schedule does not contain time values. "
+            "\nPlease edit 'schedule.yaml' and manually add the necessary time values."
+            "\n🕒  Expected time format: 'YYYY-MM-DD HH:MM:SS' (e.g., '2023-10-20 01:00:00').\n"
+        )
     else:
         # Create a default example schedule
-        schedule_body = utils.get_example_schedule()
-    schedule.write_text(schedule_body)
+        # schedule_body = utils.get_example_schedule()
+        schedule.write_text(utils.get_example_schedule())
 
     click.echo(f"Created '{config.name}' and '{schedule.name}' at {path}.")
 
