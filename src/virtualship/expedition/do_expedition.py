@@ -32,6 +32,15 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     ship_config = _get_ship_config(expedition_dir)
     schedule = _get_schedule(expedition_dir)
 
+    # remove instrument configurations that are not in schedule
+    instruments_in_schedule = set(
+        [waypoint.instrument for waypoint in schedule.waypoints]
+    )
+    for instrument in ['argo_float', 'drifter']:
+        if hasattr(ship_config, instrument + "_config") and instrument not in instruments_in_schedule:
+            print(f"{instrument} configuration provided but not in schedule.")
+            setattr(ship_config, instrument + "_config", None)
+
     # load last checkpoint
     checkpoint = _load_checkpoint(expedition_dir)
     if checkpoint is None:
