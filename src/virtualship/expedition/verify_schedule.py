@@ -99,7 +99,7 @@ def verify_schedule(
         distance = geodinv[2]
 
         time_to_reach = timedelta(
-            seconds=distance / ship_config.ship_speed_knots * 3600/1852
+            seconds=distance / ship_config.ship_speed_knots * 3600 / 1852
         )
         arrival_time = time + time_to_reach
 
