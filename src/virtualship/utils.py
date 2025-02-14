@@ -97,11 +97,11 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):  # noqa: D417
     coordinates_data = coordinates_data.dropna()
 
     # maximum depth (in meters), buffer (in degrees) for each instrument
-    instrument_properties = {
-        "XBT": {"maximum_depth": 2000, "buffer": 1},
-        "CTD": {"maximum_depth": 5000, "buffer": 1},
-        "DRIFTER": {"maximum_depth": 1, "buffer": 5},
-        "ARGO_FLOAT": {"maximum_depth": 2000, "buffer": 5},
+    instrument_max_depths = {
+        "XBT": 2000,
+        "CTD": 5000,
+        "DRIFTER": 1,
+        "ARGO_FLOAT": 2000,
     }
 
     unique_instruments = set()
@@ -112,21 +112,14 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):  # noqa: D417
 
     # Determine the maximum depth based on the unique instruments
     maximum_depth = max(
-        instrument_properties.get(inst, {"maximum_depth": 0})["maximum_depth"]
-        for inst in unique_instruments
-    )
-
-    # Determine the buffer based on the maximum buffer of the instruments present
-    buffer = max(
-        instrument_properties.get(inst, {"buffer": 0})["buffer"]
-        for inst in unique_instruments
+        instrument_max_depths.get(instrument, 0) for instrument in unique_instruments
     )
 
     spatial_range = SpatialRange(
-        minimum_longitude=coordinates_data["Longitude"].min() - buffer,
-        maximum_longitude=coordinates_data["Longitude"].max() + buffer,
-        minimum_latitude=coordinates_data["Latitude"].min() - buffer,
-        maximum_latitude=coordinates_data["Latitude"].max() + buffer,
+        minimum_longitude=coordinates_data["Longitude"].min(),
+        maximum_longitude=coordinates_data["Longitude"].max(),
+        minimum_latitude=coordinates_data["Latitude"].min(),
+        maximum_latitude=coordinates_data["Latitude"].max(),
         minimum_depth=0,
         maximum_depth=maximum_depth,
     )
