@@ -107,7 +107,9 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     time_range = schedule.space_time_region.time_range
     start_datetime = time_range.start_time
     end_datetime = time_range.end_time
-    instruments_in_schedule = [waypoint.instrument.name for waypoint in schedule.waypoints]
+    instruments_in_schedule = [
+        waypoint.instrument.name for waypoint in schedule.waypoints
+    ]
 
     # Create download folder and set download metadata
     download_folder = data_folder / hash_to_filename(space_time_region_hash)
