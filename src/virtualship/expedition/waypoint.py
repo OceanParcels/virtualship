@@ -21,8 +21,3 @@ class Waypoint(BaseModel):
         if isinstance(instrument, list):
             return [inst.value for inst in instrument]
         return instrument.value if instrument else None
-
-    @field_serializer("time")
-    def serialize_time(self, time):
-        """Ensure datetime is formatted properly in YAML."""
-        return time.strftime("%Y-%m-%d %H:%M:%S") if time else None
