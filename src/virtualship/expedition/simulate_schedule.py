@@ -260,7 +260,7 @@ class _ScheduleSimulator:
                     )
                 )
             elif instrument is InstrumentType.XBT:
-                self._measurements_to_simulate.drifters.append(
+                self._measurements_to_simulate.xbts.append(
                     XBT(
                         spacetime=Spacetime(self._location, self._time),
                         min_depth=self._ship_config.xbt_config.min_depth_meter,

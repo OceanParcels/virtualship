@@ -115,5 +115,4 @@ def simulate_measurements(
             fieldset=input_data.xbt_fieldset,
             xbts=measurements.xbts,
             outputdt=timedelta(seconds=1),
-            endtime=None,
         )
