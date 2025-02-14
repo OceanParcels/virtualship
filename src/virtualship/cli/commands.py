@@ -16,7 +16,7 @@ from virtualship.cli._fetch import (
     hash_to_filename,
 )
 from virtualship.expedition.do_expedition import _get_schedule, do_expedition
-from virtualship.utils import SCHEDULE, SHIP_CONFIG
+from virtualship.utils import SCHEDULE, SHIP_CONFIG, mfp_to_yaml
 
 
 @click.command()
@@ -24,8 +24,18 @@ from virtualship.utils import SCHEDULE, SHIP_CONFIG
     "path",
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
-def init(path):
-    """Initialize a directory for a new expedition, with an example schedule and ship config files."""
+@click.option(
+    "--from-mfp",
+    type=str,
+    default=None,
+    help='Partially initialise a project from an exported xlsx or csv file from NIOZ\' Marine Facilities Planning tool (specifically the "Export Coordinates > DD" option). User edits are required after initialisation.',
+)
+def init(path, from_mfp):
+    """
+    Initialize a directory for a new expedition, with an example schedule and ship config files.
+
+    If --mfp-file is provided, it will generate the schedule from the MPF file instead.
+    """
     path = Path(path)
     path.mkdir(exist_ok=True)
 
@@ -43,7 +53,20 @@ def init(path):
         )
 
     config.write_text(utils.get_example_config())
-    schedule.write_text(utils.get_example_schedule())
+    if from_mfp:
+        mfp_file = Path(from_mfp)
+        # Generate schedule.yaml from the MPF file
+        click.echo(f"Generating schedule from {mfp_file}...")
+        mfp_to_yaml(mfp_file, schedule)
+        click.echo(
+            "\n⚠️  The generated schedule does not contain time values. "
+            "\nPlease edit 'schedule.yaml' and manually add the necessary time values."
+            "\n🕒  Expected time format: 'YYYY-MM-DD HH:MM:SS' (e.g., '2023-10-20 01:00:00').\n"
+        )
+    else:
+        # Create a default example schedule
+        # schedule_body = utils.get_example_schedule()
+        schedule.write_text(utils.get_example_schedule())
 
     click.echo(f"Created '{config.name}' and '{schedule.name}' at {path}.")
 

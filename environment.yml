@@ -12,6 +12,7 @@ dependencies:
   - pip
   - pyyaml
   - copernicusmarine >= 2
+  - openpyxl
 
   # linting
   - pre-commit
