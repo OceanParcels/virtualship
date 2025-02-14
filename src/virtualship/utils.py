@@ -80,7 +80,7 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
             f"Error: Found columns {list(actual_columns)}, but expected columns {list(expected_columns)}. "
             "Are you sure that you're using the correct export from MFP?"
         )
-        
+
     extra_columns = actual_columns - expected_columns
     if extra_columns:
         print(
