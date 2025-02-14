@@ -34,8 +34,20 @@ miniconda:
     - conda-forge
     - defaults
   dependencies:
-    - python=3.10
-    - virtualship
+    - python=3.12
+    - git
+
+    # virtualship deps
+    - click
+    - parcels >3.1.0
+    - pyproj >=3,<4
+    - sortedcontainers ==2.4.0
+    - opensimplex ==0.4.5
+    - numpy >=1,<2
+    - pydantic >=2,<3
+    - copernicusmarine >=2
+
+    # extra
     - xarray
     - numpy
     - scipy
@@ -51,8 +63,6 @@ miniconda:
     # After conda-packages pip-packages can still be installed
     # so install pip ...
     - pip
-  # ... and tell conda to use it:
-  # - pip:
-  #   - requests
-  #   - ...
+    - pip:
+        - git+https://github.com/OceanParcels/virtualship@main
   prefix: /etc/miniconda/envs
