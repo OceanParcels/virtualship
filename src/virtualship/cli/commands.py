@@ -107,6 +107,9 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     time_range = schedule.space_time_region.time_range
     start_datetime = time_range.start_time
     end_datetime = time_range.end_time
+    instruments_in_schedule = [
+        waypoint.instrument.name for waypoint in schedule.waypoints
+    ]
 
     # Create download folder and set download metadata
     download_folder = data_folder / hash_to_filename(space_time_region_hash)
@@ -116,57 +119,151 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     )
     shutil.copyfile(path / SCHEDULE, download_folder / SCHEDULE)
 
-    # Define all datasets to download, including bathymetry
-    download_dict = {
-        "Bathymetry": {
-            "dataset_id": "cmems_mod_glo_phy_my_0.083deg_static",
-            "variables": ["deptho"],
-            "output_filename": "bathymetry.nc",
-        },
-        "UVdata": {
-            "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
-            "variables": ["uo", "vo"],
-            "output_filename": "default_uv.nc",
-        },
-        "Sdata": {
-            "dataset_id": "cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i",
-            "variables": ["so"],
-            "output_filename": "default_s.nc",
-        },
-        "Tdata": {
-            "dataset_id": "cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i",
-            "variables": ["thetao"],
-            "output_filename": "default_t.nc",
-        },
-    }
+    if set(["XBT", "CTD", "SHIP_UNDERWATER_ST"]) & set(instruments_in_schedule):
+        print("Ship data will be downloaded")
 
-    # Iterate over all datasets and download each based on space_time_region
-    try:
-        for dataset in download_dict.values():
-            copernicusmarine.subset(
-                dataset_id=dataset["dataset_id"],
-                variables=dataset["variables"],
-                minimum_longitude=spatial_range.minimum_longitude,
-                maximum_longitude=spatial_range.maximum_longitude,
-                minimum_latitude=spatial_range.minimum_latitude,
-                maximum_latitude=spatial_range.maximum_latitude,
-                start_datetime=start_datetime,
-                end_datetime=end_datetime,
-                minimum_depth=abs(spatial_range.minimum_depth),
-                maximum_depth=abs(spatial_range.maximum_depth),
-                output_filename=dataset["output_filename"],
-                output_directory=download_folder,
-                username=username,
-                password=password,
-                force_download=True,
-                overwrite=True,
-            )
-    except InvalidUsernameOrPassword as e:
-        shutil.rmtree(download_folder)
-        raise e
+        # Define all ship datasets to download, including bathymetry
+        download_dict = {
+            "Bathymetry": {
+                "dataset_id": "cmems_mod_glo_phy_my_0.083deg_static",
+                "variables": ["deptho"],
+                "output_filename": "bathymetry.nc",
+            },
+            "UVdata": {
+                "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
+                "variables": ["uo", "vo"],
+                "output_filename": "default_uv.nc",
+            },
+            "Sdata": {
+                "dataset_id": "cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i",
+                "variables": ["so"],
+                "output_filename": "default_s.nc",
+            },
+            "Tdata": {
+                "dataset_id": "cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i",
+                "variables": ["thetao"],
+                "output_filename": "default_t.nc",
+            },
+        }
 
-    complete_download(download_folder)
-    click.echo("Data download based on space-time region completed.")
+        # Iterate over all datasets and download each based on space_time_region
+        try:
+            for dataset in download_dict.values():
+                copernicusmarine.subset(
+                    dataset_id=dataset["dataset_id"],
+                    variables=dataset["variables"],
+                    minimum_longitude=spatial_range.minimum_longitude,
+                    maximum_longitude=spatial_range.maximum_longitude,
+                    minimum_latitude=spatial_range.minimum_latitude,
+                    maximum_latitude=spatial_range.maximum_latitude,
+                    start_datetime=start_datetime,
+                    end_datetime=end_datetime,
+                    minimum_depth=abs(spatial_range.minimum_depth),
+                    maximum_depth=abs(spatial_range.maximum_depth),
+                    output_filename=dataset["output_filename"],
+                    output_directory=download_folder,
+                    username=username,
+                    password=password,
+                    overwrite=True,
+                    coordinates_selection_method="outside",
+                )
+        except InvalidUsernameOrPassword as e:
+            shutil.rmtree(download_folder)
+            raise e
+
+        complete_download(download_folder)
+        click.echo("Ship data download based on space-time region completed.")
+
+    if "DRIFTER" in instruments_in_schedule:
+        print("Drifter data will be downloaded")
+        drifter_download_dict = {
+            "UVdata": {
+                "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
+                "variables": ["uo", "vo"],
+                "output_filename": "drifter_uv.nc",
+            },
+            "Tdata": {
+                "dataset_id": "cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i",
+                "variables": ["thetao"],
+                "output_filename": "drifter_t.nc",
+            },
+        }
+
+        # Iterate over all datasets and download each based on space_time_region
+        try:
+            for dataset in drifter_download_dict.values():
+                copernicusmarine.subset(
+                    dataset_id=dataset["dataset_id"],
+                    variables=dataset["variables"],
+                    minimum_longitude=spatial_range.minimum_longitude + 3.0,
+                    maximum_longitude=spatial_range.maximum_longitude + 3.0,
+                    minimum_latitude=spatial_range.minimum_latitude + 3.0,
+                    maximum_latitude=spatial_range.maximum_latitude + 3.0,
+                    start_datetime=start_datetime,
+                    end_datetime=end_datetime,
+                    minimum_depth=abs(1),
+                    maximum_depth=abs(1),
+                    output_filename=dataset["output_filename"],
+                    output_directory=download_folder,
+                    username=username,
+                    password=password,
+                    overwrite=True,
+                    coordinates_selection_method="outside",
+                )
+        except InvalidUsernameOrPassword as e:
+            shutil.rmtree(download_folder)
+            raise e
+
+        complete_download(download_folder)
+        click.echo("Drifter data download based on space-time region completed.")
+
+    if "ARGO_FLOAT" in instruments_in_schedule:
+        print("Argo float data will be downloaded")
+        argo_download_dict = {
+            "UVdata": {
+                "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
+                "variables": ["uo", "vo"],
+                "output_filename": "argo_float_uv.nc",
+            },
+            "Sdata": {
+                "dataset_id": "cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i",
+                "variables": ["so"],
+                "output_filename": "argo_float_s.nc",
+            },
+            "Tdata": {
+                "dataset_id": "cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i",
+                "variables": ["thetao"],
+                "output_filename": "argo_float_t.nc",
+            },
+        }
+
+        # Iterate over all datasets and download each based on space_time_region
+        try:
+            for dataset in argo_download_dict.values():
+                copernicusmarine.subset(
+                    dataset_id=dataset["dataset_id"],
+                    variables=dataset["variables"],
+                    minimum_longitude=spatial_range.minimum_longitude + 3.0,
+                    maximum_longitude=spatial_range.maximum_longitude + 3.0,
+                    minimum_latitude=spatial_range.minimum_latitude + 3.0,
+                    maximum_latitude=spatial_range.maximum_latitude + 3.0,
+                    start_datetime=start_datetime,
+                    end_datetime=end_datetime,
+                    minimum_depth=abs(0),
+                    maximum_depth=abs(spatial_range.maximum_depth),
+                    output_filename=dataset["output_filename"],
+                    output_directory=download_folder,
+                    username=username,
+                    password=password,
+                    overwrite=True,
+                    coordinates_selection_method="outside",
+                )
+        except InvalidUsernameOrPassword as e:
+            shutil.rmtree(download_folder)
+            raise e
+
+        complete_download(download_folder)
+        click.echo("Argo_float data download based on space-time region completed.")
 
 
 @click.command()
