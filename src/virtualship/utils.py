@@ -65,11 +65,35 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
     )
     from virtualship.expedition.waypoint import Location, Waypoint
 
+    # Expected column headers
+    expected_columns = {"Station Type", "Name", "Latitude", "Longitude", "Instrument"}
+
     # Read data from Excel
-    coordinates_data = pd.read_excel(
-        excel_file_path,
-        usecols=["Station Type", "Name", "Latitude", "Longitude", "Instrument"],
-    )
+    coordinates_data = pd.read_excel(excel_file_path)
+
+    # Check if the headers match the expected ones
+    actual_columns = set(coordinates_data.columns)
+
+    missing_columns = expected_columns - actual_columns
+    if missing_columns:
+        raise ValueError(
+            f"Error: Found columns {list(actual_columns)}, but expected columns {list(expected_columns)}. "
+            "Are you sure that you're using the correct export from MFP?"
+        )
+        
+    extra_columns = actual_columns - expected_columns
+    if extra_columns:
+        print(
+            f"Warning: Found additional unexpected columns {list(extra_columns)}. "
+            "Manually added columns have no effect. "
+            "If the MFP export format changed, please submit an issue: "
+            "https://github.com/OceanParcels/virtualship/issues."
+        )
+
+    # Drop unexpected columns (optional, only if you want to ensure strict conformity)
+    coordinates_data = coordinates_data[list(expected_columns)]
+
+    # Continue with the rest of the function after validation...
     coordinates_data = coordinates_data.dropna()
 
     # Define maximum depth (in meters) and buffer (in degrees) for each instrument
