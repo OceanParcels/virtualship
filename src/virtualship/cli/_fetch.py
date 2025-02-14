@@ -89,13 +89,10 @@ def get_existing_download(
     data_folder: Path, space_time_region_hash: str
 ) -> Path | None:
     """Check if a download has already been completed. If so, return the path for existing download."""
-    for download_path in data_folder.iterdir():
+    for download_path in data_folder.rglob("*"):
         try:
             hash = filename_to_hash(download_path.name)
         except ValueError:
-            click.echo(
-                f"Skipping {download_path.name} as it is not a valid download folder name."
-            )
             continue
 
         if hash == space_time_region_hash:
