@@ -175,7 +175,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
         click.echo("Ship data download based on space-time region completed.")
 
     if "DRIFTER" in instruments_in_schedule:
-        print("Additional drifter data will be downloaded")
+        print("Drifter data will be downloaded")
         drifter_download_dict = {
             "UVdata": {
                 "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
@@ -201,14 +201,14 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
                     maximum_latitude=spatial_range.maximum_latitude + 3.0,
                     start_datetime=start_datetime,
                     end_datetime=end_datetime,
-                    minimum_depth=abs(0),
+                    minimum_depth=abs(1),
                     maximum_depth=abs(1),
                     output_filename=dataset["output_filename"],
                     output_directory=download_folder,
                     username=username,
                     password=password,
-                    force_download=True,
                     overwrite=True,
+                    coordinates_selection_method="outside",
                 )
         except InvalidUsernameOrPassword as e:
             shutil.rmtree(download_folder)
@@ -218,7 +218,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
         click.echo("Drifter data download based on space-time region completed.")
 
     if "ARGO_FLOAT" in instruments_in_schedule:
-        print("Additional argo float data will be downloaded")
+        print("Argo float data will be downloaded")
         argo_download_dict = {
             "UVdata": {
                 "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
@@ -255,8 +255,8 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
                     output_directory=download_folder,
                     username=username,
                     password=password,
-                    force_download=True,
                     overwrite=True,
+                    coordinates_selection_method="outside",
                 )
         except InvalidUsernameOrPassword as e:
             shutil.rmtree(download_folder)
