@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import click
 from pydantic import BaseModel
 
 from virtualship.utils import _dump_yaml, _generic_load_yaml

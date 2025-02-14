@@ -36,8 +36,11 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     instruments_in_schedule = set(
         [waypoint.instrument for waypoint in schedule.waypoints]
     )
-    for instrument in ['argo_float', 'drifter']:
-        if hasattr(ship_config, instrument + "_config") and instrument not in instruments_in_schedule:
+    for instrument in ["argo_float", "drifter"]:
+        if (
+            hasattr(ship_config, instrument + "_config")
+            and instrument not in instruments_in_schedule
+        ):
             print(f"{instrument} configuration provided but not in schedule.")
             setattr(ship_config, instrument + "_config", None)
 
