@@ -92,7 +92,7 @@ class DrifterConfig(pydantic.BaseModel):
 class ShipConfig(pydantic.BaseModel):
     """Configuration of the virtual ship."""
 
-    ship_speed_meter_per_second: float = pydantic.Field(gt=0.0)
+    ship_speed_knots: float = pydantic.Field(gt=0.0)
     """
     Velocity of the ship in meters per second.
     """
