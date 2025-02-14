@@ -25,12 +25,12 @@ from virtualship.utils import SCHEDULE, SHIP_CONFIG, mfp_to_yaml
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
 @click.option(
-    "--mfp-file",
+    "--from-mfp",
     type=str,
     default=None,
     help='Partially initialise a project from an exported xlsx or csv file from NIOZ\' Marine Facilities Planning tool (specifically the "Export Coordinates > DD" option). User edits are required after initialisation.',
 )
-def init(path, mfp_file):
+def init(path, from_mfp):
     """
     Initialize a directory for a new expedition, with an example schedule and ship config files.
 
@@ -53,11 +53,11 @@ def init(path, mfp_file):
         )
 
     config.write_text(utils.get_example_config())
-
-    if mfp_file:
+    if from_mfp:
+        mfp_file = Path(from_mfp)
         # Generate schedule.yaml from the MPF file
         click.echo(f"Generating schedule from {mfp_file}...")
-        schedule_body = mfp_to_yaml(mfp_file, schedule)
+        mfp_to_yaml(mfp_file, schedule)
         click.echo(
             "\n⚠️  The generated schedule does not contain time values. "
             "\nPlease edit 'schedule.yaml' and manually add the necessary time values."

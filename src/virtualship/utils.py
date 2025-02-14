@@ -40,7 +40,7 @@ def _generic_load_yaml(data: str, model: BaseModel) -> BaseModel:
     return model.model_validate(yaml.safe_load(data))
 
 
-def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
+def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):  # noqa: D417
     """
     Generates a YAML file with spatial and temporal information based on instrument data from MFP excel file.
 
@@ -96,7 +96,7 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
     # Continue with the rest of the function after validation...
     coordinates_data = coordinates_data.dropna()
 
-    # Define maximum depth (in meters) and buffer (in degrees) for each instrument
+    # maximum depth (in meters), buffer (in degrees) for each instrument
     instrument_properties = {
         "XBT": {"maximum_depth": 2000, "buffer": 1},
         "CTD": {"maximum_depth": 5000, "buffer": 1},
@@ -104,33 +104,23 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):
         "ARGO_FLOAT": {"maximum_depth": 2000, "buffer": 5},
     }
 
-    # Extract unique instruments from dataset using a set
     unique_instruments = set()
 
     for instrument_list in coordinates_data["Instrument"]:
-        instruments = instrument_list.split(
-            ", "
-        )  # Split by ", " to get individual instruments
-        unique_instruments |= set(instruments)  # Union update with set of instruments
+        instruments = instrument_list.split(", ")
+        unique_instruments |= set(instruments)
 
     # Determine the maximum depth based on the unique instruments
     maximum_depth = max(
         instrument_properties.get(inst, {"maximum_depth": 0})["maximum_depth"]
         for inst in unique_instruments
     )
-    minimum_depth = 0
 
     # Determine the buffer based on the maximum buffer of the instruments present
     buffer = max(
         instrument_properties.get(inst, {"buffer": 0})["buffer"]
         for inst in unique_instruments
     )
-
-    # Adjusted spatial range
-    min_longitude = coordinates_data["Longitude"].min() - buffer
-    max_longitude = coordinates_data["Longitude"].max() + buffer
-    min_latitude = coordinates_data["Latitude"].min() - buffer
-    max_latitude = coordinates_data["Latitude"].max() + buffer
 
     spatial_range = SpatialRange(
         minimum_longitude=coordinates_data["Longitude"].min() - buffer,
