@@ -82,10 +82,10 @@ class InputData:
     @classmethod
     def _load_default_fieldset(cls, directory: Path) -> FieldSet:
         filenames = {
-            "U": directory.joinpath("default_uv.nc"),
-            "V": directory.joinpath("default_uv.nc"),
-            "S": directory.joinpath("default_s.nc"),
-            "T": directory.joinpath("default_t.nc"),
+            "U": directory.joinpath("ship_uv.nc"),
+            "V": directory.joinpath("ship_uv.nc"),
+            "S": directory.joinpath("ship_s.nc"),
+            "T": directory.joinpath("ship_t.nc"),
         }
         variables = {"U": "uo", "V": "vo", "S": "so", "T": "thetao"}
         dimensions = {

@@ -155,17 +155,17 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
             "UVdata": {
                 "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
                 "variables": ["uo", "vo"],
-                "output_filename": "default_uv.nc",
+                "output_filename": "ship_uv.nc",
             },
             "Sdata": {
                 "dataset_id": "cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i",
                 "variables": ["so"],
-                "output_filename": "default_s.nc",
+                "output_filename": "ship_s.nc",
             },
             "Tdata": {
                 "dataset_id": "cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i",
                 "variables": ["thetao"],
-                "output_filename": "default_t.nc",
+                "output_filename": "ship_t.nc",
             },
         }
 
