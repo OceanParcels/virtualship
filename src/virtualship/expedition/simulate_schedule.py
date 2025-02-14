@@ -10,6 +10,7 @@ import pyproj
 from ..instruments.argo_float import ArgoFloat
 from ..instruments.ctd import CTD
 from ..instruments.drifter import Drifter
+from ..instruments.xbt import XBT
 from ..location import Location
 from ..spacetime import Spacetime
 from .instrument_type import InstrumentType
@@ -43,6 +44,7 @@ class MeasurementsToSimulate:
     argo_floats: list[ArgoFloat] = field(default_factory=list, init=False)
     drifters: list[Drifter] = field(default_factory=list, init=False)
     ctds: list[CTD] = field(default_factory=list, init=False)
+    xbts: list[XBT] = field(default_factory=list, init=False)
 
 
 def simulate_schedule(
@@ -255,6 +257,16 @@ class _ScheduleSimulator:
                         spacetime=Spacetime(self._location, self._time),
                         depth=self._ship_config.drifter_config.depth_meter,
                         lifetime=self._ship_config.drifter_config.lifetime,
+                    )
+                )
+            elif instrument is InstrumentType.XBT:
+                self._measurements_to_simulate.xbts.append(
+                    XBT(
+                        spacetime=Spacetime(self._location, self._time),
+                        min_depth=self._ship_config.xbt_config.min_depth_meter,
+                        max_depth=self._ship_config.xbt_config.max_depth_meter,
+                        fall_speed=self._ship_config.xbt_config.fall_speed_meter_per_second,
+                        deceleration_coefficient=self._ship_config.xbt_config.deceleration_coefficient,
                     )
                 )
             else:

@@ -16,6 +16,7 @@ class InputData:
     argo_float_fieldset: FieldSet | None
     ctd_fieldset: FieldSet | None
     drifter_fieldset: FieldSet | None
+    xbt_fieldset: FieldSet | None
     ship_underwater_st_fieldset: FieldSet | None
 
     @classmethod
@@ -26,6 +27,7 @@ class InputData:
         load_argo_float: bool,
         load_ctd: bool,
         load_drifter: bool,
+        load_xbt: bool,
         load_ship_underwater_st: bool,
     ) -> InputData:
         """
@@ -49,7 +51,7 @@ class InputData:
             argo_float_fieldset = cls._load_argo_float_fieldset(directory)
         else:
             argo_float_fieldset = None
-        if load_adcp or load_ctd or load_ship_underwater_st:
+        if load_adcp or load_ctd or load_ship_underwater_st or load_xbt:
             default_fieldset = cls._load_default_fieldset(directory)
         if load_adcp:
             adcp_fieldset = default_fieldset
@@ -63,12 +65,17 @@ class InputData:
             ship_underwater_st_fieldset = default_fieldset
         else:
             ship_underwater_st_fieldset = None
+        if load_xbt:
+            xbt_fieldset = default_fieldset
+        else:
+            xbt_fieldset = None
 
         return InputData(
             adcp_fieldset=adcp_fieldset,
             argo_float_fieldset=argo_float_fieldset,
             ctd_fieldset=ctd_fieldset,
             drifter_fieldset=drifter_fieldset,
+            xbt_fieldset=xbt_fieldset,
             ship_underwater_st_fieldset=ship_underwater_st_fieldset,
         )
 

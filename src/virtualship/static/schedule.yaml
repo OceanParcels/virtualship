@@ -25,3 +25,8 @@ waypoints:
       latitude: 0.02
       longitude: 0.02
     time: 2023-01-01 02:00:00
+  - instrument: XBT
+    location:
+      latitude: 0.03
+      longitude: 0.03
+    time: 2023-01-01 03:00:00
