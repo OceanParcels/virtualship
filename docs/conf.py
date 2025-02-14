@@ -70,3 +70,10 @@ nitpick_ignore = [
 ]
 
 always_document_param_types = True
+
+nbsphinx_thumbnails = {
+    "user-guide/assignments/Research_proposal_intro": "user-guide/_images/MFPtimeline.jpg",
+    "user-guide/assignments/Research_Proposal_only": "user-guide/_images/MFP.jpg",
+    "user-guide/assignments/Virtualship_research_proposal": "user-guide/_images/AnnaWeber.jpeg",
+    "user-guide/assignments/sciencecommunication_assignment": "user-guide/_images/marine_ss.jpg",
+}

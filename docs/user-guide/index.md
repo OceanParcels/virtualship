@@ -5,4 +5,5 @@
 
 quickstart
 tutorials/index
+assignments/index
 ```

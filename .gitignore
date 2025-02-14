@@ -6,6 +6,7 @@ __pycache__/
 # Figures
 *.jpg
 *.gif
+!docs/**/*.gif
 
 # Data files created
 /results
