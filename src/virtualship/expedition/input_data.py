@@ -52,21 +52,21 @@ class InputData:
         else:
             argo_float_fieldset = None
         if load_adcp or load_ctd or load_ship_underwater_st or load_xbt:
-            default_fieldset = cls._load_default_fieldset(directory)
+            ship_fieldset = cls._load_ship_fieldset(directory)
         if load_adcp:
-            adcp_fieldset = default_fieldset
+            adcp_fieldset = ship_fieldset
         else:
             adcp_fieldset = None
         if load_ctd:
-            ctd_fieldset = default_fieldset
+            ctd_fieldset = ship_fieldset
         else:
             ctd_fieldset = None
         if load_ship_underwater_st:
-            ship_underwater_st_fieldset = default_fieldset
+            ship_underwater_st_fieldset = ship_fieldset
         else:
             ship_underwater_st_fieldset = None
         if load_xbt:
-            xbt_fieldset = default_fieldset
+            xbt_fieldset = ship_fieldset
         else:
             xbt_fieldset = None
 
@@ -80,7 +80,7 @@ class InputData:
         )
 
     @classmethod
-    def _load_default_fieldset(cls, directory: Path) -> FieldSet:
+    def _load_ship_fieldset(cls, directory: Path) -> FieldSet:
         filenames = {
             "U": directory.joinpath("ship_uv.nc"),
             "V": directory.joinpath("ship_uv.nc"),
