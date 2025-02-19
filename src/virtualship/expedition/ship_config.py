@@ -41,7 +41,7 @@ class ADCPConfig(pydantic.BaseModel):
 class CTDConfig(pydantic.BaseModel):
     """Configuration for CTD instrument."""
 
-    stationkeeping_time: timedelta = pydantic.Field(
+    stationkeeping_time_minutes: timedelta = pydantic.Field(
         serialization_alias="stationkeeping_time_minutes",
         validation_alias="stationkeeping_time_minutes",
         gt=timedelta(),
@@ -51,8 +51,8 @@ class CTDConfig(pydantic.BaseModel):
 
     model_config = pydantic.ConfigDict(populate_by_name=True)
 
-    @pydantic.field_serializer("stationkeeping_time")
-    def _serialize_stationkeeping_time(self, value: timedelta, _info):
+    @pydantic.field_serializer("stationkeeping_time_minutes")
+    def _serialize_stationkeeping_time_minutes(self, value: timedelta, _info):
         return value.total_seconds() / 60.0
 
 
@@ -103,7 +103,7 @@ class ShipConfig(pydantic.BaseModel):
 
     ship_speed_knots: float = pydantic.Field(gt=0.0)
     """
-    Velocity of the ship in meters per second.
+    Velocity of the ship in knots.
     """
 
     argo_float_config: ArgoFloatConfig | None = None
