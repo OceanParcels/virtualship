@@ -1,4 +1,4 @@
-ship_speed_knots: 5.14
+ship_speed_knots: 10.0
 adcp_config:
   num_bins: 40
   max_depth_meter: -1000.0
@@ -16,6 +16,7 @@ ctd_config:
   stationkeeping_time_minutes: 20.0
 drifter_config:
   depth_meter: 0.0
+  period_minutes: 60.0
   lifetime_minutes: 40320.0
 ship_underwater_st_config:
   period_minutes: 5.0

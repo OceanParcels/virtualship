@@ -81,6 +81,11 @@ class DrifterConfig(pydantic.BaseModel):
         validation_alias="lifetime_minutes",
         gt=timedelta(),
     )
+    period: timedelta = pydantic.Field(
+        serialization_alias="period_minutes",
+        validation_alias="period_minutes",
+        gt=timedelta(),
+    )
 
     model_config = pydantic.ConfigDict(populate_by_name=True)
 
