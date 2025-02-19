@@ -132,6 +132,8 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     end_datetime = time_range.end_time
     instruments_in_schedule = [
         waypoint.instrument[0].name
+        if isinstance(waypoint.instrument, list)
+        else waypoint.instrument.name
         for waypoint in schedule.waypoints  # TODO check why instrument is a list here
     ]
 
