@@ -58,7 +58,8 @@ def test_mfp_to_yaml_missing_headers(mock_read_excel, tmp_path):
     yaml_output_path = tmp_path / "schedule.yaml"
 
     with pytest.raises(
-        ValueError, match="Error: Found columns .* but expected columns .*"
+        ValueError,
+        match="Error: Missing column 'Instrument'. Have you added this column after exporting from MFP?",
     ):
         mfp_to_yaml("mock_file.xlsx", yaml_output_path)
 
