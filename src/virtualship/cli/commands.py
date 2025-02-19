@@ -131,7 +131,8 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     start_datetime = time_range.start_time
     end_datetime = time_range.end_time
     instruments_in_schedule = [
-        waypoint.instrument.name for waypoint in schedule.waypoints
+        waypoint.instrument[0].name
+        for waypoint in schedule.waypoints  # TODO check why instrument is a list here
     ]
 
     # Create download folder and set download metadata
