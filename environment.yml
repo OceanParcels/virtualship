@@ -31,6 +31,6 @@ dependencies:
   - ipykernel
   - pandoc
   - sphinx-copybutton
-  - sphinx-autodoc-typehints
+  # - sphinx-autodoc-typehints # https://github.com/OceanParcels/virtualship/pull/125#issuecomment-2668766302
   - pydata-sphinx-theme
   - sphinx-autobuild
