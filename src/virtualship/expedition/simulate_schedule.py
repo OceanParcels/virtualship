@@ -249,7 +249,7 @@ class _ScheduleSimulator:
                     )
                 )
                 time_costs.append(
-                    minutes=self._ship_config.ctd_config.stationkeeping_time_minutes
+                    self._ship_config.ctd_config.stationkeeping_time_minutes
                 )
             elif instrument is InstrumentType.DRIFTER:
                 self._measurements_to_simulate.drifters.append(
