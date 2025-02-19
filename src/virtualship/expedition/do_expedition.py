@@ -42,8 +42,6 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
         "DRIFTER",
         "XBT",
         "CTD",
-        "ADCP",
-        "SHIP_UNDERWATER_ST",
     ]:  # TODO make instrument names consistent capitals or lowercase throughout codebase
         if (
             hasattr(ship_config, instrument.lower() + "_config")
@@ -180,6 +178,15 @@ def _get_schedule(expedition_dir: Path) -> Schedule:
         return Schedule.from_yaml(file_path)
     except FileNotFoundError as e:
         raise FileNotFoundError(f'Schedule not found. Save it to "{file_path}".') from e
+
+
+def _get_ship_config(expedition_dir: Path) -> Schedule:
+    """Load Schedule object from yaml config file in `expedition_dir`."""
+    file_path = expedition_dir.joinpath(SHIP_CONFIG)
+    try:
+        return ShipConfig.from_yaml(file_path)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f'Config not found. Save it to "{file_path}".') from e
 
 
 def _load_checkpoint(expedition_dir: Path) -> Checkpoint | None:
