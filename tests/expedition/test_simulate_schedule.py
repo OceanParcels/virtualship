@@ -20,8 +20,8 @@ def test_simulate_schedule_feasible() -> None:
     ship_config.ship_speed_meter_per_second = 5.14
     schedule = Schedule(
         waypoints=[
-            Waypoint(Location(0, 0), base_time),
-            Waypoint(Location(0.01, 0), base_time + timedelta(days=1)),
+            Waypoint(location=Location(0, 0), time=base_time),
+            Waypoint(location=Location(0.01, 0), time=base_time + timedelta(days=1)),
         ]
     )
 
@@ -38,8 +38,8 @@ def test_simulate_schedule_too_far() -> None:
     ship_config = ShipConfig.from_yaml("expedition_dir/ship_config.yaml")
     schedule = Schedule(
         waypoints=[
-            Waypoint(Location(0, 0), base_time),
-            Waypoint(Location(1.0, 0), base_time + timedelta(minutes=1)),
+            Waypoint(location=Location(0, 0), time=base_time),
+            Waypoint(location=Location(1.0, 0), time=base_time + timedelta(minutes=1)),
         ]
     )
 

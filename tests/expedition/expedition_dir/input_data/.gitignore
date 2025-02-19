@@ -2,8 +2,8 @@
 !argo_float_t.nc
 !argo_float_uv.nc
 !bathymetry.nc
-!default_s.nc
-!default_t.nc
-!default_uv.nc
+!ship_s.nc
+!ship_t.nc
+!ship_uv.nc
 !drifter_t.nc
 !drifter_uv.nc

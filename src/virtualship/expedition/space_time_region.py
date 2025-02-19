@@ -42,13 +42,17 @@ class SpatialRange(BaseModel):
 class TimeRange(BaseModel):
     """Defines the temporal boundaries for a space-time region."""
 
-    start_time: datetime
-    end_time: datetime
+    #! TODO: Remove the `| None` for `start_time` and `end_time`, and have the MFP functionality not use pydantic (with testing to avoid codebase drift)
+    start_time: datetime | None = None
+    end_time: datetime | None = None
 
     @model_validator(mode="after")
     def _check_time_range(self) -> Self:
-        if not self.start_time < self.end_time:
-            raise ValueError("start_time must be before end_time")
+        if (
+            self.start_time and self.end_time
+        ):  #! TODO: remove this check once `start_time` and `end_time` are required
+            if not self.start_time < self.end_time:
+                raise ValueError("start_time must be before end_time")
         return self
 
 

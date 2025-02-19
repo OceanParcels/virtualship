@@ -157,7 +157,9 @@ def simulate_argo_floats(
     )
 
     # define output file for the simulation
-    out_file = argo_float_particleset.ParticleFile(name=out_path, outputdt=outputdt)
+    out_file = argo_float_particleset.ParticleFile(
+        name=out_path, outputdt=outputdt, chunks=[len(argo_float_particleset), 100]
+    )
 
     # get earliest between fieldset end time and provide end time
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
@@ -180,5 +182,5 @@ def simulate_argo_floats(
         endtime=actual_endtime,
         dt=DT,
         output_file=out_file,
-        verbose_progress=False,
+        verbose_progress=True,
     )

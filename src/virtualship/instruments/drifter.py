@@ -99,7 +99,7 @@ def simulate_drifters(
         endtime=actual_endtime,
         dt=dt,
         output_file=out_file,
-        verbose_progress=False,
+        verbose_progress=True,
     )
 
     # if there are more particles left than the number of drifters with an indefinite endtime, warn the user

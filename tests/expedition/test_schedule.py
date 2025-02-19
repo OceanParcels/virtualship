@@ -12,9 +12,11 @@ def test_schedule(tmpdir) -> None:
 
     schedule = Schedule(
         waypoints=[
-            Waypoint(Location(0, 0), time=base_time, instrument=None),
+            Waypoint(location=Location(0, 0), time=base_time, instrument=None),
             Waypoint(
-                Location(1, 1), time=base_time + timedelta(hours=1), instrument=None
+                location=Location(1, 1),
+                time=base_time + timedelta(hours=1),
+                instrument=None,
             ),
         ]
     )

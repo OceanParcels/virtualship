@@ -107,12 +107,12 @@ def test_simulate_adcp(tmpdir) -> None:
             for var in ["lat", "lon"]:
                 obs_value = obs[var].values.item()
                 exp_value = exp[var]
-                assert np.isclose(
-                    obs_value, exp_value
-                ), f"Observation incorrect {vert_loc=} {obs_i=} {var=} {obs_value=} {exp_value=}."
+                assert np.isclose(obs_value, exp_value), (
+                    f"Observation incorrect {vert_loc=} {obs_i=} {var=} {obs_value=} {exp_value=}."
+                )
             for var in ["V", "U"]:
                 obs_value = obs[var].values.item()
                 exp_value = exp[var][vert_loc]
-                assert np.isclose(
-                    obs_value, exp_value
-                ), f"Observation incorrect {vert_loc=} {i=} {var=} {obs_value=} {exp_value=}."
+                assert np.isclose(obs_value, exp_value), (
+                    f"Observation incorrect {vert_loc=} {i=} {var=} {obs_value=} {exp_value=}."
+                )

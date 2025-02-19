@@ -126,6 +126,6 @@ def test_simulate_xbts(tmpdir) -> None:
             for var in ["temperature", "lat", "lon"]:
                 obs_value = obs[var].values.item()
                 exp_value = exp[var]
-                assert np.isclose(
-                    obs_value, exp_value
-                ), f"Observation incorrect {xbt_i=} {loc=} {var=} {obs_value=} {exp_value=}."
+                assert np.isclose(obs_value, exp_value), (
+                    f"Observation incorrect {xbt_i=} {loc=} {var=} {obs_value=} {exp_value=}."
+                )
