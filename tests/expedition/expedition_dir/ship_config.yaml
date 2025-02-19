@@ -1,4 +1,4 @@
-ship_speed_meter_per_second: 5.14
+ship_speed_knots: 5.14
 adcp_config:
   num_bins: 40
   max_depth_meter: -1000.0
