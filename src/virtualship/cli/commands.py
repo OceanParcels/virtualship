@@ -155,17 +155,17 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
             "UVdata": {
                 "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
                 "variables": ["uo", "vo"],
-                "output_filename": "ship_uv.nc",
+                "output_filename": "default_uv.nc",
             },
             "Sdata": {
                 "dataset_id": "cmems_mod_glo_phy-so_anfc_0.083deg_PT6H-i",
                 "variables": ["so"],
-                "output_filename": "ship_s.nc",
+                "output_filename": "default_s.nc",
             },
             "Tdata": {
                 "dataset_id": "cmems_mod_glo_phy-thetao_anfc_0.083deg_PT6H-i",
                 "variables": ["thetao"],
-                "output_filename": "ship_t.nc",
+                "output_filename": "default_t.nc",
             },
         }
 
@@ -272,7 +272,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
                     maximum_latitude=spatial_range.maximum_latitude + 3.0,
                     start_datetime=start_datetime,
                     end_datetime=end_datetime,
-                    minimum_depth=abs(0),
+                    minimum_depth=abs(1),
                     maximum_depth=abs(spatial_range.maximum_depth),
                     output_filename=dataset["output_filename"],
                     output_directory=download_folder,
