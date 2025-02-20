@@ -182,5 +182,5 @@ def simulate_argo_floats(
         endtime=actual_endtime,
         dt=DT,
         output_file=out_file,
-        verbose_progress=False,
+        verbose_progress=True,
     )
