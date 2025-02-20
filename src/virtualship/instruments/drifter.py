@@ -81,7 +81,9 @@ def simulate_drifters(
     )
 
     # define output file for the simulation
-    out_file = drifter_particleset.ParticleFile(name=out_path, outputdt=outputdt)
+    out_file = drifter_particleset.ParticleFile(
+        name=out_path, outputdt=outputdt, chunks=[len(drifter_particleset), 100]
+    )
 
     # get earliest between fieldset end time and provide end time
     fieldset_endtime = fieldset.time_origin.fulltime(fieldset.U.grid.time_full[-1])
