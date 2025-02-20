@@ -35,7 +35,7 @@ class ADCPConfig(pydantic.BaseModel):
 
     @pydantic.field_serializer("period")
     def _serialize_period(self, value: timedelta, _info):
-        return value.total_seconds() / 60.0
+        return value.total_seconds() * 60.0
 
 
 class CTDConfig(pydantic.BaseModel):
@@ -53,7 +53,7 @@ class CTDConfig(pydantic.BaseModel):
 
     @pydantic.field_serializer("stationkeeping_time_minutes")
     def _serialize_stationkeeping_time_minutes(self, value: timedelta, _info):
-        return value.total_seconds() / 60.0
+        return value.total_seconds() * 60.0
 
 
 class ShipUnderwaterSTConfig(pydantic.BaseModel):
@@ -69,7 +69,7 @@ class ShipUnderwaterSTConfig(pydantic.BaseModel):
 
     @pydantic.field_serializer("period")
     def _serialize_period(self, value: timedelta, _info):
-        return value.total_seconds() / 60.0
+        return value.total_seconds() * 60.0
 
 
 class DrifterConfig(pydantic.BaseModel):
@@ -91,7 +91,11 @@ class DrifterConfig(pydantic.BaseModel):
 
     @pydantic.field_serializer("lifetime")
     def _serialize_lifetime(self, value: timedelta, _info):
-        return value.total_seconds() / 60.0
+        return value.total_seconds() * 60.0
+
+    @pydantic.field_serializer("period")
+    def _serialize_period(self, value: timedelta, _info):
+        return value.total_seconds() * 60.0
 
 
 class XBTConfig(pydantic.BaseModel):
