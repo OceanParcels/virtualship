@@ -17,6 +17,7 @@ class Drifter:
     spacetime: Spacetime
     depth: float  # depth at which it floats and samples
     lifetime: timedelta | None  # if none, lifetime is infinite
+    period: timedelta  # time between samples
 
 
 _DrifterParticle = JITParticle.add_variables(

@@ -51,6 +51,7 @@ def test_simulate_schedule_too_far() -> None:
 def test_time_in_minutes_in_ship_schedule() -> None:
     """Test whether the pydantic serializer picks up the time *in minutes* in the ship schedule."""
     ship_config = ShipConfig.from_yaml("expedition_dir/ship_config.yaml")
+    assert ship_config.drifter_config.period == timedelta(minutes=60)
     assert ship_config.adcp_config.period == timedelta(minutes=5)
     assert ship_config.ctd_config.stationkeeping_time == timedelta(minutes=20)
     assert ship_config.ship_underwater_st_config.period == timedelta(minutes=5)

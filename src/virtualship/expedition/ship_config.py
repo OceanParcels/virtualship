@@ -95,12 +95,25 @@ class DrifterConfig(pydantic.BaseModel):
         validation_alias="lifetime_minutes",
         gt=timedelta(),
     )
+    period: timedelta = pydantic.Field(
+        serialization_alias="period_minutes",
+        validation_alias="period_minutes",
+        gt=timedelta(),
+    )
 
     model_config = pydantic.ConfigDict(populate_by_name=True)
 
     @pydantic.field_serializer("lifetime")
     def _serialize_lifetime(self, value: timedelta, _info):
         return value.total_seconds() / 60.0
+
+    @pydantic.field_serializer("period")
+    def _serialize_period(self, value: timedelta, _info):
+        return value.total_seconds() / 60.0
+
+    @pydantic.field_validator("period", mode="before")
+    def _validate_period(cls, value: int | float | timedelta) -> timedelta:
+        return _validate_numeric_mins_to_timedelta(value)
 
     @pydantic.field_validator("lifetime", mode="before")
     def _validate_lifetime(cls, value: int | float | timedelta) -> timedelta:
