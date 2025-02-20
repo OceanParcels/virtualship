@@ -248,9 +248,7 @@ class _ScheduleSimulator:
                         max_depth=self._ship_config.ctd_config.max_depth_meter,
                     )
                 )
-                time_costs.append(
-                    self._ship_config.ctd_config.stationkeeping_time_minutes
-                )
+                time_costs.append(self._ship_config.ctd_config.stationkeeping_time)
             elif instrument is InstrumentType.DRIFTER:
                 self._measurements_to_simulate.drifters.append(
                     Drifter(
