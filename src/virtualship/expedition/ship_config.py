@@ -8,6 +8,8 @@ from pathlib import Path
 import pydantic
 import yaml
 
+from virtualship.utils import _validate_numeric_mins_to_timedelta
+
 
 class ArgoFloatConfig(pydantic.BaseModel):
     """Configuration for argos floats."""
@@ -37,6 +39,10 @@ class ADCPConfig(pydantic.BaseModel):
     def _serialize_period(self, value: timedelta, _info):
         return value.total_seconds() * 60.0
 
+    @pydantic.field_validator("period", mode="before")
+    def _validate_period(cls, value: int | float | timedelta) -> timedelta:
+        return _validate_numeric_mins_to_timedelta(value)
+
 
 class CTDConfig(pydantic.BaseModel):
     """Configuration for CTD instrument."""
@@ -55,6 +61,10 @@ class CTDConfig(pydantic.BaseModel):
     def _serialize_stationkeeping_time_minutes(self, value: timedelta, _info):
         return value.total_seconds() * 60.0
 
+    @pydantic.field_validator("stationkeeping_time", mode="before")
+    def _validate_stationkeeping_time(cls, value: int | float | timedelta) -> timedelta:
+        return _validate_numeric_mins_to_timedelta(value)
+
 
 class ShipUnderwaterSTConfig(pydantic.BaseModel):
     """Configuration for underwater ST."""
@@ -70,6 +80,10 @@ class ShipUnderwaterSTConfig(pydantic.BaseModel):
     @pydantic.field_serializer("period")
     def _serialize_period(self, value: timedelta, _info):
         return value.total_seconds() * 60.0
+
+    @pydantic.field_validator("period", mode="before")
+    def _validate_period(cls, value: int | float | timedelta) -> timedelta:
+        return _validate_numeric_mins_to_timedelta(value)
 
 
 class DrifterConfig(pydantic.BaseModel):
@@ -96,6 +110,10 @@ class DrifterConfig(pydantic.BaseModel):
     @pydantic.field_serializer("period")
     def _serialize_period(self, value: timedelta, _info):
         return value.total_seconds() * 60.0
+
+    @pydantic.field_validator("lifetime", mode="before")
+    def _validate_lifetime(cls, value: int | float | timedelta) -> timedelta:
+        return _validate_numeric_mins_to_timedelta(value)
 
 
 class XBTConfig(pydantic.BaseModel):
