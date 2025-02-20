@@ -15,7 +15,11 @@ from virtualship.cli._fetch import (
     get_space_time_region_hash,
     hash_to_filename,
 )
-from virtualship.expedition.do_expedition import _get_schedule, do_expedition
+from virtualship.expedition.do_expedition import (
+    _get_schedule,
+    _get_ship_config,
+    do_expedition,
+)
 from virtualship.utils import SCHEDULE, SHIP_CONFIG, mfp_to_yaml
 
 
@@ -107,6 +111,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     data_folder.mkdir(exist_ok=True)
 
     schedule = _get_schedule(path)
+    ship_config = _get_ship_config(path)
 
     if schedule.space_time_region is None:
         raise ValueError(
@@ -131,7 +136,10 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     start_datetime = time_range.start_time
     end_datetime = time_range.end_time
     instruments_in_schedule = [
-        waypoint.instrument.name for waypoint in schedule.waypoints
+        waypoint.instrument[0].name
+        if isinstance(waypoint.instrument, list)
+        else waypoint.instrument.name
+        for waypoint in schedule.waypoints  # TODO check why instrument is a list here
     ]
 
     # Create download folder and set download metadata
@@ -142,7 +150,11 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     )
     shutil.copyfile(path / SCHEDULE, download_folder / SCHEDULE)
 
-    if set(["XBT", "CTD", "SHIP_UNDERWATER_ST"]) & set(instruments_in_schedule):
+    if (
+        (set(["XBT", "CTD", "SHIP_UNDERWATER_ST"]) & set(instruments_in_schedule))
+        or hasattr(ship_config, "ship_underwater_st_config")
+        or hasattr(ship_config, "adcp_config")
+    ):
         print("Ship data will be downloaded")
 
         # Define all ship datasets to download, including bathymetry
