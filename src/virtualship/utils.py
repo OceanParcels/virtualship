@@ -156,6 +156,6 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):  # noqa: D417
 
 def _validate_numeric_mins_to_timedelta(value: int | float | timedelta) -> timedelta:
     """Convert minutes to timedelta when reading."""
-    if isinstance(value, (int, float)):
-        return timedelta(minutes=value)
-    return value
+    if isinstance(value, timedelta):
+        return value
+    return timedelta(minutes=value)
