@@ -1,3 +1,4 @@
+from datetime import timedelta
 from functools import lru_cache
 from importlib.resources import files
 from typing import TextIO
@@ -151,3 +152,10 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):  # noqa: D417
 
     # Save to YAML file
     schedule.to_yaml(yaml_output_path)
+
+
+def _validate_numeric_mins_to_timedelta(value: int | float | timedelta) -> timedelta:
+    """Convert minutes to timedelta when reading."""
+    if isinstance(value, timedelta):
+        return value
+    return timedelta(minutes=value)

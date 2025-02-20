@@ -101,6 +101,8 @@ ignore = [
     "E501",
     # consider `[meta, header, *data]` instead of concatenation
     "RUF005",
+    # Use `X | Y` in `isinstance` call instead of `(X, Y)`
+    "UP038",
     # multi-line-summary-first-line
     "D212",
     # one-blank-line-before-class
