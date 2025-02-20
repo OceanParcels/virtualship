@@ -37,7 +37,7 @@ class ADCPConfig(pydantic.BaseModel):
 
     @pydantic.field_serializer("period")
     def _serialize_period(self, value: timedelta, _info):
-        return value.total_seconds() * 60.0
+        return value.total_seconds() / 60.0
 
     @pydantic.field_validator("period", mode="before")
     def _validate_period(cls, value: int | float | timedelta) -> timedelta:
@@ -59,7 +59,7 @@ class CTDConfig(pydantic.BaseModel):
 
     @pydantic.field_serializer("stationkeeping_time_minutes")
     def _serialize_stationkeeping_time_minutes(self, value: timedelta, _info):
-        return value.total_seconds() * 60.0
+        return value.total_seconds() / 60.0
 
     @pydantic.field_validator("stationkeeping_time", mode="before")
     def _validate_stationkeeping_time(cls, value: int | float | timedelta) -> timedelta:
@@ -79,7 +79,7 @@ class ShipUnderwaterSTConfig(pydantic.BaseModel):
 
     @pydantic.field_serializer("period")
     def _serialize_period(self, value: timedelta, _info):
-        return value.total_seconds() * 60.0
+        return value.total_seconds() / 60.0
 
     @pydantic.field_validator("period", mode="before")
     def _validate_period(cls, value: int | float | timedelta) -> timedelta:
@@ -105,11 +105,15 @@ class DrifterConfig(pydantic.BaseModel):
 
     @pydantic.field_serializer("lifetime")
     def _serialize_lifetime(self, value: timedelta, _info):
-        return value.total_seconds() * 60.0
+        return value.total_seconds() / 60.0
 
     @pydantic.field_serializer("period")
     def _serialize_period(self, value: timedelta, _info):
-        return value.total_seconds() * 60.0
+        return value.total_seconds() / 60.0
+
+    @pydantic.field_validator("period", mode="before")
+    def _validate_period(cls, value: int | float | timedelta) -> timedelta:
+        return _validate_numeric_mins_to_timedelta(value)
 
     @pydantic.field_validator("lifetime", mode="before")
     def _validate_lifetime(cls, value: int | float | timedelta) -> timedelta:
