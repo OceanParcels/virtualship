@@ -85,7 +85,7 @@ def simulate_measurements(
             out_path=expedition_dir.joinpath("results", "drifters.zarr"),
             fieldset=input_data.drifter_fieldset,
             drifters=measurements.drifters,
-            outputdt=ship_config.drifter_config.period,
+            outputdt=timedelta(hours=5),
             dt=timedelta(minutes=5),
             endtime=None,
         )

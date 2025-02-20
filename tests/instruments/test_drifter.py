@@ -41,7 +41,6 @@ def test_simulate_drifters(tmpdir) -> None:
             ),
             depth=0.0,
             lifetime=datetime.timedelta(hours=2),
-            period=60,
         ),
         Drifter(
             spacetime=Spacetime(
@@ -50,7 +49,6 @@ def test_simulate_drifters(tmpdir) -> None:
             ),
             depth=0.0,
             lifetime=None,
-            period=60,
         ),
     ]
 
