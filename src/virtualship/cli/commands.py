@@ -230,9 +230,9 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
                 copernicusmarine.subset(
                     dataset_id=dataset["dataset_id"],
                     variables=dataset["variables"],
-                    minimum_longitude=spatial_range.minimum_longitude + 3.0,
+                    minimum_longitude=spatial_range.minimum_longitude - 3.0,
                     maximum_longitude=spatial_range.maximum_longitude + 3.0,
-                    minimum_latitude=spatial_range.minimum_latitude + 3.0,
+                    minimum_latitude=spatial_range.minimum_latitude - 3.0,
                     maximum_latitude=spatial_range.maximum_latitude + 3.0,
                     start_datetime=start_datetime,
                     end_datetime=end_datetime,
@@ -278,9 +278,9 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
                 copernicusmarine.subset(
                     dataset_id=dataset["dataset_id"],
                     variables=dataset["variables"],
-                    minimum_longitude=spatial_range.minimum_longitude + 3.0,
+                    minimum_longitude=spatial_range.minimum_longitude - 3.0,
                     maximum_longitude=spatial_range.maximum_longitude + 3.0,
-                    minimum_latitude=spatial_range.minimum_latitude + 3.0,
+                    minimum_latitude=spatial_range.minimum_latitude - 3.0,
                     maximum_latitude=spatial_range.maximum_latitude + 3.0,
                     start_datetime=start_datetime,
                     end_datetime=end_datetime,
