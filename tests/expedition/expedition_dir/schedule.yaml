@@ -6,7 +6,8 @@ waypoints:
       longitude: 0
     time: 2023-01-01 00:00:00
   - instrument:
-      - DRIFTER, CTD
+      - DRIFTER
+      - CTD
     location:
       latitude: 0.01
       longitude: 0.01
