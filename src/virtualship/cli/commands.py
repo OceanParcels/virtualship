@@ -20,7 +20,12 @@ from virtualship.expedition.do_expedition import (
     _get_ship_config,
     do_expedition,
 )
-from virtualship.utils import SCHEDULE, SHIP_CONFIG, mfp_to_yaml
+from virtualship.utils import (
+    SCHEDULE,
+    SHIP_CONFIG,
+    get_instruments_in_schedule,
+    mfp_to_yaml,
+)
 
 
 @click.command()
@@ -135,12 +140,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     time_range = schedule.space_time_region.time_range
     start_datetime = time_range.start_time
     end_datetime = time_range.end_time
-    instruments_in_schedule = [
-        waypoint.instrument[0].name
-        if isinstance(waypoint.instrument, list)
-        else waypoint.instrument.name
-        for waypoint in schedule.waypoints  # TODO check why instrument is a list here
-    ]
+    instruments_in_schedule = get_instruments_in_schedule(schedule)
 
     # Create download folder and set download metadata
     download_folder = data_folder / hash_to_filename(space_time_region_hash)

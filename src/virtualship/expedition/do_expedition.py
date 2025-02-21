@@ -7,7 +7,12 @@ from pathlib import Path
 import pyproj
 
 from virtualship.cli._fetch import get_existing_download, get_space_time_region_hash
-from virtualship.utils import CHECKPOINT, SCHEDULE, SHIP_CONFIG
+from virtualship.utils import (
+    CHECKPOINT,
+    SCHEDULE,
+    SHIP_CONFIG,
+    get_instruments_in_schedule,
+)
 
 from .checkpoint import Checkpoint
 from .expedition_cost import expedition_cost
@@ -33,11 +38,7 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     schedule = _get_schedule(expedition_dir)
 
     # remove instrument configurations that are not in schedule
-    instruments_in_schedule = [
-        waypoint.instrument.name
-        for waypoint in schedule.waypoints
-        if waypoint.instrument
-    ]
+    instruments_in_schedule = get_instruments_in_schedule(schedule)
 
     for instrument in [
         "ARGO_FLOAT",
