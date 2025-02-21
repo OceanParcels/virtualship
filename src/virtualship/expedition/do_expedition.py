@@ -33,11 +33,11 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     schedule = _get_schedule(expedition_dir)
 
     # remove instrument configurations that are not in schedule
-    instruments_in_schedule = [
-        waypoint.instrument.name
-        for waypoint in schedule.waypoints
-        if waypoint.instrument
-    ]
+    instruments_in_schedule = []
+    for waypoint in schedule.waypoints:
+        if waypoint.instrument:
+            for instrument in waypoint.instrument:
+                instruments_in_schedule.append(instrument.name)
 
     for instrument in [
         "ARGO_FLOAT",
