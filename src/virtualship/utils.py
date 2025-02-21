@@ -179,7 +179,7 @@ def get_instruments_in_schedule(schedule):
     instruments_in_schedule = []
     for waypoint in schedule.waypoints:
         if waypoint.instrument:
-            for instrument in waypoint.instrument:
+            for instrument in waypoint.instrument.name:
                 if instrument:
-                    instruments_in_schedule.append(instrument.name)
+                    instruments_in_schedule.append(instrument)
     return instruments_in_schedule
