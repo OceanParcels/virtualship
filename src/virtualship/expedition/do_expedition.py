@@ -34,7 +34,9 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
 
     # remove instrument configurations that are not in schedule
     instruments_in_schedule = [
-        waypoint.instrument.name for waypoint in schedule.waypoints
+        waypoint.instrument.name
+        for waypoint in schedule.waypoints
+        if waypoint.instrument
     ]
 
     for instrument in [
