@@ -46,6 +46,7 @@ miniconda:
     - numpy >=1,<2
     - pydantic >=2,<3
     - copernicusmarine >=2
+    - openpyxl
 
     # extra
     - xarray
