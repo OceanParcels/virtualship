@@ -10,22 +10,26 @@ space_time_region:
     start_time: 2023-01-01 00:00:00
     end_time: 2023-02-01 00:00:00
 waypoints:
-  - instrument: CTD
+  - instrument:
+      - CTD
     location:
       latitude: 0
       longitude: 0
     time: 2023-01-01 00:00:00
-  - instrument: DRIFTER
+  - instrument:
+      - DRIFTER, CTD
     location:
       latitude: 0.01
       longitude: 0.01
     time: 2023-01-01 01:00:00
-  - instrument: ARGO_FLOAT
+  - instrument:
+      - ARGO_FLOAT
     location:
       latitude: 0.02
       longitude: 0.02
     time: 2023-01-01 02:00:00
-  - instrument: XBT
+  - instrument:
+      - XBT
     location:
       latitude: 0.03
       longitude: 0.03
