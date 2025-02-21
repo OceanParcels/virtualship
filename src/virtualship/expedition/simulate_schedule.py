@@ -122,11 +122,11 @@ class _ScheduleSimulator:
             lons2=location.lon,
             lats2=location.lat,
         )
+        ship_speed_meter_per_second = self._ship_config.ship_speed_knots * 3600 / 1852
         azimuth1 = geodinv[0]
         distance_to_next_waypoint = geodinv[2]
         time_to_reach = timedelta(
-            seconds=distance_to_next_waypoint
-            / self._ship_config.ship_speed_meter_per_second
+            seconds=distance_to_next_waypoint / ship_speed_meter_per_second
         )
         end_time = self._time + time_to_reach
 
@@ -137,8 +137,7 @@ class _ScheduleSimulator:
             while self._next_adcp_time <= end_time:
                 time_to_sail = self._next_adcp_time - time
                 distance_to_move = (
-                    self._ship_config.ship_speed_meter_per_second
-                    * time_to_sail.total_seconds()
+                    ship_speed_meter_per_second * time_to_sail.total_seconds()
                 )
                 geodfwd: tuple[float, float, float] = self._projection.fwd(
                     lons=location.lon,
@@ -164,8 +163,7 @@ class _ScheduleSimulator:
             while self._next_ship_underwater_st_time <= end_time:
                 time_to_sail = self._next_ship_underwater_st_time - time
                 distance_to_move = (
-                    self._ship_config.ship_speed_meter_per_second
-                    * time_to_sail.total_seconds()
+                    ship_speed_meter_per_second * time_to_sail.total_seconds()
                 )
                 geodfwd: tuple[float, float, float] = self._projection.fwd(
                     lons=location.lon,
@@ -250,7 +248,7 @@ class _ScheduleSimulator:
                         max_depth=self._ship_config.ctd_config.max_depth_meter,
                     )
                 )
-                time_costs.append(timedelta(minutes=20))
+                time_costs.append(self._ship_config.ctd_config.stationkeeping_time)
             elif instrument is InstrumentType.DRIFTER:
                 self._measurements_to_simulate.drifters.append(
                     Drifter(

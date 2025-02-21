@@ -17,7 +17,7 @@ def test_simulate_schedule_feasible() -> None:
 
     projection = pyproj.Geod(ellps="WGS84")
     ship_config = ShipConfig.from_yaml("expedition_dir/ship_config.yaml")
-    ship_config.ship_speed_meter_per_second = 5.14
+    ship_config.ship_speed_knots = 10.0
     schedule = Schedule(
         waypoints=[
             Waypoint(location=Location(0, 0), time=base_time),
@@ -46,3 +46,11 @@ def test_simulate_schedule_too_far() -> None:
     result = simulate_schedule(projection, ship_config, schedule)
 
     assert isinstance(result, ScheduleProblem)
+
+
+def test_time_in_minutes_in_ship_schedule() -> None:
+    """Test whether the pydantic serializer picks up the time *in minutes* in the ship schedule."""
+    ship_config = ShipConfig.from_yaml("expedition_dir/ship_config.yaml")
+    assert ship_config.adcp_config.period == timedelta(minutes=5)
+    assert ship_config.ctd_config.stationkeeping_time == timedelta(minutes=20)
+    assert ship_config.ship_underwater_st_config.period == timedelta(minutes=5)
