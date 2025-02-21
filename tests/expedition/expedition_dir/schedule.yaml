@@ -7,18 +7,12 @@ waypoints:
     time: 2023-01-01 00:00:00
   - instrument:
       - DRIFTER
-      - CTD
+      - ARGO_FLOAT
     location:
       latitude: 0.01
       longitude: 0.01
-    time: 2023-01-01 01:00:00
-  - instrument:
-      - ARGO_FLOAT
-    location:
-      latitude: 0.02
-      longitude: 0.02
-    time: 2023-01-01 02:00:00
+    time: 2023-01-02 00:00:00
   - location: # empty waypoint
       latitude: 0.02
       longitude: 0.01
-    time: 2023-01-01 03:00:00
+    time: 2023-01-02 03:00:00
