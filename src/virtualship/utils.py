@@ -1,3 +1,4 @@
+import warnings
 from datetime import timedelta
 from functools import lru_cache
 from importlib.resources import files
@@ -89,11 +90,12 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):  # noqa: D417
 
     extra_columns = actual_columns - expected_columns
     if extra_columns:
-        print(
-            f"Warning: Found additional unexpected columns {list(extra_columns)}. "
+        warnings.warn(
+            f"Found additional unexpected columns {list(extra_columns)}. "
             "Manually added columns have no effect. "
             "If the MFP export format changed, please submit an issue: "
-            "https://github.com/OceanParcels/virtualship/issues."
+            "https://github.com/OceanParcels/virtualship/issues.",
+            stacklevel=2,
         )
 
     # Drop unexpected columns (optional, only if you want to ensure strict conformity)

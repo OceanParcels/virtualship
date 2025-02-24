@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pandas as pd
 import pytest
 
@@ -79,21 +77,12 @@ def test_mfp_to_yaml_missing_headers(missing_columns_mfp_file, tmp_path):
         mfp_to_yaml(missing_columns_mfp_file, yaml_output_path)
 
 
-@patch("builtins.print")  # Capture printed warnings
-def test_mfp_to_yaml_extra_headers(mock_print, unexpected_header_mfp_file, tmp_path):
+def test_mfp_to_yaml_extra_headers(unexpected_header_mfp_file, tmp_path):
     """Test that mfp_to_yaml prints a warning when extra columns are found."""
     yaml_output_path = tmp_path / "schedule.yaml"
 
-    # Run function
-    mfp_to_yaml(unexpected_header_mfp_file, yaml_output_path)
-
-    # Ensure a warning message was printed
-    mock_print.assert_any_call(
-        "Warning: Found additional unexpected columns ['Unexpected Column']. "
-        "Manually added columns have no effect. "
-        "If the MFP export format changed, please submit an issue: "
-        "https://github.com/OceanParcels/virtualship/issues."
-    )
+    with pytest.warns(UserWarning, match="Found additional unexpected columns.*"):
+        mfp_to_yaml(unexpected_header_mfp_file, yaml_output_path)
 
 
 def test_mfp_to_yaml_instrument_conversion(valid_mfp_file, tmp_path):
