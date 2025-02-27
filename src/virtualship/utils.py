@@ -45,25 +45,24 @@ def _generic_load_yaml(data: str, model: BaseModel) -> BaseModel:
 
 def load_coordinates(file_path):
     """Loads coordinates from a file based on its extension."""
-
     if not os.path.isfile(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 
     ext = os.path.splitext(file_path)[-1].lower()
 
     try:
-        if ext in ['.xls', '.xlsx']:
+        if ext in [".xls", ".xlsx"]:
             return pd.read_excel(file_path)
 
-        if ext == '.csv':
+        if ext == ".csv":
             return pd.read_csv(file_path)
 
         raise ValueError(f"Unsupported file extension {ext}.")
 
     except Exception as e:
         raise RuntimeError(
-            f"Could not read coordinates data from the provided file. "
-            f"Ensure it is either a csv or excel file."
+            "Could not read coordinates data from the provided file. "
+            "Ensure it is either a csv or excel file."
         ) from e
 
 
