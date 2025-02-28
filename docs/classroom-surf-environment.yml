@@ -54,6 +54,7 @@ miniconda:
     - scipy
     - pandas
     - matplotlib
+    - ipympl
     - cartopy
     - cmocean
     - geopy
