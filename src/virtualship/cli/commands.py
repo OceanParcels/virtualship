@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+from datetime import timedelta
 
 import click
 import copernicusmarine
@@ -235,7 +236,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
                     minimum_latitude=spatial_range.minimum_latitude - 3.0,
                     maximum_latitude=spatial_range.maximum_latitude + 3.0,
                     start_datetime=start_datetime,
-                    end_datetime=end_datetime,
+                    end_datetime=end_datetime + timedelta(days=21),
                     minimum_depth=abs(1),
                     maximum_depth=abs(1),
                     output_filename=dataset["output_filename"],
@@ -283,7 +284,7 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
                     minimum_latitude=spatial_range.minimum_latitude - 3.0,
                     maximum_latitude=spatial_range.maximum_latitude + 3.0,
                     start_datetime=start_datetime,
-                    end_datetime=end_datetime,
+                    end_datetime=end_datetime + timedelta(days=21),
                     minimum_depth=abs(1),
                     maximum_depth=abs(spatial_range.maximum_depth),
                     output_filename=dataset["output_filename"],
