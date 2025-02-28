@@ -107,6 +107,10 @@ class _ScheduleSimulator:
                     f"Waypoint {wp_i} could not be reached in time. Current time: {self._time}. Waypoint time: {waypoint.time}."
                 )
                 return ScheduleProblem(self._time, wp_i)
+            else:
+                self._time = (
+                    waypoint.time
+                )  # wait at the waypoint until ship is schedules to be there
 
             # note measurements made at waypoint
             time_passed = self._make_measurements(waypoint)
@@ -122,7 +126,7 @@ class _ScheduleSimulator:
             lons2=location.lon,
             lats2=location.lat,
         )
-        ship_speed_meter_per_second = self._ship_config.ship_speed_knots * 3600 / 1852
+        ship_speed_meter_per_second = self._ship_config.ship_speed_knots * 1852 / 3600
         azimuth1 = geodinv[0]
         distance_to_next_waypoint = geodinv[2]
         time_to_reach = timedelta(
