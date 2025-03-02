@@ -1,3 +1,4 @@
+import os
 import warnings
 from datetime import timedelta
 from functools import lru_cache
@@ -42,36 +43,32 @@ def _generic_load_yaml(data: str, model: BaseModel) -> BaseModel:
     return model.model_validate(yaml.safe_load(data))
 
 
-def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):  # noqa: D417
-    """
-    Generates a YAML file with spatial and temporal information based on instrument data from MFP excel file.
+def load_coordinates(file_path):
+    """Loads coordinates from a file based on its extension."""
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
 
-    Parameters
-    ----------
-    - excel_file_path (str): Path to the Excel file containing coordinate and instrument data.
+    ext = os.path.splitext(file_path)[-1].lower()
 
-    The function:
-    1. Reads instrument and location data from the Excel file.
-    2. Determines the maximum depth and buffer based on the instruments present.
-    3. Ensures longitude and latitude values remain valid after applying buffer adjustments.
-    4. returns the yaml information.
+    try:
+        if ext in [".xls", ".xlsx"]:
+            return pd.read_excel(file_path)
 
-    """
-    # Importing Schedule and related models from expedition module
-    from virtualship.expedition.instrument_type import InstrumentType
-    from virtualship.expedition.schedule import Schedule
-    from virtualship.expedition.space_time_region import (
-        SpaceTimeRegion,
-        SpatialRange,
-        TimeRange,
-    )
-    from virtualship.expedition.waypoint import Location, Waypoint
+        if ext == ".csv":
+            return pd.read_csv(file_path)
 
+        raise ValueError(f"Unsupported file extension {ext}.")
+
+    except Exception as e:
+        raise RuntimeError(
+            "Could not read coordinates data from the provided file. "
+            "Ensure it is either a csv or excel file."
+        ) from e
+
+
+def validate_coordinates(coordinates_data):
     # Expected column headers
     expected_columns = {"Station Type", "Name", "Latitude", "Longitude", "Instrument"}
-
-    # Read data from Excel
-    coordinates_data = pd.read_excel(excel_file_path)
 
     # Check if the headers match the expected ones
     actual_columns = set(coordinates_data.columns)
@@ -103,6 +100,51 @@ def mfp_to_yaml(excel_file_path: str, yaml_output_path: str):  # noqa: D417
 
     # Continue with the rest of the function after validation...
     coordinates_data = coordinates_data.dropna()
+
+    # Convert latitude and longitude to floats, replacing commas with dots
+    # Handles case when the latitude and longitude have decimals with commas
+    if coordinates_data["Latitude"].dtype in ["object", "string"]:
+        coordinates_data["Latitude"] = coordinates_data["Latitude"].apply(
+            lambda x: float(x.replace(",", "."))
+        )
+
+    if coordinates_data["Longitude"].dtype in ["object", "string"]:
+        coordinates_data["Longitude"] = coordinates_data["Longitude"].apply(
+            lambda x: float(x.replace(",", "."))
+        )
+
+    return coordinates_data
+
+
+def mfp_to_yaml(coordinates_file_path: str, yaml_output_path: str):  # noqa: D417
+    """
+    Generates a YAML file with spatial and temporal information based on instrument data from MFP excel file.
+
+    Parameters
+    ----------
+    - excel_file_path (str): Path to the Excel file containing coordinate and instrument data.
+
+    The function:
+    1. Reads instrument and location data from the Excel file.
+    2. Determines the maximum depth and buffer based on the instruments present.
+    3. Ensures longitude and latitude values remain valid after applying buffer adjustments.
+    4. returns the yaml information.
+
+    """
+    # Importing Schedule and related models from expedition module
+    from virtualship.expedition.instrument_type import InstrumentType
+    from virtualship.expedition.schedule import Schedule
+    from virtualship.expedition.space_time_region import (
+        SpaceTimeRegion,
+        SpatialRange,
+        TimeRange,
+    )
+    from virtualship.expedition.waypoint import Location, Waypoint
+
+    # Read data from file
+    coordinates_data = load_coordinates(coordinates_file_path)
+
+    coordinates_data = validate_coordinates(coordinates_data)
 
     # maximum depth (in meters), buffer (in degrees) for each instrument
     instrument_max_depths = {
