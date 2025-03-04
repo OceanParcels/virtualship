@@ -229,9 +229,9 @@ class ShipConfig(pydantic.BaseModel):
             "XBT",
             "CTD",
         ]:  # TODO make instrument names consistent capitals or lowercase throughout codebase
-            if (
-                hasattr(self, instrument.lower() + "_config")
-                and instrument not in instruments_in_schedule
+            if hasattr(self, instrument.lower() + "_config") and not any(
+                instrument == schedule_instrument.name
+                for schedule_instrument in instruments_in_schedule
             ):
                 print(f"{instrument} configuration provided but not in schedule.")
                 setattr(self, instrument.lower() + "_config", None)
@@ -243,20 +243,30 @@ class ShipConfig(pydantic.BaseModel):
             except ValueError as e:
                 raise NotImplementedError("Instrument not supported.") from e
 
-            if (
-                instrument == InstrumentType.ARGO_FLOAT
-                and self.argo_float_config is None
+            if instrument == InstrumentType.ARGO_FLOAT and (
+                not hasattr(self, "argo_float_config") or self.argo_float_config is None
             ):
                 raise ConfigError(
                     "Planning has a waypoint with Argo float instrument, but configuration does not configure Argo floats."
                 )
-            if instrument == InstrumentType.CTD and self.ctd_config is None:
+            if instrument == InstrumentType.CTD and (
+                not hasattr(self, "ctd_config") or self.ctd_config is None
+            ):
                 raise ConfigError(
                     "Planning has a waypoint with CTD instrument, but configuration does not configure CTDs."
                 )
-            if instrument == InstrumentType.DRIFTER and self.drifter_config is None:
+            if instrument == InstrumentType.DRIFTER and (
+                not hasattr(self, "drifter_config") or self.drifter_config is None
+            ):
                 raise ConfigError(
                     "Planning has a waypoint with drifter instrument, but configuration does not configure drifters."
+                )
+
+            if instrument == InstrumentType.XBT and (
+                not hasattr(self, "xbt_config") or self.xbt_config is None
+            ):
+                raise ConfigError(
+                    "Planning has a waypoint with XBT instrument, but configuration does not configure XBT."
                 )
 
 
