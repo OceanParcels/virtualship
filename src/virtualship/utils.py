@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 import os
 import warnings
 from datetime import timedelta
 from functools import lru_cache
 from importlib.resources import files
-from typing import TextIO
+from pathlib import Path
+from typing import TYPE_CHECKING, TextIO
+
+if TYPE_CHECKING:
+    from virtualship.expedition.schedule import Schedule
+    from virtualship.expedition.ship_config import ShipConfig
 
 import pandas as pd
 import yaml
@@ -217,6 +224,29 @@ def _validate_numeric_mins_to_timedelta(value: int | float | timedelta) -> timed
     if isinstance(value, timedelta):
         return value
     return timedelta(minutes=value)
+
+
+def _get_schedule(expedition_dir: Path) -> Schedule:
+    """Load Schedule object from yaml config file in `expedition_dir`."""
+    from virtualship.expedition.schedule import Schedule
+
+    file_path = expedition_dir.joinpath(SCHEDULE)
+    try:
+        return Schedule.from_yaml(file_path)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f'Schedule not found. Save it to "{file_path}".') from e
+
+
+def _get_ship_config(expedition_dir: Path) -> ShipConfig:
+    from virtualship.expedition.ship_config import ShipConfig
+
+    file_path = expedition_dir.joinpath(SHIP_CONFIG)
+    try:
+        return ShipConfig.from_yaml(file_path)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(
+            f'Ship config not found. Save it to "{file_path}".'
+        ) from e
 
 
 def get_instruments_in_schedule(schedule):

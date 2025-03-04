@@ -16,14 +16,12 @@ from virtualship.cli._fetch import (
     get_space_time_region_hash,
     hash_to_filename,
 )
-from virtualship.expedition.do_expedition import (
-    _get_schedule,
-    _get_ship_config,
-    do_expedition,
-)
+from virtualship.expedition.do_expedition import do_expedition
 from virtualship.utils import (
     SCHEDULE,
     SHIP_CONFIG,
+    _get_schedule,
+    _get_ship_config,
     get_instruments_in_schedule,
     mfp_to_yaml,
 )
