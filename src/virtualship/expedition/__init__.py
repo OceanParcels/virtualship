@@ -1,6 +1,7 @@
 """Everything for simulating an expedition."""
 
 from .do_expedition import do_expedition
+from .input_data import InputData
 from .instrument_type import InstrumentType
 from .schedule import Schedule
 from .ship_config import (
@@ -19,6 +20,7 @@ __all__ = [
     "ArgoFloatConfig",
     "CTDConfig",
     "DrifterConfig",
+    "InputData",
     "InstrumentType",
     "Schedule",
     "ShipConfig",
