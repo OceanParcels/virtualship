@@ -9,8 +9,8 @@ import pyproj
 from virtualship.cli._fetch import get_existing_download, get_space_time_region_hash
 from virtualship.utils import (
     CHECKPOINT,
-    SCHEDULE,
-    SHIP_CONFIG,
+    _get_schedule,
+    _get_ship_config,
     get_instruments_in_schedule,
 )
 
@@ -129,16 +129,6 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     print("Your measurements can be found in the results directory.")
 
 
-def _get_ship_config(expedition_dir: Path) -> ShipConfig | None:
-    file_path = expedition_dir.joinpath(SHIP_CONFIG)
-    try:
-        return ShipConfig.from_yaml(file_path)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(
-            f'Ship config not found. Save it to "{file_path}".'
-        ) from e
-
-
 def _load_input_data(
     expedition_dir: Path,
     schedule: Schedule,
@@ -172,24 +162,6 @@ def _load_input_data(
         load_xbt=ship_config.xbt_config is not None,
         load_ship_underwater_st=ship_config.ship_underwater_st_config is not None,
     )
-
-
-def _get_schedule(expedition_dir: Path) -> Schedule:
-    """Load Schedule object from yaml config file in `expedition_dir`."""
-    file_path = expedition_dir.joinpath(SCHEDULE)
-    try:
-        return Schedule.from_yaml(file_path)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(f'Schedule not found. Save it to "{file_path}".') from e
-
-
-def _get_ship_config(expedition_dir: Path) -> Schedule:
-    """Load Schedule object from yaml config file in `expedition_dir`."""
-    file_path = expedition_dir.joinpath(SHIP_CONFIG)
-    try:
-        return ShipConfig.from_yaml(file_path)
-    except FileNotFoundError as e:
-        raise FileNotFoundError(f'Config not found. Save it to "{file_path}".') from e
 
 
 def _load_checkpoint(expedition_dir: Path) -> Checkpoint | None:
