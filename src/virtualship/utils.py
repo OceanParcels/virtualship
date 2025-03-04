@@ -247,13 +247,3 @@ def _get_ship_config(expedition_dir: Path) -> ShipConfig:
         raise FileNotFoundError(
             f'Ship config not found. Save it to "{file_path}".'
         ) from e
-
-
-def get_instruments_in_schedule(schedule):
-    instruments_in_schedule = []
-    for waypoint in schedule.waypoints:
-        if waypoint.instrument:
-            for instrument in waypoint.instrument:
-                if instrument:
-                    instruments_in_schedule.append(instrument.name)
-    return instruments_in_schedule

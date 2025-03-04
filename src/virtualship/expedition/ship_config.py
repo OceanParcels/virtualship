@@ -10,6 +10,9 @@ import yaml
 
 from virtualship.utils import _validate_numeric_mins_to_timedelta
 
+from .instrument_type import InstrumentType
+from .schedule import Schedule
+
 
 class ArgoFloatConfig(pydantic.BaseModel):
     """Configuration for argos floats."""
@@ -188,3 +191,76 @@ class ShipConfig(pydantic.BaseModel):
         with open(file_path) as file:
             data = yaml.safe_load(file)
         return ShipConfig(**data)
+
+    def verify(self, schedule: Schedule) -> None:
+        """
+        Verify the ship configuration against the provided schedule.
+
+        This function performs two main tasks:
+        1. Removes instrument configurations that are not present in the schedule.
+        2. Verifies that all instruments in the schedule have corresponding configurations.
+
+        Parameters
+        ----------
+        schedule : Schedule
+            The schedule object containing the planned instruments and waypoints.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ConfigError
+            If an instrument in the schedule does not have a corresponding configuration.
+
+        Notes
+        -----
+        - Prints a message if a configuration is provided for an instrument not in the schedule.
+        - Sets the configuration to None for instruments not in the schedule.
+        - Raises a ConfigError for each instrument in the schedule that lacks a configuration.
+
+        """
+        instruments_in_schedule = schedule.get_instruments()
+
+        for instrument in [
+            "ARGO_FLOAT",
+            "DRIFTER",
+            "XBT",
+            "CTD",
+        ]:  # TODO make instrument names consistent capitals or lowercase throughout codebase
+            if (
+                hasattr(self, instrument.lower() + "_config")
+                and instrument not in instruments_in_schedule
+            ):
+                print(f"{instrument} configuration provided but not in schedule.")
+                setattr(self, instrument.lower() + "_config", None)
+
+        # verify instruments in schedule have configuration
+        for instrument in instruments_in_schedule:
+            try:
+                InstrumentType(instrument)
+            except ValueError as e:
+                raise NotImplementedError("Instrument not supported.") from e
+
+            if (
+                instrument == InstrumentType.ARGO_FLOAT
+                and self.argo_float_config is None
+            ):
+                raise ConfigError(
+                    "Planning has a waypoint with Argo float instrument, but configuration does not configure Argo floats."
+                )
+            if instrument == InstrumentType.CTD and self.ctd_config is None:
+                raise ConfigError(
+                    "Planning has a waypoint with CTD instrument, but configuration does not configure CTDs."
+                )
+            if instrument == InstrumentType.DRIFTER and self.drifter_config is None:
+                raise ConfigError(
+                    "Planning has a waypoint with drifter instrument, but configuration does not configure drifters."
+                )
+
+
+class ConfigError(RuntimeError):
+    """An error in the config."""
+
+    pass
