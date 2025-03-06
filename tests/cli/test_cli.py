@@ -15,7 +15,7 @@ def copernicus_subset_no_download(monkeypatch):
         Path(output_directory).joinpath(output_filename).touch()
 
     monkeypatch.setattr(
-        "virtualship.cli.commands.copernicusmarine.subset", fake_download
+        "virtualship.cli._fetch.copernicusmarine.subset", fake_download
     )
     yield
 
