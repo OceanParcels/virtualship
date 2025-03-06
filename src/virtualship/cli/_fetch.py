@@ -45,10 +45,12 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
     schedule = _get_schedule(path)
     ship_config = _get_ship_config(path)
 
-    if schedule.space_time_region is None:
-        raise ValueError(
-            "space_time_region not found in schedule, please define it to fetch the data."
-        )
+    schedule.verify(
+        ship_config.ship_speed_knots,
+        input_data=None,
+        check_space_time_region=True,
+        ignore_missing_fieldsets=True
+    )
 
     space_time_region_hash = get_space_time_region_hash(schedule.space_time_region)
 
