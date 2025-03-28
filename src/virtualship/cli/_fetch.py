@@ -8,7 +8,12 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from virtualship.utils import _dump_yaml, _generic_load_yaml, _get_schedule, _get_ship_config
+from virtualship.utils import (
+    _dump_yaml,
+    _generic_load_yaml,
+    _get_schedule,
+    _get_ship_config,
+)
 
 if TYPE_CHECKING:
     from virtualship.expedition.space_time_region import SpaceTimeRegion
@@ -18,7 +23,6 @@ import copernicusmarine
 from copernicusmarine.core_functions.credentials_utils import InvalidUsernameOrPassword
 
 import virtualship.cli._creds as creds
-
 from virtualship.utils import SCHEDULE
 
 DOWNLOAD_METADATA = "download_metadata.yaml"
@@ -49,7 +53,7 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
         ship_config.ship_speed_knots,
         input_data=None,
         check_space_time_region=True,
-        ignore_missing_fieldsets=True
+        ignore_missing_fieldsets=True,
     )
 
     space_time_region_hash = get_space_time_region_hash(schedule.space_time_region)
@@ -80,7 +84,10 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
     shutil.copyfile(path / SCHEDULE, download_folder / SCHEDULE)
 
     if (
-        ({"XBT", "CTD", "SHIP_UNDERWATER_ST"} & set(instrument.name for instrument in instruments_in_schedule))
+        (
+            {"XBT", "CTD", "SHIP_UNDERWATER_ST"}
+            & set(instrument.name for instrument in instruments_in_schedule)
+        )
         or hasattr(ship_config, "ship_underwater_st_config")
         or hasattr(ship_config, "adcp_config")
     ):

@@ -7,9 +7,8 @@ import pytest
 from virtualship import Location
 from virtualship.expedition import Waypoint
 from virtualship.expedition.do_expedition import _load_input_data
+from virtualship.expedition.schedule import Schedule, ScheduleError
 from virtualship.utils import _get_ship_config
-from virtualship.expedition.schedule import ScheduleError, Schedule
-
 
 projection = pyproj.Geod(ellps="WGS84")
 
@@ -56,81 +55,107 @@ def test_get_instruments() -> None:
         waypoints=[
             Waypoint(location=Location(0, 0), instrument=["CTD"]),
             Waypoint(location=Location(1, 0), instrument=["XBT", "ARGO_FLOAT"]),
-            Waypoint(location=Location(1, 0), instrument=["CTD"])
+            Waypoint(location=Location(1, 0), instrument=["CTD"]),
         ]
     )
 
-    assert set(instrument.name for instrument in schedule.get_instruments()) == {"CTD", "XBT", "ARGO_FLOAT"}
+    assert set(instrument.name for instrument in schedule.get_instruments()) == {
+        "CTD",
+        "XBT",
+        "ARGO_FLOAT",
+    }
 
 
 @pytest.mark.parametrize(
     "schedule,check_space_time_region,error,match",
     [
         pytest.param(
-            Schedule(
-                waypoints=[]
-            ),
+            Schedule(waypoints=[]),
             False,
             ScheduleError,
             "At least one waypoint must be provided.",
-            id="NoWaypoints"
+            id="NoWaypoints",
         ),
         pytest.param(
             Schedule(
                 waypoints=[
                     Waypoint(location=Location(0, 0)),
-                    Waypoint(location=Location(1, 0), time=datetime(2022, 1, 1, 1, 0, 0)),
+                    Waypoint(
+                        location=Location(1, 0), time=datetime(2022, 1, 1, 1, 0, 0)
+                    ),
                 ]
             ),
             False,
             ScheduleError,
             "First waypoint must have a specified time.",
-            id="FirstWaypointHasTime"
+            id="FirstWaypointHasTime",
         ),
         pytest.param(
             Schedule(
                 waypoints=[
-                    Waypoint(location=Location(0, 0), time=datetime(2022, 1, 2, 1, 0, 0)),
+                    Waypoint(
+                        location=Location(0, 0), time=datetime(2022, 1, 2, 1, 0, 0)
+                    ),
                     Waypoint(location=Location(0, 0)),
-                    Waypoint(location=Location(1, 0), time=datetime(2022, 1, 1, 1, 0, 0)),
+                    Waypoint(
+                        location=Location(1, 0), time=datetime(2022, 1, 1, 1, 0, 0)
+                    ),
                 ]
             ),
             False,
             ScheduleError,
             "Each waypoint should be timed after all previous waypoints",
-            id="SequentialWaypoints"
+            id="SequentialWaypoints",
         ),
         pytest.param(
             Schedule(
                 waypoints=[
-                    Waypoint(location=Location(0, 0), time=datetime(2022, 1, 1, 1, 0, 0)),
-                    Waypoint(location=Location(1, 0), time=datetime(2022, 1, 1, 1, 1, 0)),
+                    Waypoint(
+                        location=Location(0, 0), time=datetime(2022, 1, 1, 1, 0, 0)
+                    ),
+                    Waypoint(
+                        location=Location(1, 0), time=datetime(2022, 1, 1, 1, 1, 0)
+                    ),
                 ]
             ),
             False,
             ScheduleError,
             "Waypoint planning is not valid: would arrive too late at waypoint number 2...",
-            id="NotEnoughTime"
+            id="NotEnoughTime",
         ),
         pytest.param(
             Schedule(
                 waypoints=[
-                    Waypoint(location=Location(0, 0), time=datetime(2022, 1, 1, 1, 0, 0)),
-                    Waypoint(location=Location(1, 0), time=datetime(2022, 1, 2, 1, 1, 0)),
+                    Waypoint(
+                        location=Location(0, 0), time=datetime(2022, 1, 1, 1, 0, 0)
+                    ),
+                    Waypoint(
+                        location=Location(1, 0), time=datetime(2022, 1, 2, 1, 1, 0)
+                    ),
                 ]
             ),
             True,
             ScheduleError,
             "space_time_region not found in schedule, please define it to fetch the data.",
-            id="NoSpaceTimeRegion"
+            id="NoSpaceTimeRegion",
         ),
-    ]
+    ],
 )
-def test_verify_schedule_errors(schedule: Schedule, check_space_time_region: bool, error, match) -> None:
-
+def test_verify_schedule_errors(
+    schedule: Schedule, check_space_time_region: bool, error, match
+) -> None:
     ship_config = _get_ship_config(expedition_dir)
 
-    input_data = _load_input_data(expedition_dir, schedule, ship_config, input_data=Path("expedition_dir/input_data"))
+    input_data = _load_input_data(
+        expedition_dir,
+        schedule,
+        ship_config,
+        input_data=Path("expedition_dir/input_data"),
+    )
 
     with pytest.raises(error, match=match):
-        schedule.verify(ship_config.ship_speed_knots, input_data, check_space_time_region=check_space_time_region)
+        schedule.verify(
+            ship_config.ship_speed_knots,
+            input_data,
+            check_space_time_region=check_space_time_region,
+        )

@@ -8,11 +8,8 @@ from virtualship.expedition.do_expedition import do_expedition
 from virtualship.utils import (
     SCHEDULE,
     SHIP_CONFIG,
-    _get_schedule,
-    _get_ship_config,
     mfp_to_yaml,
 )
-from virtualship.utils import SCHEDULE, SHIP_CONFIG, mfp_to_yaml
 
 
 @click.command()
@@ -96,7 +93,6 @@ def fetch(path: str | Path, username: str | None, password: str | None) -> None:
     be provided on prompt, via command line arguments, or via a YAML config file. Run
     `virtualship fetch` on a expedition for more info.
     """
-
     _fetch(path, username, password)
 
 
