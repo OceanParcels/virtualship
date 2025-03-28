@@ -4,9 +4,7 @@ import pytest
 
 from virtualship.expedition.schedule import Schedule
 from virtualship.expedition.ship_config import ConfigError, ShipConfig
-
 from virtualship.utils import get_example_config, get_example_schedule
-
 
 expedition_dir = Path("expedition_dir")
 
@@ -21,8 +19,14 @@ def schedule(tmp_file):
 @pytest.fixture
 def schedule_no_xbt(schedule):
     for waypoint in schedule.waypoints:
-        if waypoint.instrument and any(instrument.name == "XBT" for instrument in waypoint.instrument):
-            waypoint.instrument = [instrument for instrument in waypoint.instrument if instrument.name != 'XBT']
+        if waypoint.instrument and any(
+            instrument.name == "XBT" for instrument in waypoint.instrument
+        ):
+            waypoint.instrument = [
+                instrument
+                for instrument in waypoint.instrument
+                if instrument.name != "XBT"
+            ]
 
     return schedule
 
@@ -36,25 +40,25 @@ def ship_config(tmp_file):
 
 @pytest.fixture
 def ship_config_no_xbt(ship_config):
-    delattr(ship_config, 'xbt_config')
+    delattr(ship_config, "xbt_config")
     return ship_config
 
 
 @pytest.fixture
 def ship_config_no_ctd(ship_config):
-    delattr(ship_config, 'ctd_config')
+    delattr(ship_config, "ctd_config")
     return ship_config
 
 
 @pytest.fixture
 def ship_config_no_argo_float(ship_config):
-    delattr(ship_config, 'argo_float_config')
+    delattr(ship_config, "argo_float_config")
     return ship_config
 
 
 @pytest.fixture
 def ship_config_no_drifter(ship_config):
-    delattr(ship_config, 'drifter_config')
+    delattr(ship_config, "drifter_config")
     return ship_config
 
 
@@ -65,12 +69,10 @@ def test_import_export_ship_config(ship_config, tmp_file) -> None:
 
 
 def test_verify_ship_config(ship_config, schedule) -> None:
-
     ship_config.verify(schedule)
 
 
 def test_verify_ship_config_no_instrument(ship_config, schedule_no_xbt) -> None:
-
     ship_config.verify(schedule_no_xbt)
 
 
@@ -81,29 +83,31 @@ def test_verify_ship_config_no_instrument(ship_config, schedule_no_xbt) -> None:
             "ship_config_no_xbt",
             ConfigError,
             "Planning has a waypoint with XBT instrument, but configuration does not configure XBT.",
-            id="ShipConfigNoXBT"
+            id="ShipConfigNoXBT",
         ),
         pytest.param(
             "ship_config_no_ctd",
             ConfigError,
             "Planning has a waypoint with CTD instrument, but configuration does not configure CTD.",
-            id="ShipConfigNoCTD"
+            id="ShipConfigNoCTD",
         ),
         pytest.param(
             "ship_config_no_argo_float",
             ConfigError,
             "Planning has a waypoint with Argo float instrument, but configuration does not configure Argo floats.",
-            id="ShipConfigNoARGO_FLOAT"
+            id="ShipConfigNoARGO_FLOAT",
         ),
         pytest.param(
             "ship_config_no_drifter",
             ConfigError,
             "Planning has a waypoint with drifter instrument, but configuration does not configure drifters.",
-            id="ShipConfigNoDRIFTER"
+            id="ShipConfigNoDRIFTER",
         ),
-    ]
+    ],
 )
-def test_verify_ship_config_errors(request, schedule, ship_config_fixture, error, match) -> None:
+def test_verify_ship_config_errors(
+    request, schedule, ship_config_fixture, error, match
+) -> None:
     ship_config = request.getfixturevalue(ship_config_fixture)
 
     with pytest.raises(error, match=match):

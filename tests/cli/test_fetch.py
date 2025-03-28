@@ -7,6 +7,7 @@ from virtualship.cli._fetch import (
     DOWNLOAD_METADATA,
     DownloadMetadata,
     IncompleteDownloadError,
+    _fetch,
     assert_complete_download,
     complete_download,
     create_hash,
@@ -15,17 +16,9 @@ from virtualship.cli._fetch import (
     hash_model,
     hash_to_filename,
 )
-
-
-from pathlib import Path
-
-import pytest
-
-from virtualship.cli._fetch import _fetch
-from virtualship.expedition.ship_config import ShipConfig
 from virtualship.expedition.schedule import Schedule
-from virtualship.utils import get_example_schedule, get_example_config
-
+from virtualship.expedition.ship_config import ShipConfig
+from virtualship.utils import get_example_config, get_example_schedule
 
 
 @pytest.fixture
@@ -35,9 +28,7 @@ def copernicus_subset_no_download(monkeypatch):
     def fake_download(output_filename, output_directory, **_):
         Path(output_directory).joinpath(output_filename).touch()
 
-    monkeypatch.setattr(
-        "virtualship.cli._fetch.copernicusmarine.subset", fake_download
-    )
+    monkeypatch.setattr("virtualship.cli._fetch.copernicusmarine.subset", fake_download)
     yield
 
 
