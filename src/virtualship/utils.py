@@ -157,6 +157,7 @@ def mfp_to_yaml(coordinates_file_path: str, yaml_output_path: str):  # noqa: D41
     instrument_max_depths = {
         "XBT": 2000,
         "CTD": 5000,
+        "CTD_BGC": 5000,
         "DRIFTER": 1,
         "ARGO_FLOAT": 2000,
     }
