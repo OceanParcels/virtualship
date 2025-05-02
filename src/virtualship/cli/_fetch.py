@@ -38,6 +38,8 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
     be provided on prompt, via command line arguments, or via a YAML config file. Run
     `virtualship fetch` on an expedition for more info.
     """
+    from virtualship.expedition.instrument_type import InstrumentType
+
     if sum([username is None, password is None]) == 1:
         raise ValueError("Both username and password must be provided when using CLI.")
 
@@ -88,10 +90,10 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             {"XBT", "CTD", "SHIP_UNDERWATER_ST"}
             & set(instrument.name for instrument in instruments_in_schedule)
         )
-        or hasattr(ship_config, "ship_underwater_st_config")
-        or hasattr(ship_config, "adcp_config")
+        or ship_config.ship_underwater_st_config is not None
+        or ship_config.adcp_config is not None
     ):
-        print("Ship data will be downloaded")
+        print("Ship data will be downloaded. Please wait...")
 
         # Define all ship datasets to download, including bathymetry
         download_dict = {
@@ -145,8 +147,8 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
         complete_download(download_folder)
         click.echo("Ship data download based on space-time region completed.")
 
-    if "DRIFTER" in instruments_in_schedule:
-        print("Drifter data will be downloaded")
+    if InstrumentType.DRIFTER in instruments_in_schedule:
+        print("Drifter data will be downloaded. Please wait...")
         drifter_download_dict = {
             "UVdata": {
                 "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
@@ -188,8 +190,8 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
         complete_download(download_folder)
         click.echo("Drifter data download based on space-time region completed.")
 
-    if "ARGO_FLOAT" in instruments_in_schedule:
-        print("Argo float data will be downloaded")
+    if InstrumentType.ARGO_FLOAT in instruments_in_schedule:
+        print("Argo float data will be downloaded. Please wait...")
         argo_download_dict = {
             "UVdata": {
                 "dataset_id": "cmems_mod_glo_phy-cur_anfc_0.083deg_PT6H-i",
