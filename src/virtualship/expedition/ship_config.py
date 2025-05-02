@@ -3,15 +3,26 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from enum import Enum
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pydantic
 import yaml
 
 from virtualship.utils import _validate_numeric_mins_to_timedelta
 
-from .instrument_type import InstrumentType
-from .schedule import Schedule
+if TYPE_CHECKING:
+    from .schedule import Schedule
+
+
+class InstrumentType(Enum):
+    """Types of instruments."""
+
+    CTD = "CTD"
+    DRIFTER = "DRIFTER"
+    ARGO_FLOAT = "ARGO_FLOAT"
+    XBT = "XBT"
 
 
 class ArgoFloatConfig(pydantic.BaseModel):

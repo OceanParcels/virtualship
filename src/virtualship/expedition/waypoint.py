@@ -1,21 +1,23 @@
 """Waypoint class."""
 
+from __future__ import annotations
+
 from datetime import datetime
 
-from pydantic import BaseModel, field_serializer
+import pydantic
 
 from ..location import Location
-from .instrument_type import InstrumentType
+from .ship_config import InstrumentType
 
 
-class Waypoint(BaseModel):
+class Waypoint(pydantic.BaseModel):
     """A Waypoint to sail to with an optional time and an optional instrument."""
 
     location: Location
     time: datetime | None = None
     instrument: InstrumentType | list[InstrumentType] | None = None
 
-    @field_serializer("instrument")
+    @pydantic.field_serializer("instrument")
     def serialize_instrument(self, instrument):
         """Ensure InstrumentType is serialized as a string (or list of strings)."""
         if isinstance(instrument, list):
