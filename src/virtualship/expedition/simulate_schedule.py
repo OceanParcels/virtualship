@@ -13,9 +13,8 @@ from ..instruments.drifter import Drifter
 from ..instruments.xbt import XBT
 from ..location import Location
 from ..spacetime import Spacetime
-from .instrument_type import InstrumentType
 from .schedule import Schedule
-from .ship_config import ShipConfig
+from .ship_config import InstrumentType, ShipConfig
 from .waypoint import Waypoint
 
 
