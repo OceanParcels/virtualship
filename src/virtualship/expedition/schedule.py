@@ -12,7 +12,7 @@ import yaml
 from parcels import FieldSet
 
 from .input_data import InputData
-from .instrument_type import InstrumentType
+from .ship_config import InstrumentType
 from .space_time_region import SpaceTimeRegion
 from .waypoint import Waypoint
 
