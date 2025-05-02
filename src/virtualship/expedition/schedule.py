@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import itertools
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pydantic
@@ -11,12 +11,27 @@ import pyproj
 import yaml
 from parcels import FieldSet
 
+from ..location import Location
 from .input_data import InputData
 from .ship_config import InstrumentType
 from .space_time_region import SpaceTimeRegion
-from .waypoint import Waypoint
 
 projection: pyproj.Geod = pyproj.Geod(ellps="WGS84")
+
+
+class Waypoint(pydantic.BaseModel):
+    """A Waypoint to sail to with an optional time and an optional instrument."""
+
+    location: Location
+    time: datetime | None = None
+    instrument: InstrumentType | list[InstrumentType] | None = None
+
+    @pydantic.field_serializer("instrument")
+    def serialize_instrument(self, instrument):
+        """Ensure InstrumentType is serialized as a string (or list of strings)."""
+        if isinstance(instrument, list):
+            return [inst.value for inst in instrument]
+        return instrument.value if instrument else None
 
 
 class Schedule(pydantic.BaseModel):

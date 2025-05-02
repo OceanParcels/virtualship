@@ -139,14 +139,13 @@ def mfp_to_yaml(coordinates_file_path: str, yaml_output_path: str):  # noqa: D41
 
     """
     # Importing Schedule and related models from expedition module
-    from virtualship.expedition.schedule import Schedule
+    from virtualship.expedition.schedule import Location, Schedule, Waypoint
     from virtualship.expedition.ship_config import InstrumentType
     from virtualship.expedition.space_time_region import (
         SpaceTimeRegion,
         SpatialRange,
         TimeRange,
     )
-    from virtualship.expedition.waypoint import Location, Waypoint
 
     # Read data from file
     coordinates_data = load_coordinates(coordinates_file_path)

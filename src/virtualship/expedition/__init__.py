@@ -2,7 +2,7 @@
 
 from .do_expedition import do_expedition
 from .input_data import InputData
-from .schedule import Schedule
+from .schedule import Schedule, Waypoint
 from .ship_config import (
     ADCPConfig,
     ArgoFloatConfig,
@@ -12,7 +12,6 @@ from .ship_config import (
     ShipUnderwaterSTConfig,
 )
 from .space_time_region import SpaceTimeRegion
-from .waypoint import Waypoint
 
 __all__ = [
     "ADCPConfig",
