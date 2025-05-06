@@ -5,6 +5,7 @@ from __future__ import annotations
 import itertools
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pydantic
 import pyproj
@@ -12,10 +13,11 @@ import yaml
 from parcels import FieldSet
 
 from ..location import Location
-from .input_data import InputData
 from .ship_config import InstrumentType
 from .space_time_region import SpaceTimeRegion
 
+if TYPE_CHECKING:
+    from .input_data import InputData
 projection: pyproj.Geod = pyproj.Geod(ellps="WGS84")
 
 
