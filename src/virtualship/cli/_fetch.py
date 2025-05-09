@@ -87,7 +87,7 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
 
     if (
         (
-            {"XBT", "CTD", "SHIP_UNDERWATER_ST"}
+            {"XBT", "CTD", "CDT_BGC", "SHIP_UNDERWATER_ST"}
             & set(instrument.name for instrument in instruments_in_schedule)
         )
         or ship_config.ship_underwater_st_config is not None
