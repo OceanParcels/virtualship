@@ -81,6 +81,28 @@ class CTDConfig(pydantic.BaseModel):
         return _validate_numeric_mins_to_timedelta(value)
 
 
+class CTD_BGCConfig(pydantic.BaseModel):
+    """Configuration for CTD_BGC instrument."""
+
+    stationkeeping_time: timedelta = pydantic.Field(
+        serialization_alias="stationkeeping_time_minutes",
+        validation_alias="stationkeeping_time_minutes",
+        gt=timedelta(),
+    )
+    min_depth_meter: float = pydantic.Field(le=0.0)
+    max_depth_meter: float = pydantic.Field(le=0.0)
+
+    model_config = pydantic.ConfigDict(populate_by_name=True)
+
+    @pydantic.field_serializer("stationkeeping_time")
+    def _serialize_stationkeeping_time(self, value: timedelta, _info):
+        return value.total_seconds() / 60.0
+
+    @pydantic.field_validator("stationkeeping_time", mode="before")
+    def _validate_stationkeeping_time(cls, value: int | float | timedelta) -> timedelta:
+        return _validate_numeric_mins_to_timedelta(value)
+
+
 class ShipUnderwaterSTConfig(pydantic.BaseModel):
     """Configuration for underwater ST."""
 
@@ -158,6 +180,13 @@ class ShipConfig(pydantic.BaseModel):
     CTD configuration.
 
     If None, no CTDs can be cast.
+    """
+
+    ctd_bgc_config: CTD_BGCConfig | None = None
+    """
+    CTD_BGC configuration.
+
+    If None, no BGC CTDs can be cast.
     """
 
     ship_underwater_st_config: ShipUnderwaterSTConfig | None = None
@@ -240,6 +269,7 @@ class ShipConfig(pydantic.BaseModel):
             "DRIFTER",
             "XBT",
             "CTD",
+            "CTD_BGC",
         ]:  # TODO make instrument names consistent capitals or lowercase throughout codebase
             if hasattr(self, instrument.lower() + "_config") and not any(
                 instrument == schedule_instrument.name
@@ -249,6 +279,7 @@ class ShipConfig(pydantic.BaseModel):
                 setattr(self, instrument.lower() + "_config", None)
 
         # verify instruments in schedule have configuration
+        # TODO: the ConfigError message could be improved to explain that the **schedule** file has X instrument but the **ship_config** file does not
         for instrument in instruments_in_schedule:
             try:
                 InstrumentType(instrument)
@@ -266,6 +297,12 @@ class ShipConfig(pydantic.BaseModel):
             ):
                 raise ConfigError(
                     "Planning has a waypoint with CTD instrument, but configuration does not configure CTDs."
+                )
+            if instrument == InstrumentType.CTD_BGC and (
+                not hasattr(self, "ctd_bgc_config") or self.ctd_bgc_config is None
+            ):
+                raise ConfigError(
+                    "Planning has a waypoint with CTD_BGC instrument, but configuration does not configure CTD_BGCs."
                 )
             if instrument == InstrumentType.DRIFTER and (
                 not hasattr(self, "drifter_config") or self.drifter_config is None
