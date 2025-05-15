@@ -144,7 +144,6 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             shutil.rmtree(download_folder)
             raise e
 
-        complete_download(download_folder)
         click.echo("Ship data download based on space-time region completed.")
 
     if InstrumentType.DRIFTER in instruments_in_schedule:
@@ -187,7 +186,6 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             shutil.rmtree(download_folder)
             raise e
 
-        complete_download(download_folder)
         click.echo("Drifter data download based on space-time region completed.")
 
     if InstrumentType.ARGO_FLOAT in instruments_in_schedule:
@@ -235,7 +233,6 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             shutil.rmtree(download_folder)
             raise e
 
-        complete_download(download_folder)
         click.echo("Argo_float data download based on space-time region completed.")
 
     if InstrumentType.CTD_BGC in instruments_in_schedule:
@@ -279,8 +276,9 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             shutil.rmtree(download_folder)
             raise e
 
-        complete_download(download_folder)
         click.echo("CTD_BGC data download based on space-time region completed.")
+
+    complete_download(download_folder)
 
 
 def _hash(s: str, *, length: int) -> str:
