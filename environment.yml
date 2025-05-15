@@ -16,6 +16,7 @@ dependencies:
 
   # linting
   - pre-commit
+  - mypy
 
   # Testing
   - pytest

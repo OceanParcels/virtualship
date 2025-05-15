@@ -50,7 +50,7 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     checkpoint.verify(schedule)
 
     # load fieldsets
-    input_data = _load_input_data(
+    loaded_input_data = _load_input_data(
         expedition_dir=expedition_dir,
         schedule=schedule,
         ship_config=ship_config,
@@ -58,7 +58,7 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     )
 
     # verify schedule is valid
-    schedule.verify(ship_config.ship_speed_knots, input_data)
+    schedule.verify(ship_config.ship_speed_knots, loaded_input_data)
 
     # simulate the schedule
     schedule_results = simulate_schedule(
@@ -98,7 +98,7 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     simulate_measurements(
         expedition_dir,
         ship_config,
-        input_data,
+        loaded_input_data,
         schedule_results.measurements_to_simulate,
     )
     print("Done simulating measurements.")
@@ -130,6 +130,10 @@ def _load_input_data(
     if input_data is None:
         space_time_region_hash = get_space_time_region_hash(schedule.space_time_region)
         input_data = get_existing_download(expedition_dir, space_time_region_hash)
+
+    assert input_data is not None, (
+        "Input data hasn't been found. Have you run the `virtualship fetch` command?"
+    )
 
     return InputData.load(
         directory=input_data,
