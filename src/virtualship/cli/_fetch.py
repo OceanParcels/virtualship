@@ -87,7 +87,7 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
 
     if (
         (
-            {"XBT", "CTD", "SHIP_UNDERWATER_ST"}
+            {"XBT", "CTD", "CDT_BGC", "SHIP_UNDERWATER_ST"}
             & set(instrument.name for instrument in instruments_in_schedule)
         )
         or ship_config.ship_underwater_st_config is not None
@@ -144,7 +144,6 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             shutil.rmtree(download_folder)
             raise e
 
-        complete_download(download_folder)
         click.echo("Ship data download based on space-time region completed.")
 
     if InstrumentType.DRIFTER in instruments_in_schedule:
@@ -187,7 +186,6 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             shutil.rmtree(download_folder)
             raise e
 
-        complete_download(download_folder)
         click.echo("Drifter data download based on space-time region completed.")
 
     if InstrumentType.ARGO_FLOAT in instruments_in_schedule:
@@ -235,8 +233,52 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             shutil.rmtree(download_folder)
             raise e
 
-        complete_download(download_folder)
         click.echo("Argo_float data download based on space-time region completed.")
+
+    if InstrumentType.CTD_BGC in instruments_in_schedule:
+        print("CTD_BGC data will be downloaded. Please wait...")
+
+        ctd_bgc_download_dict = {
+            "o2data": {
+                "dataset_id": "cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m",
+                "variables": ["o2"],
+                "output_filename": "ctd_bgc_o2.nc",
+            },
+            "chlorodata": {
+                "dataset_id": "cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m",
+                "variables": ["chl"],
+                "output_filename": "ctd_bgc_chloro.nc",
+            },
+        }
+
+        # Iterate over all datasets and download each based on space_time_region
+        try:
+            for dataset in ctd_bgc_download_dict.values():
+                copernicusmarine.subset(
+                    dataset_id=dataset["dataset_id"],
+                    variables=dataset["variables"],
+                    minimum_longitude=spatial_range.minimum_longitude - 3.0,
+                    maximum_longitude=spatial_range.maximum_longitude + 3.0,
+                    minimum_latitude=spatial_range.minimum_latitude - 3.0,
+                    maximum_latitude=spatial_range.maximum_latitude + 3.0,
+                    start_datetime=start_datetime,
+                    end_datetime=end_datetime + timedelta(days=21),
+                    minimum_depth=abs(1),
+                    maximum_depth=abs(spatial_range.maximum_depth),
+                    output_filename=dataset["output_filename"],
+                    output_directory=download_folder,
+                    username=username,
+                    password=password,
+                    overwrite=True,
+                    coordinates_selection_method="outside",
+                )
+        except InvalidUsernameOrPassword as e:
+            shutil.rmtree(download_folder)
+            raise e
+
+        click.echo("CTD_BGC data download based on space-time region completed.")
+
+    complete_download(download_folder)
 
 
 def _hash(s: str, *, length: int) -> str:
