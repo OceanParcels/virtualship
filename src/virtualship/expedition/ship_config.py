@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class InstrumentType(Enum):
-    """Types of instruments."""
+    """Types of the instruments."""
 
     CTD = "CTD"
     CTD_BGC = "CTD_BGC"
