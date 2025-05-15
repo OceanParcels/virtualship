@@ -6,6 +6,7 @@ from pathlib import Path
 from ..instruments.adcp import simulate_adcp
 from ..instruments.argo_float import simulate_argo_floats
 from ..instruments.ctd import simulate_ctd
+from ..instruments.ctd_bgc import simulate_ctd_bgc
 from ..instruments.drifter import simulate_drifters
 from ..instruments.ship_underwater_st import simulate_ship_underwater_st
 from ..instruments.xbt import simulate_xbt
@@ -72,6 +73,19 @@ def simulate_measurements(
             out_path=expedition_dir.joinpath("results", "ctd.zarr"),
             fieldset=input_data.ctd_fieldset,
             ctds=measurements.ctds,
+            outputdt=timedelta(seconds=10),
+        )
+
+    if len(measurements.ctd_bgcs) > 0:
+        print("Simulating BGC CTD casts.")
+        if ship_config.ctd_bgc_config is None:
+            raise RuntimeError("No configuration for CTD_BGC provided.")
+        if input_data.ctd_bgc_fieldset is None:
+            raise RuntimeError("No fieldset for CTD_BGC provided.")
+        simulate_ctd_bgc(
+            out_path=expedition_dir.joinpath("results", "ctd_bgc.zarr"),
+            fieldset=input_data.ctd_bgc_fieldset,
+            ctd_bgcs=measurements.ctd_bgcs,
             outputdt=timedelta(seconds=10),
         )
 

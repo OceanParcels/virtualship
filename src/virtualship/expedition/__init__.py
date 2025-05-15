@@ -6,6 +6,7 @@ from .schedule import Schedule, Waypoint
 from .ship_config import (
     ADCPConfig,
     ArgoFloatConfig,
+    CTD_BGCConfig,
     CTDConfig,
     DrifterConfig,
     ShipConfig,
@@ -17,6 +18,7 @@ __all__ = [
     "ADCPConfig",
     "ArgoFloatConfig",
     "CTDConfig",
+    "CTD_BGCConfig",
     "DrifterConfig",
     "InputData",
     "InstrumentType",
