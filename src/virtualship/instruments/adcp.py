@@ -1,10 +1,12 @@
 """ADCP instrument."""
 
+import logging
 from pathlib import Path
 
 import numpy as np
 from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 
+from ..log_filter import DuplicateFilter
 from ..spacetime import Spacetime
 
 # we specifically use ScipyParticle because we have many small calls to execute
@@ -30,6 +32,7 @@ def simulate_adcp(
     min_depth: float,
     num_bins: int,
     sample_points: list[Spacetime],
+    log_filter: bool = True,
 ) -> None:
     """
     Use Parcels to simulate an ADCP in a fieldset.
@@ -40,6 +43,7 @@ def simulate_adcp(
     :param min_depth: Minimum depth the ADCP can measure.
     :param num_bins: How many samples to take in the complete range between max_depth and min_depth.
     :param sample_points: The places and times to sample at.
+    :param log_filter: Whether to filter duplicate log messages (defaults to True). This is a bit of a hack, but it works and could be removed if changed in Parcels.
     """
     sample_points.sort(key=lambda p: p.time)
 
@@ -60,6 +64,12 @@ def simulate_adcp(
     # outputdt set to infinite as we just want to write at the end of every call to 'execute'
     out_file = particleset.ParticleFile(name=out_path, outputdt=np.inf)
 
+    #  whether to filter parcels duplicate log messages
+    if log_filter:
+        external_logger = logging.getLogger("parcels.tools.loggers")
+        for handler in external_logger.handlers:
+            handler.addFilter(DuplicateFilter())
+
     for point in sample_points:
         particleset.lon_nextloop[:] = point.location.lon
         particleset.lat_nextloop[:] = point.location.lat
@@ -76,3 +86,9 @@ def simulate_adcp(
             verbose_progress=False,
             output_file=out_file,
         )
+
+    # turn off log filter after .execute(), to prevent being applied universally to all loggers
+    # separate if statement from above to prevent error if log_filter is False
+    if log_filter:
+        for handler in external_logger.handlers:
+            handler.removeFilter(handler.filters[0])
