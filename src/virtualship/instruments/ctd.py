@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
+from ..log_filter import Filter, external_logger
 from ..spacetime import Spacetime
 
 
@@ -121,14 +122,23 @@ def simulate_ctd(
     # define output file for the simulation
     out_file = ctd_particleset.ParticleFile(name=out_path, outputdt=outputdt)
 
-    # execute simulation
-    ctd_particleset.execute(
-        [_sample_salinity, _sample_temperature, _ctd_cast],
-        endtime=fieldset_endtime,
-        dt=DT,
-        verbose_progress=False,
-        output_file=out_file,
-    )
+    # filter out Parcels logging messages
+    for handler in external_logger.handlers:
+        handler.addFilter(Filter())
+
+    # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
+    try:
+        ctd_particleset.execute(
+            [_sample_salinity, _sample_temperature, _ctd_cast],
+            endtime=fieldset_endtime,
+            dt=DT,
+            verbose_progress=False,
+            output_file=out_file,
+        )
+
+    finally:
+        for handler in external_logger.handlers:
+            handler.removeFilter(handler.filters[0])
 
     # there should be no particles left, as they delete themselves when they resurface
     if len(ctd_particleset.particledata) != 0:

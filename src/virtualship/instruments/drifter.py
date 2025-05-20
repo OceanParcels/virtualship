@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, Variable
 
+from ..log_filter import Filter, external_logger
 from ..spacetime import Spacetime
 
 
@@ -95,14 +96,24 @@ def simulate_drifters(
     else:
         actual_endtime = np.timedelta64(endtime)
 
-    # execute simulation
-    drifter_particleset.execute(
-        [AdvectionRK4, _sample_temperature, _check_lifetime],
-        endtime=actual_endtime,
-        dt=dt,
-        output_file=out_file,
-        verbose_progress=True,
-    )
+    # filter out Parcels logging messages
+    for handler in external_logger.handlers:
+        handler.addFilter(Filter())
+
+    # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
+    try:
+        # execute simulation
+        drifter_particleset.execute(
+            [AdvectionRK4, _sample_temperature, _check_lifetime],
+            endtime=actual_endtime,
+            dt=dt,
+            output_file=out_file,
+            verbose_progress=False,
+        )
+
+    finally:
+        for handler in external_logger.handlers:
+            handler.removeFilter(handler.filters[0])
 
     # if there are more particles left than the number of drifters with an indefinite endtime, warn the user
     if len(drifter_particleset.particledata) > len(
