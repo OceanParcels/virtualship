@@ -1,17 +1,12 @@
-"""Class for suppressing duplicate log messages in Python logging."""
-
 import logging
 
+# get Parcels logger
+external_logger = logging.getLogger("parcels.tools.loggers")
 
-class DuplicateFilter(logging.Filter):
-    """Logging filter for suppressing duplicate log messages."""
 
-    def __init__(self):
-        self.last_log = None
+# filter class
+class Filter(logging.Filter):
+    """Logging filter for all (Parcels) logging messages."""
 
     def filter(self, record):
-        current_log = record.getMessage()
-        if current_log != self.last_log:
-            self.last_log = current_log
-            return True
         return False
