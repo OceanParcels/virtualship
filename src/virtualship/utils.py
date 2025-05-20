@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import itertools
 import os
+import sys
+import threading
+import time
 import warnings
 from datetime import timedelta
 from functools import lru_cache
@@ -247,3 +251,46 @@ def _get_ship_config(expedition_dir: Path) -> ShipConfig:
         raise FileNotFoundError(
             f'Ship config not found. Save it to "{file_path}".'
         ) from e
+
+
+class RotatePrint:
+    """A rotating symbol for the end of simulation print statements, to indicate progress."""
+
+    def __init__(self, message="Processing...", delay=0.18):
+        self.spinner_symbols = itertools.cycle(["-", "\\", "|", "/"])
+        self.delay = delay
+        self.message = message
+        self.running = False
+        self.spinner_thread = None
+        self.final_message_printed = False
+
+    def _spinner_task(self):
+        while self.running:
+            sys.stdout.write(f"\r{self.message} {next(self.spinner_symbols)}")
+            sys.stdout.flush()
+            time.sleep(self.delay)
+
+        # overwrite with the final message with completion message
+        if not self.final_message_printed:
+            sys.stdout.write(f"\r{self.message} [COMPLETED]\n")
+            sys.stdout.flush()
+            self.final_message_printed = True
+
+    def start(self):
+        self.running = True
+        self.final_message_printed = False
+        self.spinner_thread = threading.Thread(
+            target=self._spinner_task
+        )  # threading allows main function to complete and prevents rotator from hanging
+        self.spinner_thread.daemon = True
+        self.spinner_thread.start()
+
+    def stop(self):
+        self.running = False
+        if self.spinner_thread and self.spinner_thread.is_alive():
+            self.spinner_thread.join()
+
+        if not self.final_message_printed:
+            sys.stdout.write(f"\r{self.message} [COMPLETED]\n")
+            sys.stdout.flush()
+            self.final_message_printed = True
