@@ -132,6 +132,7 @@ def simulate_argo_floats(
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     :param endtime: Stop at this time, or if None, continue until the end of the fieldset.
     """
+    print("Simulating argo floats...")
     DT = 10.0  # dt of Argo float simulation integrator
 
     if len(argo_floats) == 0:
@@ -178,7 +179,6 @@ def simulate_argo_floats(
 
     # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
     try:
-        # execute simulation
         argo_float_particleset.execute(
             [
                 _argo_float_vertical_movement,
@@ -189,9 +189,10 @@ def simulate_argo_floats(
             endtime=actual_endtime,
             dt=DT,
             output_file=out_file,
-            verbose_progress=False,
+            verbose_progress=True,
         )
 
     finally:
+        print("... [COMPLETED]")
         for handler in external_logger.handlers:
             handler.removeFilter(handler.filters[0])

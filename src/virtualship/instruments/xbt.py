@@ -9,6 +9,7 @@ from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
 from ..log_filter import Filter, external_logger
 from ..spacetime import Spacetime
+from ..utils import RotatePrint
 
 
 @dataclass
@@ -70,6 +71,8 @@ def simulate_xbt(
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     :raises ValueError: Whenever provided XBTs, fieldset, are not compatible with this function.
     """
+    rotator = RotatePrint("Simulating XBTs")
+
     DT = 10.0  # dt of XBT simulation integrator
 
     if len(xbts) == 0:
@@ -131,8 +134,10 @@ def simulate_xbt(
         handler.addFilter(Filter())
 
     # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
+    # also suits starting and ending the rotator for custom log message
     try:
-        # execute simulation
+        rotator.start()
+
         xbt_particleset.execute(
             [_sample_temperature, _xbt_cast],
             endtime=fieldset_endtime,
@@ -142,6 +147,7 @@ def simulate_xbt(
         )
 
     finally:
+        rotator.stop()
         for handler in external_logger.handlers:
             handler.removeFilter(handler.filters[0])
 

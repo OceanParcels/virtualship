@@ -9,6 +9,7 @@ from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
 from ..log_filter import Filter, external_logger
 from ..spacetime import Spacetime
+from ..utils import RotatePrint
 
 
 @dataclass
@@ -69,6 +70,8 @@ def simulate_ctd(
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     :raises ValueError: Whenever provided CTDs, fieldset, are not compatible with this function.
     """
+    rotator = RotatePrint("Simulating CTD casts...")
+
     WINCH_SPEED = 1.0  # sink and rise speed in m/s
     DT = 10.0  # dt of CTD simulation integrator
 
@@ -127,7 +130,10 @@ def simulate_ctd(
         handler.addFilter(Filter())
 
     # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
+    # also suits starting and ending the rotator for custom log message
     try:
+        rotator.start()
+
         ctd_particleset.execute(
             [_sample_salinity, _sample_temperature, _ctd_cast],
             endtime=fieldset_endtime,
@@ -137,6 +143,7 @@ def simulate_ctd(
         )
 
     finally:
+        rotator.stop()
         for handler in external_logger.handlers:
             handler.removeFilter(handler.filters[0])
 

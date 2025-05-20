@@ -36,7 +36,6 @@ def simulate_measurements(
         expedition_dir = Path(expedition_dir)
 
     if len(measurements.ship_underwater_sts) > 0:
-        print("Simulating onboard salinity and temperature measurements.")
         if ship_config.ship_underwater_st_config is None:
             raise RuntimeError("No configuration for ship underwater ST provided.")
         if input_data.ship_underwater_st_fieldset is None:
@@ -49,7 +48,6 @@ def simulate_measurements(
         )
 
     if len(measurements.adcps) > 0:
-        print("Simulating onboard ADCP.")
         if ship_config.adcp_config is None:
             raise RuntimeError("No configuration for ADCP provided.")
         if input_data.adcp_fieldset is None:
@@ -64,7 +62,6 @@ def simulate_measurements(
         )
 
     if len(measurements.ctds) > 0:
-        print("Simulating CTD casts.")
         if ship_config.ctd_config is None:
             raise RuntimeError("No configuration for CTD provided.")
         if input_data.ctd_fieldset is None:
@@ -77,7 +74,6 @@ def simulate_measurements(
         )
 
     if len(measurements.ctd_bgcs) > 0:
-        print("Simulating BGC CTD casts.")
         if ship_config.ctd_bgc_config is None:
             raise RuntimeError("No configuration for CTD_BGC provided.")
         if input_data.ctd_bgc_fieldset is None:
@@ -90,7 +86,6 @@ def simulate_measurements(
         )
 
     if len(measurements.drifters) > 0:
-        print("Simulating drifters")
         if ship_config.drifter_config is None:
             raise RuntimeError("No configuration for drifters provided.")
         if input_data.drifter_fieldset is None:
@@ -105,7 +100,6 @@ def simulate_measurements(
         )
 
     if len(measurements.argo_floats) > 0:
-        print("Simulating argo floats")
         if ship_config.argo_float_config is None:
             raise RuntimeError("No configuration for argo floats provided.")
         if input_data.argo_float_fieldset is None:
@@ -119,7 +113,6 @@ def simulate_measurements(
         )
 
     if len(measurements.xbts) > 0:
-        print("Simulating XBTs")
         if ship_config.xbt_config is None:
             raise RuntimeError("No configuration for XBTs provided.")
         if input_data.xbt_fieldset is None:

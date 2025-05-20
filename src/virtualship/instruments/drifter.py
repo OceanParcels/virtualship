@@ -59,6 +59,8 @@ def simulate_drifters(
     :param dt: Dt for integration.
     :param endtime: Stop at this time, or if None, continue until the end of the fieldset or until all drifters ended. If this is earlier than the last drifter ended or later than the end of the fieldset, a warning will be printed.
     """
+    print("Simulating drifters...")
+
     if len(drifters) == 0:
         print(
             "No drifters provided. Parcels currently crashes when providing an empty particle set, so no drifter simulation will be done and no files will be created."
@@ -102,16 +104,16 @@ def simulate_drifters(
 
     # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
     try:
-        # execute simulation
         drifter_particleset.execute(
             [AdvectionRK4, _sample_temperature, _check_lifetime],
             endtime=actual_endtime,
             dt=dt,
             output_file=out_file,
-            verbose_progress=False,
+            verbose_progress=True,
         )
 
     finally:
+        print("... [COMPLETED]")
         for handler in external_logger.handlers:
             handler.removeFilter(handler.filters[0])
 
