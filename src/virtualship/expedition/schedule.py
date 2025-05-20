@@ -139,7 +139,7 @@ class Schedule(pydantic.BaseModel):
         # check if all waypoints are in water
         # this is done by picking an arbitrary provided fieldset and checking if UV is not zero
 
-        print("Verifying all waypoints are on water..")
+        print("\nVerifying all waypoints are on water...")
 
         # get all available fieldsets
         available_fieldsets = []
@@ -178,7 +178,7 @@ class Schedule(pydantic.BaseModel):
                 raise ScheduleError(
                     f"The following waypoints are on land: {['#' + str(wp_i) + ' ' + str(wp) for (wp_i, wp) in land_waypoints]}"
                 )
-            print("Good, all waypoints are on water.")
+            print("... Good, all waypoints are on water.")
 
         # check that ship will arrive on time at each waypoint (in case no unexpected event happen)
         time = self.waypoints[0].time
