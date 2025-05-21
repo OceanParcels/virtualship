@@ -16,7 +16,7 @@ from virtualship.utils import (
 )
 
 if TYPE_CHECKING:
-    from virtualship.expedition.space_time_region import SpaceTimeRegion
+    from virtualship.models.space_time_region import SpaceTimeRegion
 
 import click
 import copernicusmarine

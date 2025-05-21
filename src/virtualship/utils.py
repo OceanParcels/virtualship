@@ -140,7 +140,7 @@ def mfp_to_yaml(coordinates_file_path: str, yaml_output_path: str):  # noqa: D41
     """
     from virtualship.models.schedule import Location, Schedule, Waypoint
     from virtualship.models.ship_config import InstrumentType
-    from virtualship.expedition.space_time_region import (
+    from virtualship.models.space_time_region import (
         SpaceTimeRegion,
         SpatialRange,
         TimeRange,

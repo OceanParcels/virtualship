@@ -13,7 +13,7 @@ import yaml
 
 from .location import Location
 from .ship_config import InstrumentType
-from ..expedition.space_time_region import SpaceTimeRegion
+from .space_time_region import SpaceTimeRegion
 
 if TYPE_CHECKING:
     from ..expedition.input_data import InputData

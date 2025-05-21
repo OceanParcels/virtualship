@@ -12,7 +12,7 @@ from ..models.ship_config import (
     ShipConfig,
     ShipUnderwaterSTConfig,
 )
-from .space_time_region import SpaceTimeRegion
+from ..models.space_time_region import SpaceTimeRegion
 
 __all__ = [
     "ADCPConfig",
