@@ -20,7 +20,7 @@ from .space_time_region import SpaceTimeRegion
 if TYPE_CHECKING:
     from parcels import FieldSet
 
-    from ..expedition.input_data import InputData
+    from virtualship.expedition.input_data import InputData
 
 projection: pyproj.Geod = pyproj.Geod(ellps="WGS84")
 

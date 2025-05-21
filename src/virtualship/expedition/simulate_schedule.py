@@ -7,15 +7,15 @@ from datetime import datetime, timedelta
 
 import pyproj
 
-from ..instruments.argo_float import ArgoFloat
-from ..instruments.ctd import CTD
-from ..instruments.ctd_bgc import CTD_BGC
-from ..instruments.drifter import Drifter
-from ..instruments.xbt import XBT
-from ..models.location import Location
-from ..models.schedule import Schedule, Waypoint
-from ..models.ship_config import InstrumentType, ShipConfig
-from ..models.spacetime import Spacetime
+from virtualship.instruments.argo_float import ArgoFloat
+from virtualship.instruments.ctd import CTD
+from virtualship.instruments.ctd_bgc import CTD_BGC
+from virtualship.instruments.drifter import Drifter
+from virtualship.instruments.xbt import XBT
+from virtualship.models.location import Location
+from virtualship.models.schedule import Schedule, Waypoint
+from virtualship.models.ship_config import InstrumentType, ShipConfig
+from virtualship.models.spacetime import Spacetime
 
 
 @dataclass

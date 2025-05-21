@@ -8,9 +8,8 @@ import pydantic
 import yaml
 
 from virtualship.errors import CheckpointError
-
-from ..models.schedule import Schedule
-from ..models.ship_config import InstrumentType
+from virtualship.models.schedule import Schedule
+from virtualship.models.ship_config import InstrumentType
 
 
 class _YamlDumper(yaml.SafeDumper):

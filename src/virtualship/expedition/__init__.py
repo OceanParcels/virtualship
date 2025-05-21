@@ -1,7 +1,7 @@
 """Everything for simulating an expedition."""
 
-from ..models.schedule import Schedule, Waypoint
-from ..models.ship_config import (
+from virtualship.models.schedule import Schedule, Waypoint
+from virtualship.models.ship_config import (
     ADCPConfig,
     ArgoFloatConfig,
     CTD_BGCConfig,
@@ -10,7 +10,8 @@ from ..models.ship_config import (
     ShipConfig,
     ShipUnderwaterSTConfig,
 )
-from ..models.space_time_region import SpaceTimeRegion
+from virtualship.models.space_time_region import SpaceTimeRegion
+
 from .do_expedition import do_expedition
 from .input_data import InputData
 

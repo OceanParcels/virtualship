@@ -6,14 +6,15 @@ from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ..instruments.adcp import simulate_adcp
-from ..instruments.argo_float import simulate_argo_floats
-from ..instruments.ctd import simulate_ctd
-from ..instruments.ctd_bgc import simulate_ctd_bgc
-from ..instruments.drifter import simulate_drifters
-from ..instruments.ship_underwater_st import simulate_ship_underwater_st
-from ..instruments.xbt import simulate_xbt
-from ..models.ship_config import ShipConfig
+from virtualship.instruments.adcp import simulate_adcp
+from virtualship.instruments.argo_float import simulate_argo_floats
+from virtualship.instruments.ctd import simulate_ctd
+from virtualship.instruments.ctd_bgc import simulate_ctd_bgc
+from virtualship.instruments.drifter import simulate_drifters
+from virtualship.instruments.ship_underwater_st import simulate_ship_underwater_st
+from virtualship.instruments.xbt import simulate_xbt
+from virtualship.models.ship_config import ShipConfig
+
 from .simulate_schedule import MeasurementsToSimulate
 
 if TYPE_CHECKING:
