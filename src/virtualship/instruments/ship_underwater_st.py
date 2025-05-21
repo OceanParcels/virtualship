@@ -5,7 +5,9 @@ from pathlib import Path
 import numpy as np
 from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 
+from ..log_filter import Filter, external_logger
 from ..spacetime import Spacetime
+from ..utils import RotatePrint
 
 # we specifically use ScipyParticle because we have many small calls to execute
 # there is some overhead with JITParticle and this ends up being significantly faster
@@ -41,6 +43,8 @@ def simulate_ship_underwater_st(
     :param depth: The depth at which to measure. 0 is water surface, negative is into the water.
     :param sample_points: The places and times to sample at.
     """
+    rotator = RotatePrint("Simulating onboard salinity and temperature measurements...")
+
     sample_points.sort(key=lambda p: p.time)
 
     particleset = ParticleSet.from_list(
@@ -52,25 +56,38 @@ def simulate_ship_underwater_st(
         time=0,  # same for time
     )
 
-    # define output file for the simulation
     # outputdt set to infinie as we want to just want to write at the end of every call to 'execute'
     out_file = particleset.ParticleFile(name=out_path, outputdt=np.inf)
 
-    # iterate over each point, manually set lat lon time, then
-    # execute the particle set for one step, performing one set of measurement
-    for point in sample_points:
-        particleset.lon_nextloop[:] = point.location.lon
-        particleset.lat_nextloop[:] = point.location.lat
-        particleset.time_nextloop[:] = fieldset.time_origin.reltime(
-            np.datetime64(point.time)
-        )
+    # filter out Parcels logging messages
+    for handler in external_logger.handlers:
+        handler.addFilter(Filter())
 
-        # perform one step using the particleset
-        # dt and runtime are set so exactly one step is made.
-        particleset.execute(
-            [_sample_salinity, _sample_temperature],
-            dt=1,
-            runtime=1,
-            verbose_progress=False,
-            output_file=out_file,
-        )
+    # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
+    # also suits starting and ending the rotator for custom log message
+    try:
+        rotator.start()
+
+        # iterate over each point, manually set lat lon time, then
+        # execute the particle set for one step, performing one set of measurement
+        for point in sample_points:
+            particleset.lon_nextloop[:] = point.location.lon
+            particleset.lat_nextloop[:] = point.location.lat
+            particleset.time_nextloop[:] = fieldset.time_origin.reltime(
+                np.datetime64(point.time)
+            )
+
+            # perform one step using the particleset
+            # dt and runtime are set so exactly one step is made.
+            particleset.execute(
+                [_sample_salinity, _sample_temperature],
+                dt=1,
+                runtime=1,
+                verbose_progress=False,
+                output_file=out_file,
+            )
+
+    finally:
+        rotator.stop()
+        for handler in external_logger.handlers:
+            handler.removeFilter(handler.filters[0])

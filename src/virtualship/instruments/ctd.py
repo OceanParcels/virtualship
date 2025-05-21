@@ -7,7 +7,9 @@ from pathlib import Path
 import numpy as np
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
+from ..log_filter import Filter, external_logger
 from ..spacetime import Spacetime
+from ..utils import RotatePrint
 
 
 @dataclass
@@ -68,6 +70,8 @@ def simulate_ctd(
     :param outputdt: Interval which dictates the update frequency of file output during simulation
     :raises ValueError: Whenever provided CTDs, fieldset, are not compatible with this function.
     """
+    rotator = RotatePrint("Simulating CTD casts...")
+
     WINCH_SPEED = 1.0  # sink and rise speed in m/s
     DT = 10.0  # dt of CTD simulation integrator
 
@@ -121,14 +125,27 @@ def simulate_ctd(
     # define output file for the simulation
     out_file = ctd_particleset.ParticleFile(name=out_path, outputdt=outputdt)
 
-    # execute simulation
-    ctd_particleset.execute(
-        [_sample_salinity, _sample_temperature, _ctd_cast],
-        endtime=fieldset_endtime,
-        dt=DT,
-        verbose_progress=False,
-        output_file=out_file,
-    )
+    # filter out Parcels logging messages
+    for handler in external_logger.handlers:
+        handler.addFilter(Filter())
+
+    # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
+    # also suits starting and ending the rotator for custom log message
+    try:
+        rotator.start()
+
+        ctd_particleset.execute(
+            [_sample_salinity, _sample_temperature, _ctd_cast],
+            endtime=fieldset_endtime,
+            dt=DT,
+            verbose_progress=False,
+            output_file=out_file,
+        )
+
+    finally:
+        rotator.stop()
+        for handler in external_logger.handlers:
+            handler.removeFilter(handler.filters[0])
 
     # there should be no particles left, as they delete themselves when they resurface
     if len(ctd_particleset.particledata) != 0:

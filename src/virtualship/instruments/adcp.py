@@ -5,7 +5,9 @@ from pathlib import Path
 import numpy as np
 from parcels import FieldSet, ParticleSet, ScipyParticle, Variable
 
+from ..log_filter import Filter, external_logger
 from ..spacetime import Spacetime
+from ..utils import RotatePrint
 
 # we specifically use ScipyParticle because we have many small calls to execute
 # there is some overhead with JITParticle and this ends up being significantly faster
@@ -41,6 +43,8 @@ def simulate_adcp(
     :param num_bins: How many samples to take in the complete range between max_depth and min_depth.
     :param sample_points: The places and times to sample at.
     """
+    rotator = RotatePrint("Simulating onboard ADCP...")
+
     sample_points.sort(key=lambda p: p.time)
 
     bins = np.linspace(max_depth, min_depth, num_bins)
@@ -60,19 +64,33 @@ def simulate_adcp(
     # outputdt set to infinite as we just want to write at the end of every call to 'execute'
     out_file = particleset.ParticleFile(name=out_path, outputdt=np.inf)
 
-    for point in sample_points:
-        particleset.lon_nextloop[:] = point.location.lon
-        particleset.lat_nextloop[:] = point.location.lat
-        particleset.time_nextloop[:] = fieldset.time_origin.reltime(
-            np.datetime64(point.time)
-        )
+    # filter out Parcels logging messages
+    for handler in external_logger.handlers:
+        handler.addFilter(Filter())
 
-        # perform one step using the particleset
-        # dt and runtime are set so exactly one step is made.
-        particleset.execute(
-            [_sample_velocity],
-            dt=1,
-            runtime=1,
-            verbose_progress=False,
-            output_file=out_file,
-        )
+    # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
+    # also suits starting and ending the rotator for custom log message
+    try:
+        rotator.start()
+
+        for point in sample_points:
+            particleset.lon_nextloop[:] = point.location.lon
+            particleset.lat_nextloop[:] = point.location.lat
+            particleset.time_nextloop[:] = fieldset.time_origin.reltime(
+                np.datetime64(point.time)
+            )
+
+            # perform one step using the particleset
+            # dt and runtime are set so exactly one step is made.
+            particleset.execute(
+                [_sample_velocity],
+                dt=1,
+                runtime=1,
+                verbose_progress=False,
+                output_file=out_file,
+            )
+
+    finally:
+        rotator.stop()
+        for handler in external_logger.handlers:
+            handler.removeFilter(handler.filters[0])

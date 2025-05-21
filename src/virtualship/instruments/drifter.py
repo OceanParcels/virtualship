@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, Variable
 
+from ..log_filter import Filter, external_logger
 from ..spacetime import Spacetime
 
 
@@ -58,6 +59,8 @@ def simulate_drifters(
     :param dt: Dt for integration.
     :param endtime: Stop at this time, or if None, continue until the end of the fieldset or until all drifters ended. If this is earlier than the last drifter ended or later than the end of the fieldset, a warning will be printed.
     """
+    print("Simulating drifters...")
+
     if len(drifters) == 0:
         print(
             "No drifters provided. Parcels currently crashes when providing an empty particle set, so no drifter simulation will be done and no files will be created."
@@ -95,14 +98,24 @@ def simulate_drifters(
     else:
         actual_endtime = np.timedelta64(endtime)
 
-    # execute simulation
-    drifter_particleset.execute(
-        [AdvectionRK4, _sample_temperature, _check_lifetime],
-        endtime=actual_endtime,
-        dt=dt,
-        output_file=out_file,
-        verbose_progress=True,
-    )
+    # filter out Parcels logging messages
+    for handler in external_logger.handlers:
+        handler.addFilter(Filter())
+
+    # try/finally to ensure filter is always removed even if .execute fails (to avoid filter being appled universally)
+    try:
+        drifter_particleset.execute(
+            [AdvectionRK4, _sample_temperature, _check_lifetime],
+            endtime=actual_endtime,
+            dt=dt,
+            output_file=out_file,
+            verbose_progress=True,
+        )
+
+    finally:
+        print("... [COMPLETED]")
+        for handler in external_logger.handlers:
+            handler.removeFilter(handler.filters[0])
 
     # if there are more particles left than the number of drifters with an indefinite endtime, warn the user
     if len(drifter_particleset.particledata) > len(
