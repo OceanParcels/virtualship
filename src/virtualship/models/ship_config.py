@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import pydantic
 import yaml
 
+from virtualship.errors import ConfigError
 from virtualship.utils import _validate_numeric_mins_to_timedelta
 
 if TYPE_CHECKING:
@@ -317,9 +318,3 @@ class ShipConfig(pydantic.BaseModel):
                 raise ConfigError(
                     "Planning has a waypoint with XBT instrument, but configuration does not configure XBT."
                 )
-
-
-class ConfigError(RuntimeError):
-    """An error in the config."""
-
-    pass
