@@ -5,8 +5,9 @@ import pyproj
 import pytest
 
 from virtualship import Location
+from virtualship.errors import ScheduleError
 from virtualship.expedition.do_expedition import _load_input_data
-from virtualship.models import Schedule, ScheduleError, Waypoint
+from virtualship.models import Schedule, Waypoint
 from virtualship.utils import _get_ship_config
 
 projection = pyproj.Geod(ellps="WGS84")
