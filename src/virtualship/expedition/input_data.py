@@ -46,6 +46,7 @@ class InputData:
         :param load_ship_underwater_st: Whether to load the ship underwater ST fieldset.
         :returns: An instance of this class with loaded fieldsets.
         """
+        directory = Path(directory)
         if load_drifter:
             drifter_fieldset = cls._load_drifter_fieldset(directory)
         else:
@@ -202,7 +203,7 @@ class InputData:
         return fieldset
 
     @classmethod
-    def _load_argo_float_fieldset(cls, directory: str | Path) -> FieldSet:
+    def _load_argo_float_fieldset(cls, directory: Path) -> FieldSet:
         filenames = {
             "U": directory.joinpath("argo_float_uv.nc"),
             "V": directory.joinpath("argo_float_uv.nc"),
