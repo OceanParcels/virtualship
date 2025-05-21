@@ -17,7 +17,7 @@ from virtualship.utils import (
 )
 
 if TYPE_CHECKING:
-    from virtualship.models.space_time_region import SpaceTimeRegion
+    from virtualship.models import SpaceTimeRegion
 
 import click
 import copernicusmarine
@@ -39,7 +39,7 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
     be provided on prompt, via command line arguments, or via a YAML config file. Run
     `virtualship fetch` on an expedition for more info.
     """
-    from virtualship.models.ship_config import InstrumentType
+    from virtualship.models import InstrumentType
 
     if sum([username is None, password is None]) == 1:
         raise ValueError("Both username and password must be provided when using CLI.")

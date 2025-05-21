@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from parcels import FieldSet, JITParticle, ParticleSet, Variable
 
-from virtualship.models.spacetime import Spacetime
+from virtualship.models import Spacetime
 
 
 @dataclass

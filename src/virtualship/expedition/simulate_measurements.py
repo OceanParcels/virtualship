@@ -13,7 +13,7 @@ from virtualship.instruments.ctd_bgc import simulate_ctd_bgc
 from virtualship.instruments.drifter import simulate_drifters
 from virtualship.instruments.ship_underwater_st import simulate_ship_underwater_st
 from virtualship.instruments.xbt import simulate_xbt
-from virtualship.models.ship_config import ShipConfig
+from virtualship.models import ShipConfig
 
 from .simulate_schedule import MeasurementsToSimulate
 

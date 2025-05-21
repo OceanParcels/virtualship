@@ -1,16 +1,17 @@
 """Everything for simulating an expedition."""
 
-from virtualship.models.schedule import Schedule, Waypoint
-from virtualship.models.ship_config import (
+from virtualship.models import (
     ADCPConfig,
     ArgoFloatConfig,
     CTD_BGCConfig,
     CTDConfig,
     DrifterConfig,
+    Schedule,
     ShipConfig,
     ShipUnderwaterSTConfig,
+    SpaceTimeRegion,
+    Waypoint,
 )
-from virtualship.models.space_time_region import SpaceTimeRegion
 
 from .do_expedition import do_expedition
 from .input_data import InputData

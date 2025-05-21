@@ -3,8 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-from virtualship.models.schedule import Schedule
-from virtualship.models.ship_config import InstrumentType
+from virtualship.models import InstrumentType, Schedule
 from virtualship.utils import mfp_to_yaml
 
 

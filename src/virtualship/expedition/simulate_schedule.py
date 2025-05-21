@@ -12,10 +12,14 @@ from virtualship.instruments.ctd import CTD
 from virtualship.instruments.ctd_bgc import CTD_BGC
 from virtualship.instruments.drifter import Drifter
 from virtualship.instruments.xbt import XBT
-from virtualship.models.location import Location
-from virtualship.models.schedule import Schedule, Waypoint
-from virtualship.models.ship_config import InstrumentType, ShipConfig
-from virtualship.models.spacetime import Spacetime
+from virtualship.models import (
+    InstrumentType,
+    Location,
+    Schedule,
+    ShipConfig,
+    Spacetime,
+    Waypoint,
+)
 
 
 @dataclass
