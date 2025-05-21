@@ -14,6 +14,7 @@ from virtualship.utils import (
     _get_schedule,
     _get_ship_config,
 )
+from virtualship.errors import IncompleteDownloadError
 
 if TYPE_CHECKING:
     from virtualship.models.space_time_region import SpaceTimeRegion
@@ -327,12 +328,6 @@ def hash_to_filename(hash: str) -> str:
     if "_" in hash:
         raise ValueError("Hash cannot contain underscores.")
     return f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{hash}"
-
-
-class IncompleteDownloadError(Exception):
-    """Exception raised for incomplete downloads."""
-
-    pass
 
 
 class DownloadMetadata(BaseModel):

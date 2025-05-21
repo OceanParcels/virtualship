@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING
 import pydantic
 import pyproj
 import yaml
+from virtualship.errors import ScheduleError
+from virtualship.errors import ConfigError
+
 
 from .location import Location
 from .ship_config import InstrumentType
@@ -211,12 +214,6 @@ class Schedule(pydantic.BaseModel):
                 )
             else:
                 time = wp_next.time
-
-
-class ScheduleError(RuntimeError):
-    """An error in the schedule."""
-
-    pass
 
 
 def _is_on_land_zero_uv(fieldset: FieldSet, waypoint: Waypoint) -> bool:
