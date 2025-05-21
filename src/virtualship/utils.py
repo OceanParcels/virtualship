@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, TextIO
 
 if TYPE_CHECKING:
     from virtualship.expedition.schedule import Schedule
-    from virtualship.expedition.ship_config import ShipConfig
+    from virtualship.models.ship_config import ShipConfig
 
 import pandas as pd
 import yaml
@@ -138,9 +138,8 @@ def mfp_to_yaml(coordinates_file_path: str, yaml_output_path: str):  # noqa: D41
     4. returns the yaml information.
 
     """
-    # Importing Schedule and related models from expedition module
     from virtualship.expedition.schedule import Location, Schedule, Waypoint
-    from virtualship.expedition.ship_config import InstrumentType
+    from virtualship.models.ship_config import InstrumentType
     from virtualship.expedition.space_time_region import (
         SpaceTimeRegion,
         SpatialRange,
@@ -238,7 +237,7 @@ def _get_schedule(expedition_dir: Path) -> Schedule:
 
 
 def _get_ship_config(expedition_dir: Path) -> ShipConfig:
-    from virtualship.expedition.ship_config import ShipConfig
+    from virtualship.models.ship_config import ShipConfig
 
     file_path = expedition_dir.joinpath(SHIP_CONFIG)
     try:

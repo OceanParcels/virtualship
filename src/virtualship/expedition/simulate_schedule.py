@@ -15,7 +15,7 @@ from ..instruments.xbt import XBT
 from ..models.location import Location
 from ..models.spacetime import Spacetime
 from .schedule import Schedule, Waypoint
-from .ship_config import InstrumentType, ShipConfig
+from ..models.ship_config import InstrumentType, ShipConfig
 
 
 @dataclass
@@ -85,9 +85,9 @@ class _ScheduleSimulator:
         self._ship_config = ship_config
         self._schedule = schedule
 
-        assert self._schedule.waypoints[0].time is not None, (
-            "First waypoint must have a time. This should have been verified before calling this function."
-        )
+        assert (
+            self._schedule.waypoints[0].time is not None
+        ), "First waypoint must have a time. This should have been verified before calling this function."
         self._time = schedule.waypoints[0].time
         self._location = schedule.waypoints[0].location
 

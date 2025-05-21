@@ -8,7 +8,7 @@ import pydantic
 import yaml
 
 from .schedule import Schedule
-from .ship_config import InstrumentType
+from ..models.ship_config import InstrumentType
 
 
 class _YamlDumper(yaml.SafeDumper):

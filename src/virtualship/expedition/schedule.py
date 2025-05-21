@@ -10,14 +10,15 @@ from typing import TYPE_CHECKING
 import pydantic
 import pyproj
 import yaml
-from parcels import FieldSet
 
 from ..models.location import Location
-from .ship_config import InstrumentType
+from ..models.ship_config import InstrumentType
 from .space_time_region import SpaceTimeRegion
 
 if TYPE_CHECKING:
     from .input_data import InputData
+    from parcels import FieldSet
+
 projection: pyproj.Geod = pyproj.Geod(ellps="WGS84")
 
 

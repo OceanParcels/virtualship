@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from virtualship.expedition.schedule import Schedule
-from virtualship.expedition.ship_config import ConfigError, ShipConfig
+from virtualship.models.ship_config import ConfigError, ShipConfig
 from virtualship.utils import get_example_config, get_example_schedule
 
 expedition_dir = Path("expedition_dir")

@@ -3,7 +3,7 @@
 from .do_expedition import do_expedition
 from .input_data import InputData
 from .schedule import Schedule, Waypoint
-from .ship_config import (
+from ..models.ship_config import (
     ADCPConfig,
     ArgoFloatConfig,
     CTD_BGCConfig,

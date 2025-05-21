@@ -17,7 +17,7 @@ from .checkpoint import Checkpoint
 from .expedition_cost import expedition_cost
 from .input_data import InputData
 from .schedule import Schedule
-from .ship_config import ShipConfig
+from ..models.ship_config import ShipConfig
 from .simulate_measurements import simulate_measurements
 from .simulate_schedule import ScheduleProblem, simulate_schedule
 
@@ -84,9 +84,9 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     os.makedirs(expedition_dir.joinpath("results"))
 
     # calculate expedition cost in US$
-    assert schedule.waypoints[0].time is not None, (
-        "First waypoint has no time. This should not be possible as it should have been verified before."
-    )
+    assert (
+        schedule.waypoints[0].time is not None
+    ), "First waypoint has no time. This should not be possible as it should have been verified before."
     time_past = schedule_results.time - schedule.waypoints[0].time
     cost = expedition_cost(schedule_results, time_past)
     with open(expedition_dir.joinpath("results", "cost.txt"), "w") as file:
@@ -131,9 +131,9 @@ def _load_input_data(
         space_time_region_hash = get_space_time_region_hash(schedule.space_time_region)
         input_data = get_existing_download(expedition_dir, space_time_region_hash)
 
-    assert input_data is not None, (
-        "Input data hasn't been found. Have you run the `virtualship fetch` command?"
-    )
+    assert (
+        input_data is not None
+    ), "Input data hasn't been found. Have you run the `virtualship fetch` command?"
 
     return InputData.load(
         directory=input_data,
