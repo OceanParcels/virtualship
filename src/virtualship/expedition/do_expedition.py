@@ -16,7 +16,7 @@ from virtualship.utils import (
 from .checkpoint import Checkpoint
 from .expedition_cost import expedition_cost
 from .input_data import InputData
-from .schedule import Schedule
+from ..models.schedule import Schedule
 from ..models.ship_config import ShipConfig
 from .simulate_measurements import simulate_measurements
 from .simulate_schedule import ScheduleProblem, simulate_schedule

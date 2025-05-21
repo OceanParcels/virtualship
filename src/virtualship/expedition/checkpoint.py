@@ -7,7 +7,7 @@ from pathlib import Path
 import pydantic
 import yaml
 
-from .schedule import Schedule
+from ..models.schedule import Schedule
 from ..models.ship_config import InstrumentType
 
 

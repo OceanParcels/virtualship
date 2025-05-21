@@ -13,7 +13,7 @@ import yaml
 from virtualship.utils import _validate_numeric_mins_to_timedelta
 
 if TYPE_CHECKING:
-    from ..expedition.schedule import Schedule
+    from .schedule import Schedule
 
 
 class InstrumentType(Enum):

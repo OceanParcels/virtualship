@@ -16,7 +16,7 @@ from virtualship.cli._fetch import (
     hash_model,
     hash_to_filename,
 )
-from virtualship.expedition.schedule import Schedule
+from virtualship.models.schedule import Schedule
 from virtualship.models.ship_config import ShipConfig
 from virtualship.utils import get_example_config, get_example_schedule
 

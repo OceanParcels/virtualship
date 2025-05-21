@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TextIO
 
 if TYPE_CHECKING:
-    from virtualship.expedition.schedule import Schedule
+    from virtualship.models.schedule import Schedule
     from virtualship.models.ship_config import ShipConfig
 
 import pandas as pd
@@ -138,7 +138,7 @@ def mfp_to_yaml(coordinates_file_path: str, yaml_output_path: str):  # noqa: D41
     4. returns the yaml information.
 
     """
-    from virtualship.expedition.schedule import Location, Schedule, Waypoint
+    from virtualship.models.schedule import Location, Schedule, Waypoint
     from virtualship.models.ship_config import InstrumentType
     from virtualship.expedition.space_time_region import (
         SpaceTimeRegion,
@@ -227,7 +227,7 @@ def _validate_numeric_mins_to_timedelta(value: int | float | timedelta) -> timed
 
 def _get_schedule(expedition_dir: Path) -> Schedule:
     """Load Schedule object from yaml config file in `expedition_dir`."""
-    from virtualship.expedition.schedule import Schedule
+    from virtualship.models.schedule import Schedule
 
     file_path = expedition_dir.joinpath(SCHEDULE)
     try:

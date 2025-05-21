@@ -14,7 +14,7 @@ from ..instruments.drifter import Drifter
 from ..instruments.xbt import XBT
 from ..models.location import Location
 from ..models.spacetime import Spacetime
-from .schedule import Schedule, Waypoint
+from ..models.schedule import Schedule, Waypoint
 from ..models.ship_config import InstrumentType, ShipConfig
 
 
