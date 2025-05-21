@@ -10,17 +10,17 @@ from typing import TYPE_CHECKING
 import pydantic
 import pyproj
 import yaml
-from virtualship.errors import ScheduleError
-from virtualship.errors import ConfigError
 
+from virtualship.errors import ScheduleError
 
 from .location import Location
 from .ship_config import InstrumentType
 from .space_time_region import SpaceTimeRegion
 
 if TYPE_CHECKING:
-    from ..expedition.input_data import InputData
     from parcels import FieldSet
+
+    from ..expedition.input_data import InputData
 
 projection: pyproj.Geod = pyproj.Geod(ellps="WGS84")
 

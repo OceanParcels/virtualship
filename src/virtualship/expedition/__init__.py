@@ -1,7 +1,5 @@
 """Everything for simulating an expedition."""
 
-from .do_expedition import do_expedition
-from .input_data import InputData
 from ..models.schedule import Schedule, Waypoint
 from ..models.ship_config import (
     ADCPConfig,
@@ -13,6 +11,8 @@ from ..models.ship_config import (
     ShipUnderwaterSTConfig,
 )
 from ..models.space_time_region import SpaceTimeRegion
+from .do_expedition import do_expedition
+from .input_data import InputData
 
 __all__ = [
     "ADCPConfig",

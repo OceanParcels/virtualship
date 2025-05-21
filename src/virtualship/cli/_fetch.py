@@ -8,13 +8,13 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
+from virtualship.errors import IncompleteDownloadError
 from virtualship.utils import (
     _dump_yaml,
     _generic_load_yaml,
     _get_schedule,
     _get_ship_config,
 )
-from virtualship.errors import IncompleteDownloadError
 
 if TYPE_CHECKING:
     from virtualship.models.space_time_region import SpaceTimeRegion

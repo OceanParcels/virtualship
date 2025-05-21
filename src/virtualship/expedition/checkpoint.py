@@ -7,9 +7,10 @@ from pathlib import Path
 import pydantic
 import yaml
 
+from virtualship.errors import CheckpointError
+
 from ..models.schedule import Schedule
 from ..models.ship_config import InstrumentType
-from virtualship.errors import CheckpointError
 
 
 class _YamlDumper(yaml.SafeDumper):

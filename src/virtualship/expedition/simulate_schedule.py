@@ -13,9 +13,9 @@ from ..instruments.ctd_bgc import CTD_BGC
 from ..instruments.drifter import Drifter
 from ..instruments.xbt import XBT
 from ..models.location import Location
-from ..models.spacetime import Spacetime
 from ..models.schedule import Schedule, Waypoint
 from ..models.ship_config import InstrumentType, ShipConfig
+from ..models.spacetime import Spacetime
 
 
 @dataclass
@@ -85,9 +85,9 @@ class _ScheduleSimulator:
         self._ship_config = ship_config
         self._schedule = schedule
 
-        assert (
-            self._schedule.waypoints[0].time is not None
-        ), "First waypoint must have a time. This should have been verified before calling this function."
+        assert self._schedule.waypoints[0].time is not None, (
+            "First waypoint must have a time. This should have been verified before calling this function."
+        )
         self._time = schedule.waypoints[0].time
         self._location = schedule.waypoints[0].location
 
