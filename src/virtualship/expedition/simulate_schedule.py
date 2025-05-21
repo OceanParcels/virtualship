@@ -12,8 +12,8 @@ from ..instruments.ctd import CTD
 from ..instruments.ctd_bgc import CTD_BGC
 from ..instruments.drifter import Drifter
 from ..instruments.xbt import XBT
-from ..location import Location
-from ..spacetime import Spacetime
+from ..models.location import Location
+from ..models.spacetime import Spacetime
 from .schedule import Schedule, Waypoint
 from .ship_config import InstrumentType, ShipConfig
 

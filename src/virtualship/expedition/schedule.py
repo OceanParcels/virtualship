@@ -12,7 +12,7 @@ import pyproj
 import yaml
 from parcels import FieldSet
 
-from ..location import Location
+from ..models.location import Location
 from .ship_config import InstrumentType
 from .space_time_region import SpaceTimeRegion
 

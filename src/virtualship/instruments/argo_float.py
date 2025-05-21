@@ -15,7 +15,7 @@ from parcels import (
     Variable,
 )
 
-from ..spacetime import Spacetime
+from ..models.spacetime import Spacetime
 
 
 @dataclass

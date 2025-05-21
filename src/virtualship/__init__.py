@@ -2,8 +2,8 @@
 
 from importlib.metadata import version as _version
 
-from .location import Location
-from .spacetime import Spacetime
+from .models.location import Location
+from .models.spacetime import Spacetime
 
 try:
     __version__ = _version("virtualship")

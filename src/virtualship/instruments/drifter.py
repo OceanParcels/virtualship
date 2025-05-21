@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from parcels import AdvectionRK4, FieldSet, JITParticle, ParticleSet, Variable
 
-from ..spacetime import Spacetime
+from ..models.spacetime import Spacetime
 
 
 @dataclass
