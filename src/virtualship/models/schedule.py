@@ -10,14 +10,18 @@ from typing import TYPE_CHECKING
 import pydantic
 import pyproj
 import yaml
-from parcels import FieldSet
 
-from ..location import Location
+from virtualship.errors import ScheduleError
+
+from .location import Location
 from .ship_config import InstrumentType
 from .space_time_region import SpaceTimeRegion
 
 if TYPE_CHECKING:
-    from .input_data import InputData
+    from parcels import FieldSet
+
+    from virtualship.expedition.input_data import InputData
+
 projection: pyproj.Geod = pyproj.Geod(ellps="WGS84")
 
 
@@ -210,12 +214,6 @@ class Schedule(pydantic.BaseModel):
                 )
             else:
                 time = wp_next.time
-
-
-class ScheduleError(RuntimeError):
-    """An error in the schedule."""
-
-    pass
 
 
 def _is_on_land_zero_uv(fieldset: FieldSet, waypoint: Waypoint) -> bool:

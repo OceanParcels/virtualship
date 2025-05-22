@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
+from virtualship.errors import IncompleteDownloadError
 from virtualship.utils import (
     _dump_yaml,
     _generic_load_yaml,
@@ -16,7 +17,7 @@ from virtualship.utils import (
 )
 
 if TYPE_CHECKING:
-    from virtualship.expedition.space_time_region import SpaceTimeRegion
+    from virtualship.models import SpaceTimeRegion
 
 import click
 import copernicusmarine
@@ -38,7 +39,7 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
     be provided on prompt, via command line arguments, or via a YAML config file. Run
     `virtualship fetch` on an expedition for more info.
     """
-    from virtualship.expedition.ship_config import InstrumentType
+    from virtualship.models import InstrumentType
 
     if sum([username is None, password is None]) == 1:
         raise ValueError("Both username and password must be provided when using CLI.")
@@ -327,12 +328,6 @@ def hash_to_filename(hash: str) -> str:
     if "_" in hash:
         raise ValueError("Hash cannot contain underscores.")
     return f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{hash}"
-
-
-class IncompleteDownloadError(Exception):
-    """Exception raised for incomplete downloads."""
-
-    pass
 
 
 class DownloadMetadata(BaseModel):
