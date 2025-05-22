@@ -3,12 +3,12 @@ from datetime import datetime, timedelta
 import pyproj
 
 from virtualship import Location
-from virtualship.expedition import Schedule, ShipConfig, Waypoint
 from virtualship.expedition.simulate_schedule import (
     ScheduleOk,
     ScheduleProblem,
     simulate_schedule,
 )
+from virtualship.models import Schedule, ShipConfig, Waypoint
 
 
 def test_simulate_schedule_feasible() -> None:
