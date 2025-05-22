@@ -11,8 +11,8 @@ import numpy as np
 import xarray as xr
 from parcels import Field, FieldSet
 
-from virtualship import Location, Spacetime
 from virtualship.instruments.ctd_bgc import CTD_BGC, simulate_ctd_bgc
+from virtualship.models import Location, Spacetime
 
 
 def test_simulate_ctd_bgcs(tmpdir) -> None:

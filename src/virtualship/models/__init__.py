@@ -1,4 +1,4 @@
-"""Pydantic models and data classes used to configure virtualship."""
+"""Pydantic models and data classes used to configure virtualship (i.e., in the configuration files or settings)."""
 
 from .location import Location
 from .schedule import Schedule, Waypoint
