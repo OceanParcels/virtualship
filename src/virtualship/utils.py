@@ -8,6 +8,8 @@ from importlib.resources import files
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO
 
+from yaspin import Spinner
+
 if TYPE_CHECKING:
     from virtualship.models import Schedule, ShipConfig
 
@@ -247,3 +249,21 @@ def _get_ship_config(expedition_dir: Path) -> ShipConfig:
         raise FileNotFoundError(
             f'Ship config not found. Save it to "{file_path}".'
         ) from e
+
+
+# custom ship spinner
+ship_spinner = Spinner(
+    interval=240,
+    frames=[
+        " 🚢    ",
+        "  🚢   ",
+        "   🚢  ",
+        "    🚢 ",
+        "     🚢",
+        "    🚢 ",
+        "   🚢  ",
+        "  🚢   ",
+        " 🚢    ",
+        "🚢     ",
+    ],
+)
