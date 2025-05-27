@@ -31,6 +31,10 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     :param expedition_dir: The base directory for the expedition.
     :param input_data: Input data folder (override used for testing).
     """
+    print("\n╔═════════════════════════════════════════════════╗")
+    print("║          VIRTUALSHIP EXPEDITION STATUS          ║")
+    print("╚═════════════════════════════════════════════════╝")
+
     if isinstance(expedition_dir, str):
         expedition_dir = Path(expedition_dir)
 
@@ -55,6 +59,8 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
         ship_config=ship_config,
         input_data=input_data,
     )
+
+    print("\n---- WAYPOINT VERIFICATION ----")
 
     # verify schedule is valid
     schedule.verify(ship_config.ship_speed_knots, loaded_input_data)
@@ -82,6 +88,8 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
         shutil.rmtree(expedition_dir.joinpath("results"))
     os.makedirs(expedition_dir.joinpath("results"))
 
+    print("\n----- EXPEDITION SUMMARY ------")
+
     # calculate expedition cost in US$
     assert schedule.waypoints[0].time is not None, (
         "First waypoint has no time. This should not be possible as it should have been verified before."
@@ -90,20 +98,26 @@ def do_expedition(expedition_dir: str | Path, input_data: Path | None = None) ->
     cost = expedition_cost(schedule_results, time_past)
     with open(expedition_dir.joinpath("results", "cost.txt"), "w") as file:
         file.writelines(f"cost: {cost} US$")
-    print(f"This expedition took {time_past} and would have cost {cost:,.0f} US$.")
+    print(f"\nExpedition duration: {time_past}\nExpedition cost: US$ {cost:,.0f}.")
+
+    print("\n--- MEASUREMENT SIMULATIONS ---")
 
     # simulate measurements
-    print("Simulating measurements. This may take a while..")
+    print("\nSimulating measurements. This may take a while...\n")
     simulate_measurements(
         expedition_dir,
         ship_config,
         loaded_input_data,
         schedule_results.measurements_to_simulate,
     )
-    print("Done simulating measurements.")
+    print("\nAll measurement simulations are complete.")
 
-    print("Your expedition has concluded successfully!")
-    print("Your measurements can be found in the results directory.")
+    print("\n----- EXPEDITION RESULTS ------")
+    print("\nYour expedition has concluded successfully!")
+    print(
+        f"Your measurements can be found in the '{expedition_dir}/results' directory."
+    )
+    print("\n------------- END -------------\n")
 
 
 def _load_input_data(

@@ -121,6 +121,8 @@ class Schedule(pydantic.BaseModel):
         :raises NotImplementedError: If an instrument in the schedule is not implemented.
         :return: None. The method doesn't return a value but raises exceptions if verification fails.
         """
+        print("\nVerifying route... ")
+
         if check_space_time_region and self.space_time_region is None:
             raise ScheduleError(
                 "space_time_region not found in schedule, please define it to fetch the data."
@@ -144,8 +146,6 @@ class Schedule(pydantic.BaseModel):
 
         # check if all waypoints are in water
         # this is done by picking an arbitrary provided fieldset and checking if UV is not zero
-
-        print("Verifying all waypoints are on water..")
 
         # get all available fieldsets
         available_fieldsets = []
@@ -184,7 +184,6 @@ class Schedule(pydantic.BaseModel):
                 raise ScheduleError(
                     f"The following waypoints are on land: {['#' + str(wp_i) + ' ' + str(wp) for (wp_i, wp) in land_waypoints]}"
                 )
-            print("Good, all waypoints are on water.")
 
         # check that ship will arrive on time at each waypoint (in case no unexpected event happen)
         time = self.waypoints[0].time
@@ -214,6 +213,8 @@ class Schedule(pydantic.BaseModel):
                 )
             else:
                 time = wp_next.time
+
+        print("... All good to go!")
 
 
 def _is_on_land_zero_uv(fieldset: FieldSet, waypoint: Waypoint) -> bool:
