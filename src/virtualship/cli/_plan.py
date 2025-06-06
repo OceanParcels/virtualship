@@ -15,10 +15,19 @@ from textual.widgets import (
     Switch,
 )
 
-from virtualship.errors import ConfigError
 from virtualship.models.location import Location
 from virtualship.models.schedule import Schedule, Waypoint
-from virtualship.models.ship_config import InstrumentType, ShipConfig
+from virtualship.models.ship_config import (
+    ADCPConfig,
+    ArgoFloatConfig,
+    CTD_BGCConfig,
+    CTDConfig,
+    DrifterConfig,
+    InstrumentType,
+    ShipConfig,
+    ShipUnderwaterSTConfig,
+    XBTConfig,
+)
 from virtualship.models.space_time_region import (
     SpaceTimeRegion,
     SpatialRange,
@@ -50,87 +59,89 @@ class WaypointWidget(Static):
         self.index = index
 
     def compose(self) -> ComposeResult:
-        if self.index > 0:
-            yield Button(
-                "Copy from Previous", id=f"wp{self.index}_copy", variant="warning"
+        with Collapsible(title=f"[b]Waypoint {self.index + 1}[/b]", collapsed=False):
+            if self.index > 0:
+                yield Button(
+                    "Copy from Previous", id=f"wp{self.index}_copy", variant="warning"
+                )
+            yield Label("Location:")
+            yield Label("    Latitude:")
+            yield Input(
+                id=f"wp{self.index}_lat",
+                value=str(self.waypoint.location.lat),
             )
-        yield Label(f"[b]Waypoint {self.index + 1}[/b]")
-        yield Label("Location:")
-        yield Label("    Latitude:")
-        yield Input(
-            id=f"wp{self.index}_lat",
-            value=str(self.waypoint.location.lat),
-        )
-        yield Label("    Longitude:")
-        yield Input(
-            id=f"wp{self.index}_lon",
-            value=str(self.waypoint.location.lon),
-        )
-        yield Label("Time:")
-        with Horizontal():
-            yield Label("Year:")
-            yield Select(
-                [
-                    (str(year), year)
-                    for year in range(
-                        datetime.datetime.now().year - 3,
-                        datetime.datetime.now().year + 1,
-                    )
-                ],
-                id=f"wp{self.index}_year",
-                value=int(self.waypoint.time.year)
-                if self.waypoint.time
-                else Select.BLANK,
-                prompt="YYYY",
-                classes="year-select",
+            yield Label("    Longitude:")
+            yield Input(
+                id=f"wp{self.index}_lon",
+                value=str(self.waypoint.location.lon),
             )
-            yield Label("Month:")
-            yield Select(
-                [(f"{m:02d}", m) for m in range(1, 13)],
-                id=f"wp{self.index}_month",
-                value=int(self.waypoint.time.month)
-                if self.waypoint.time
-                else Select.BLANK,
-                prompt="MM",
-                classes="month-select",
-            )
-            yield Label("Day:")
-            yield Select(
-                [(f"{d:02d}", d) for d in range(1, 32)],
-                id=f"wp{self.index}_day",
-                value=int(self.waypoint.time.day)
-                if self.waypoint.time
-                else Select.BLANK,
-                prompt="DD",
-                classes="day-select",
-            )
-            yield Label("Hour:")
-            yield Select(
-                [(f"{h:02d}", h) for h in range(24)],
-                id=f"wp{self.index}_hour",
-                value=int(self.waypoint.time.hour)
-                if self.waypoint.time
-                else Select.BLANK,
-                prompt="hh",
-                classes="hour-select",
-            )
-            yield Label("Min:")
-            yield Select(
-                [(f"{m:02d}", m) for m in range(0, 60, 5)],
-                id=f"wp{self.index}_minute",
-                value=int(self.waypoint.time.minute)
-                if self.waypoint.time
-                else Select.BLANK,
-                prompt="mm",
-                classes="minute-select",
-            )
-
-        yield Label("Instruments:")
-        for instrument in InstrumentType:
-            is_selected = instrument in (self.waypoint.instrument or [])
+            yield Label("Time:")
             with Horizontal():
-                yield Label(instrument.value)
-                yield Switch(value=is_selected, id=f"wp{self.index}_{instrument.value}")
+                yield Label("Year:")
+                yield Select(
+                    [
+                        (str(year), year)
+                        for year in range(
+                            datetime.datetime.now().year - 3,
+                            datetime.datetime.now().year + 1,
+                        )
+                    ],
+                    id=f"wp{self.index}_year",
+                    value=int(self.waypoint.time.year)
+                    if self.waypoint.time
+                    else Select.BLANK,
+                    prompt="YYYY",
+                    classes="year-select",
+                )
+                yield Label("Month:")
+                yield Select(
+                    [(f"{m:02d}", m) for m in range(1, 13)],
+                    id=f"wp{self.index}_month",
+                    value=int(self.waypoint.time.month)
+                    if self.waypoint.time
+                    else Select.BLANK,
+                    prompt="MM",
+                    classes="month-select",
+                )
+                yield Label("Day:")
+                yield Select(
+                    [(f"{d:02d}", d) for d in range(1, 32)],
+                    id=f"wp{self.index}_day",
+                    value=int(self.waypoint.time.day)
+                    if self.waypoint.time
+                    else Select.BLANK,
+                    prompt="DD",
+                    classes="day-select",
+                )
+                yield Label("Hour:")
+                yield Select(
+                    [(f"{h:02d}", h) for h in range(24)],
+                    id=f"wp{self.index}_hour",
+                    value=int(self.waypoint.time.hour)
+                    if self.waypoint.time
+                    else Select.BLANK,
+                    prompt="hh",
+                    classes="hour-select",
+                )
+                yield Label("Min:")
+                yield Select(
+                    [(f"{m:02d}", m) for m in range(0, 60, 5)],
+                    id=f"wp{self.index}_minute",
+                    value=int(self.waypoint.time.minute)
+                    if self.waypoint.time
+                    else Select.BLANK,
+                    prompt="mm",
+                    classes="minute-select",
+                )
+
+            yield Label("Instruments:")
+            for instrument in InstrumentType:
+                is_selected = instrument in (self.waypoint.instrument or [])
+                with Horizontal():
+                    yield Label(instrument.value)
+                    yield Switch(
+                        value=is_selected, id=f"wp{self.index}_{instrument.value}"
+                    )
 
     def copy_from_previous(self) -> None:
         if self.index > 0:
@@ -297,8 +308,8 @@ class ScheduleEditor(Static):
                     Waypoint(location=location, time=time, instrument=instruments)
                 )
 
+            # save
             self.schedule.waypoints = waypoints
-
             self.schedule.to_yaml(f"{self.path}/schedule.yaml")
 
         # TODO: one error type for User Errors (e.g. new UserError class?) which gives information on where went wrong (e.g. as above "Inputs for all latitude, longitude and time parameters are required for waypoint {i + 1}")
@@ -622,132 +633,88 @@ class ConfigEditor(Container):
         """Save changes to ship_config.yaml."""
         try:
             # ship speed
-            speed_input = self.query_one("#speed")
-            if not speed_input.value:
-                raise ConfigError("Ship speed is required")
-            self.config.ship_speed_knots = float(speed_input.value)
-
-            # TODO: could all of the below be a loop instead?! Extracting each of the sub parameters for each instrument config?
+            self.config.ship_speed_knots = float(self.query_one("#speed").value)
 
             # adcp config
             has_adcp = self.query_one("#has_adcp", Switch).value
             if has_adcp:
-                num_bins = self.query_one("#adcp_num_bins").value
-                period = self.query_one("#adcp_period").value
-                if not all([num_bins, period]):
-                    raise ConfigError(
-                        "Inputs for all ADCP configuration parameters are required when ADCP is enabled"
-                    )
-
-                self.config.adcp_config = {
-                    "max_depth_meter": -1000.0
+                self.config.adcp_config = ADCPConfig(
+                    max_depth_meter=-1000.0
                     if self.query_one("#adcp_deep", Switch).value
                     else -150.0,
-                    "num_bins": int(num_bins),
-                    "period_minutes": float(period),
-                }
+                    num_bins=int(self.query_one("#adcp_num_bins").value),
+                    period=float(self.query_one("#adcp_period").value),
+                )
             else:
                 self.config.adcp_config = None
 
             # T/S config
             has_ts = self.query_one("#has_onboard_ts", Switch).value
             if has_ts:
-                period = self.query_one("#ts_period").value
-                if not period:
-                    raise ConfigError(
-                        "Input for `period` parameter is required when onboard T/S is enabled"
-                    )
-                self.config.ship_underwater_st_config = {
-                    "period_minutes": float(period)
-                }
+                self.config.ship_underwater_st_config = ShipUnderwaterSTConfig(
+                    period=float(self.query_one("#ts_period").value)
+                )
             else:
                 self.config.ship_underwater_st_config = None
 
             # ctd config
-            ctd_max = self.query_one("#ctd_max_depth").value
-            ctd_min = self.query_one("#ctd_min_depth").value
-            ctd_time = self.query_one("#ctd_stationkeeping_time").value
-            if not all([ctd_max, ctd_min, ctd_time]):
-                raise ConfigError(
-                    "Inputs for all CTD configuration parameters must be provided"
-                )
-            self.config.ctd_config = {
-                "max_depth_meter": float(ctd_max),
-                "min_depth_meter": float(ctd_min),
-                "stationkeeping_time_minutes": float(ctd_time),
-            }
+            self.config.ctd_config = CTDConfig(
+                max_depth_meter=float(self.query_one("#ctd_max_depth").value),
+                min_depth_meter=float(self.query_one("#ctd_min_depth").value),
+                stationkeeping_time=float(
+                    self.query_one("#ctd_stationkeeping_time").value
+                ),
+            )
 
             # CTD-BGC config
-            ctd_bgc_max = self.query_one("#ctd_bgc_max_depth").value
-            ctd_bgc_min = self.query_one("#ctd_bgc_min_depth").value
-            ctd_bgc_time = self.query_one("#ctd_bgc_stationkeeping_time").value
-            if not all([ctd_bgc_max, ctd_bgc_min, ctd_bgc_time]):
-                raise ConfigError(
-                    "Inputs for all CTD-BGC configuration parameters must be provided"
-                )
-            self.config.ctd_bgc_config = {
-                "max_depth_meter": float(ctd_bgc_max),
-                "min_depth_meter": float(ctd_bgc_min),
-                "stationkeeping_time_minutes": float(ctd_bgc_time),
-            }
+            self.config.ctd_bgc_config = CTD_BGCConfig(
+                max_depth_meter=float(self.query_one("#ctd_bgc_max_depth").value),
+                min_depth_meter=float(self.query_one("#ctd_bgc_min_depth").value),
+                stationkeeping_time=float(
+                    self.query_one("#ctd_bgc_stationkeeping_time").value
+                ),
+            )
 
             # xbt config
-            xbt_max = self.query_one("#xbt_max_depth").value
-            xbt_min = self.query_one("#xbt_min_depth").value
-            xbt_fall = self.query_one("#xbt_fall_speed").value
-            xbt_decel = self.query_one("#xbt_decel_coeff").value
-            if not all([xbt_max, xbt_min, xbt_fall, xbt_decel]):
-                raise ConfigError(
-                    "Inputs for all XBT configuration parameters must be provided"
-                )
-            self.config.xbt_config = {
-                "max_depth_meter": float(xbt_max),
-                "min_depth_meter": float(xbt_min),
-                "fall_speed_meter_per_second": float(xbt_fall),
-                "deceleration_coefficient": float(xbt_decel),
-            }
+            self.config.xbt_config = XBTConfig(
+                min_depth_meter=float(self.query_one("#xbt_min_depth").value),
+                max_depth_meter=float(self.query_one("#xbt_max_depth").value),
+                fall_speed_meter_per_second=float(
+                    self.query_one("#xbt_fall_speed").value
+                ),
+                deceleration_coefficient=float(
+                    self.query_one("#xbt_decel_coeff").value
+                ),
+            )
 
             # argo config
-            argo_fields = [
-                "cycle_days",
-                "drift_days",
-                "drift_depth",
-                "max_depth",
-                "min_depth",
-                "vertical_speed",
-            ]
-            argo_values = {
-                field: self.query_one(f"#argo_{field}").value for field in argo_fields
-            }
-
-            if not all(argo_values.values()):
-                raise ConfigError(
-                    "Inputs for all Argo Float configuration parameters must be provided"
-                )
-            self.config.argo_float_config = {
-                "cycle_days": float(argo_values["cycle_days"]),
-                "drift_days": float(argo_values["drift_days"]),
-                "drift_depth_meter": float(argo_values["drift_depth"]),
-                "max_depth_meter": float(argo_values["max_depth"]),
-                "min_depth_meter": float(argo_values["min_depth"]),
-                "vertical_speed_meter_per_second": float(argo_values["vertical_speed"]),
-            }
+            self.config.argo_float_config = ArgoFloatConfig(
+                min_depth_meter=float(self.query_one("#argo_min_depth").value),
+                max_depth_meter=float(self.query_one("#argo_max_depth").value),
+                drift_depth_meter=float(self.query_one("#argo_drift_depth").value),
+                vertical_speed_meter_per_second=float(
+                    self.query_one("#argo_vertical_speed").value
+                ),
+                cycle_days=float(self.query_one("#argo_cycle_days").value),
+                drift_days=float(self.query_one("#argo_drift_days").value),
+            )
 
             # drifter config
-            drifter_depth = self.query_one("#drifter_depth").value
-            drifter_lifetime = self.query_one("#drifter_lifetime").value
-            if not all([drifter_depth, drifter_lifetime]):
-                raise ConfigError("All Drifter configuration fields must be provided")
-            self.config.drifter_config = {
-                "depth_meter": float(drifter_depth),
-                "lifetime_minutes": float(drifter_lifetime),
-            }
+            self.config.drifter_config = DrifterConfig(
+                depth_meter=float(self.query_one("#drifter_depth").value),
+                lifetime=float(self.query_one("#drifter_lifetime").value),
+            )
 
+            # save
             self.config.to_yaml(f"{self.path}/ship_config.yaml")
 
+        # TODO: one error type for User Errors (e.g. new UserError class?) which gives information on where went wrong (e.g. as above "Inputs for all latitude, longitude and time parameters are required for waypoint {i + 1}")
         except Exception as e:
             self.notify(f"Error saving config: {e!s}", severity="error", timeout=60)
             raise
+        # TODO: then also another type of generic error (e.g. the existing except Exception as e) where there is a bug in the code but it's unknown where (i.e. it has got past all the other tests before being committed)
+        # TODO: and add a message saying "please raise an issue on the VirtualShip GitHub issue tracker"
+        # TODO: also provide a full traceback which the user can copy to their issue (may need to quit the application to provide this option)
 
 
 class ScheduleScreen(Screen):
@@ -806,8 +773,18 @@ class ScheduleApp(App):
     }
 
     WaypointWidget {
-        border: solid $primary;
+        padding: 0;
+        margin: 0;
+        border: none;
+    }
+
+    WaypointWidget > Collapsible {
         margin: 1;
+        background: $boost;
+        border: solid $primary;
+    }
+
+    WaypointWidget > Collapsible > .collapsible--content {
         padding: 1;
     }
 
