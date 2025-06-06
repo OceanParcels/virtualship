@@ -35,6 +35,7 @@ dependencies = [
     "PyYAML",
     "copernicusmarine >= 2",
     "yaspin",
+    "textual",
 ]
 
 [project.urls]

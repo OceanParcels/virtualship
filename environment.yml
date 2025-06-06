@@ -14,6 +14,7 @@ dependencies:
   - copernicusmarine >= 2
   - openpyxl
   - yaspin
+  - textual
 
   # linting
   - pre-commit
