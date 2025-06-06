@@ -26,3 +26,9 @@ class ConfigError(RuntimeError):
     """An error in the config."""
 
     pass
+
+
+class UserError(Exception):
+    """Error raised when user input is invalid."""
+
+    pass

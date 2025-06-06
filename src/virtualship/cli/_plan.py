@@ -1,4 +1,5 @@
 import datetime
+from typing import ClassVar
 
 from textual import on
 from textual.app import App, ComposeResult
@@ -15,6 +16,7 @@ from textual.widgets import (
     Switch,
 )
 
+from virtualship.errors import UserError
 from virtualship.models.location import Location
 from virtualship.models.schedule import Schedule, Waypoint
 from virtualship.models.ship_config import (
@@ -50,6 +52,10 @@ from virtualship.models.space_time_region import (
 
 
 # TODO: Can the whole lot be tidied up by moving some classes/methods to a new directory/files?!
+
+
+# ------
+# TODO: the valid entry + User errors etc. need to be added to the Schedule editor (currently on the Config Editor)
 
 
 class WaypointWidget(Static):
@@ -259,7 +265,7 @@ class ScheduleEditor(Static):
         except Exception as e:
             yield Label(f"Error loading schedule: {e!s}")
 
-    def save_changes(self) -> None:
+    def save_changes(self) -> bool:
         """Save changes to schedule.yaml."""
         try:
             # spacetime region
@@ -311,17 +317,21 @@ class ScheduleEditor(Static):
             # save
             self.schedule.waypoints = waypoints
             self.schedule.to_yaml(f"{self.path}/schedule.yaml")
+            return True
 
-        # TODO: one error type for User Errors (e.g. new UserError class?) which gives information on where went wrong (e.g. as above "Inputs for all latitude, longitude and time parameters are required for waypoint {i + 1}")
         except Exception as e:
             self.notify(f"Error saving schedule: {e!r}", severity="error", timeout=60)
-            raise
-        # TODO: then also another type of generic error (e.g. the existing except Exception as e) where there is a bug in the code but it's unknown where (i.e. it has got past all the other tests before being committed)
-        # TODO: and add a message saying "please raise an issue on the VirtualShip GitHub issue tracker"
-        # TODO: also provide a full traceback which the user can copy to their issue (may need to quit the application to provide this option)
+            return False
 
 
 class ConfigEditor(Container):
+    DEFAULT_ADCP_CONFIG: ClassVar[dict[str, float]] = {
+        "num_bins": 40,
+        "period_minutes": 5.0,
+    }
+
+    DEFAULT_TS_CONFIG: ClassVar[dict[str, float]] = {"period_minutes": 5.0}
+
     # TODO: Also incorporate verify methods!
 
     def __init__(self, path: str):
@@ -613,9 +623,33 @@ class ConfigEditor(Container):
         else:
             container.add_class("-hidden")
 
+    def _set_adcp_default_values(self):
+        self.query_one("#adcp_num_bins").value = str(
+            self.DEFAULT_ADCP_CONFIG["num_bins"]
+        )
+        self.query_one("#adcp_period").value = str(
+            self.DEFAULT_ADCP_CONFIG["period_minutes"]
+        )
+        self.query_one("#adcp_shallow").value = True
+        self.query_one("#adcp_deep").value = False
+
+    def _set_ts_default_values(self):
+        self.query_one("#ts_period").value = str(
+            self.DEFAULT_TS_CONFIG["period_minutes"]
+        )
+
     @on(Switch.Changed, "#has_adcp")
     def on_adcp_toggle(self, event: Switch.Changed) -> None:
         self.show_hide_adcp_type(event.value)
+        if event.value and not self.config.adcp_config:
+            # ADCP was turned on and was previously null
+            self._set_adcp_default_values()
+
+    @on(Switch.Changed, "#has_onboard_ts")
+    def on_ts_toggle(self, event: Switch.Changed) -> None:
+        if event.value and not self.config.ship_underwater_st_config:
+            # T/S was turned on and was previously null
+            self._set_ts_default_values()
 
     @on(Switch.Changed, "#adcp_deep")
     def deep_changed(self, event: Switch.Changed) -> None:
@@ -629,21 +663,44 @@ class ConfigEditor(Container):
             deep = self.query_one("#adcp_deep", Switch)
             deep.value = False
 
-    def save_changes(self) -> None:
+    def _try_create_config(self, config_class, input_values, config_name):
+        """Helper to create config with error handling."""
+        try:
+            return config_class(**input_values)
+        except ValueError as e:
+            field = (
+                str(e).split()[0] if str(e).split() else "unknown field"
+            )  # extract field name from Pydantic error
+            raise UserError(
+                f"Invalid {config_name} configuration: {field} - {e!s}"
+            ) from e
+
+    def save_changes(self) -> bool:
         """Save changes to ship_config.yaml."""
         try:
             # ship speed
-            self.config.ship_speed_knots = float(self.query_one("#speed").value)
+            try:
+                speed = float(self.query_one("#speed").value)
+                if speed <= 0:
+                    raise UserError("Ship speed must be greater than 0")
+                self.config.ship_speed_knots = speed
+            except ValueError:
+                raise UserError("Ship speed must be a valid number") from None
 
+            # TODO: more precise user errors etc need to be added for the below as well!
             # adcp config
             has_adcp = self.query_one("#has_adcp", Switch).value
             if has_adcp:
-                self.config.adcp_config = ADCPConfig(
-                    max_depth_meter=-1000.0
-                    if self.query_one("#adcp_deep", Switch).value
-                    else -150.0,
-                    num_bins=int(self.query_one("#adcp_num_bins").value),
-                    period=float(self.query_one("#adcp_period").value),
+                self.config.adcp_config = self._try_create_config(
+                    ADCPConfig,
+                    {
+                        "max_depth_meter": -1000.0
+                        if self.query_one("#adcp_deep", Switch).value
+                        else -150.0,
+                        "num_bins": int(self.query_one("#adcp_num_bins").value),
+                        "period": float(self.query_one("#adcp_period").value),
+                    },
+                    "ADCP",
                 )
             else:
                 self.config.adcp_config = None
@@ -651,8 +708,10 @@ class ConfigEditor(Container):
             # T/S config
             has_ts = self.query_one("#has_onboard_ts", Switch).value
             if has_ts:
-                self.config.ship_underwater_st_config = ShipUnderwaterSTConfig(
-                    period=float(self.query_one("#ts_period").value)
+                self.config.ship_underwater_st_config = self._try_create_config(
+                    ShipUnderwaterSTConfig,
+                    {"period": float(self.query_one("#ts_period").value)},
+                    "Temperature/Salinity",
                 )
             else:
                 self.config.ship_underwater_st_config = None
@@ -707,14 +766,19 @@ class ConfigEditor(Container):
 
             # save
             self.config.to_yaml(f"{self.path}/ship_config.yaml")
+            return True
 
-        # TODO: one error type for User Errors (e.g. new UserError class?) which gives information on where went wrong (e.g. as above "Inputs for all latitude, longitude and time parameters are required for waypoint {i + 1}")
-        except Exception as e:
-            self.notify(f"Error saving config: {e!s}", severity="error", timeout=60)
-            raise
-        # TODO: then also another type of generic error (e.g. the existing except Exception as e) where there is a bug in the code but it's unknown where (i.e. it has got past all the other tests before being committed)
-        # TODO: and add a message saying "please raise an issue on the VirtualShip GitHub issue tracker"
-        # TODO: also provide a full traceback which the user can copy to their issue (may need to quit the application to provide this option)
+        except UserError as e:
+            self.notify(f"Input error: {e!s}", severity="error", timeout=60)
+            return False
+        except Exception:
+            # TODO: and need to make the error also print the traceback to paste into the GitHub issue!!!
+            self.notify(
+                "An unexpected error occurred. Please report this issue on GitHub.",
+                severity="error",
+                timeout=60,
+            )
+            return False
 
 
 class ScheduleScreen(Screen):
@@ -742,11 +806,13 @@ class ScheduleScreen(Screen):
         schedule_editor = self.query_one(ScheduleEditor)
 
         try:
-            config_editor.save_changes()
-            schedule_editor.save_changes()
-            self.notify(
-                "Changes saved successfully", severity="information", timeout=20
-            )
+            config_saved = config_editor.save_changes()
+            schedule_saved = schedule_editor.save_changes()
+
+            if config_saved and schedule_saved:
+                self.notify(
+                    "Changes saved successfully", severity="information", timeout=20
+                )
         except Exception as e:
             self.notify(f"Error saving changes: {e!s}", severity="error", timeout=60)
 
