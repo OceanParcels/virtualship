@@ -49,7 +49,7 @@ virtualship init EXPEDITION_NAME --from-mfp CoordinatesExport.xslx
 ```
 
 > [!TIP]
->  `CoordinatesExport.xslx` in the `virtualship init` command refers to the .xslx file exported from MFP and edited to include the instrument selection. Replace the filename with the name of your exported .xslx file (and make sure to move it from the Downloads to the folder/directory in which you are running the expedition).
+> `CoordinatesExport.xslx` in the `virtualship init` command refers to the .xslx file exported from MFP and edited to include the instrument selection. Replace the filename with the name of your exported .xslx file (and make sure to move it from the Downloads to the folder/directory in which you are running the expedition).
 
 This will create a folder/directory called `EXPEDITION_NAME` with two files: `schedule.yaml` and `ship_config.yaml` based on the sampling site coordinates that you specified in your MFP export. The `--from-mfp` flag indictates that the exported coordinates will be used. It will also populate the instrument parameters with the selections made under the "Instrument" header in the edited .xslx file.
 
@@ -76,8 +76,7 @@ If you don’t need onboard ADCP measurements, remove `adcp_config` and underlyi
 
 If you do not want to collect temperature and salinity data, remove `ship_underwater_st_config` and underlying lines from `ship_config.yaml`.
 
-> [!NOTE]
-> **For advanced users only**: you can also edit the CTD, XBT, DRIFTER and ARGO_FLOAT configurations in `ship_config.yaml`. For CTD casts, the measurements will be taken to approximately 20 meters from the ocean floor by default, but this can be changed here if desired.
+> [!NOTE] > **For advanced users only**: you can also edit the CTD, XBT, DRIFTER and ARGO_FLOAT configurations in `ship_config.yaml`. For CTD casts, the measurements will be taken to approximately 20 meters from the ocean floor by default, but this can be changed here if desired.
 
 ## Fetch the data
 
