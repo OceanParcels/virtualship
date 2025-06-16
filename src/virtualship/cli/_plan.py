@@ -1,6 +1,7 @@
 import datetime
 from typing import ClassVar
 
+from pydantic import ValidationError
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
@@ -320,7 +321,12 @@ class ScheduleEditor(Static):
             return True
 
         except Exception as e:
-            self.notify(f"Error saving schedule: {e!r}", severity="error", timeout=60)
+            self.notify(
+                f"Error saving schedule: {e!r}",
+                severity="error",
+                timeout=60,
+                markup=False,
+            )
             return False
 
 
@@ -687,92 +693,115 @@ class ConfigEditor(Container):
             except ValueError:
                 raise UserError("Ship speed must be a valid number") from None
 
-            # TODO: more precise user errors etc need to be added for the below as well!
-            # adcp config
+            # ADCP config
             has_adcp = self.query_one("#has_adcp", Switch).value
             if has_adcp:
-                self.config.adcp_config = self._try_create_config(
-                    ADCPConfig,
-                    {
-                        "max_depth_meter": -1000.0
-                        if self.query_one("#adcp_deep", Switch).value
-                        else -150.0,
-                        "num_bins": int(self.query_one("#adcp_num_bins").value),
-                        "period": float(self.query_one("#adcp_period").value),
-                    },
-                    "ADCP",
-                )
+                try:
+                    self.config.adcp_config = self._try_create_config(
+                        ADCPConfig,
+                        {
+                            "max_depth_meter": -1000.0
+                            if self.query_one("#adcp_deep", Switch).value
+                            else -150.0,
+                            "num_bins": int(self.query_one("#adcp_num_bins").value),
+                            "period": float(self.query_one("#adcp_period").value),
+                        },
+                        "ADCP",
+                    )
+                except (ValueError, ValidationError) as e:
+                    raise UserError(f"Invalid ADCP configuration: {e!s}") from e
             else:
                 self.config.adcp_config = None
 
             # T/S config
             has_ts = self.query_one("#has_onboard_ts", Switch).value
             if has_ts:
-                self.config.ship_underwater_st_config = self._try_create_config(
-                    ShipUnderwaterSTConfig,
-                    {"period": float(self.query_one("#ts_period").value)},
-                    "Temperature/Salinity",
-                )
+                try:
+                    self.config.ship_underwater_st_config = self._try_create_config(
+                        ShipUnderwaterSTConfig,
+                        {"period": float(self.query_one("#ts_period").value)},
+                        "Temperature/Salinity",
+                    )
+                except (ValueError, ValidationError) as e:
+                    raise UserError(
+                        f"Invalid Temperature/Salinity configuration: {e!s}"
+                    ) from e
             else:
                 self.config.ship_underwater_st_config = None
 
-            # ctd config
-            self.config.ctd_config = CTDConfig(
-                max_depth_meter=float(self.query_one("#ctd_max_depth").value),
-                min_depth_meter=float(self.query_one("#ctd_min_depth").value),
-                stationkeeping_time=float(
-                    self.query_one("#ctd_stationkeeping_time").value
-                ),
-            )
+            # CTD config
+            try:
+                self.config.ctd_config = CTDConfig(
+                    max_depth_meter=float(self.query_one("#ctd_max_depth").value),
+                    min_depth_meter=float(self.query_one("#ctd_min_depth").value),
+                    stationkeeping_time=float(
+                        self.query_one("#ctd_stationkeeping_time").value
+                    ),
+                )
+            except (ValueError, ValidationError) as e:
+                raise UserError(f"Invalid CTD configuration: {e!s}") from e
 
             # CTD-BGC config
-            self.config.ctd_bgc_config = CTD_BGCConfig(
-                max_depth_meter=float(self.query_one("#ctd_bgc_max_depth").value),
-                min_depth_meter=float(self.query_one("#ctd_bgc_min_depth").value),
-                stationkeeping_time=float(
-                    self.query_one("#ctd_bgc_stationkeeping_time").value
-                ),
-            )
+            try:
+                self.config.ctd_bgc_config = CTD_BGCConfig(
+                    max_depth_meter=float(self.query_one("#ctd_bgc_max_depth").value),
+                    min_depth_meter=float(self.query_one("#ctd_bgc_min_depth").value),
+                    stationkeeping_time=float(
+                        self.query_one("#ctd_bgc_stationkeeping_time").value
+                    ),
+                )
+            except (ValueError, ValidationError) as e:
+                raise UserError(f"Invalid CTD-BGC configuration: {e!s}") from e
 
-            # xbt config
-            self.config.xbt_config = XBTConfig(
-                min_depth_meter=float(self.query_one("#xbt_min_depth").value),
-                max_depth_meter=float(self.query_one("#xbt_max_depth").value),
-                fall_speed_meter_per_second=float(
-                    self.query_one("#xbt_fall_speed").value
-                ),
-                deceleration_coefficient=float(
-                    self.query_one("#xbt_decel_coeff").value
-                ),
-            )
+            # XBT config
+            try:
+                self.config.xbt_config = XBTConfig(
+                    min_depth_meter=float(self.query_one("#xbt_min_depth").value),
+                    max_depth_meter=float(self.query_one("#xbt_max_depth").value),
+                    fall_speed_meter_per_second=float(
+                        self.query_one("#xbt_fall_speed").value
+                    ),
+                    deceleration_coefficient=float(
+                        self.query_one("#xbt_decel_coeff").value
+                    ),
+                )
+            except (ValueError, ValidationError) as e:
+                raise UserError(f"Invalid XBT configuration: {e!s}") from e
 
-            # argo config
-            self.config.argo_float_config = ArgoFloatConfig(
-                min_depth_meter=float(self.query_one("#argo_min_depth").value),
-                max_depth_meter=float(self.query_one("#argo_max_depth").value),
-                drift_depth_meter=float(self.query_one("#argo_drift_depth").value),
-                vertical_speed_meter_per_second=float(
-                    self.query_one("#argo_vertical_speed").value
-                ),
-                cycle_days=float(self.query_one("#argo_cycle_days").value),
-                drift_days=float(self.query_one("#argo_drift_days").value),
-            )
+            # Argo config
+            try:
+                self.config.argo_float_config = ArgoFloatConfig(
+                    min_depth_meter=float(self.query_one("#argo_min_depth").value),
+                    max_depth_meter=float(self.query_one("#argo_max_depth").value),
+                    drift_depth_meter=float(self.query_one("#argo_drift_depth").value),
+                    vertical_speed_meter_per_second=float(
+                        self.query_one("#argo_vertical_speed").value
+                    ),
+                    cycle_days=float(self.query_one("#argo_cycle_days").value),
+                    drift_days=float(self.query_one("#argo_drift_days").value),
+                )
+            except (ValueError, ValidationError) as e:
+                raise UserError(f"Invalid Argo Float configuration: {e!s}") from e
 
-            # drifter config
-            self.config.drifter_config = DrifterConfig(
-                depth_meter=float(self.query_one("#drifter_depth").value),
-                lifetime=float(self.query_one("#drifter_lifetime").value),
-            )
+            # Drifter config
+            try:
+                self.config.drifter_config = DrifterConfig(
+                    depth_meter=float(self.query_one("#drifter_depth").value),
+                    lifetime=float(self.query_one("#drifter_lifetime").value),
+                )
+            except (ValueError, ValidationError) as e:
+                raise UserError(f"Invalid Drifter configuration: {e!s}") from e
 
             # save
             self.config.to_yaml(f"{self.path}/ship_config.yaml")
             return True
 
         except UserError as e:
-            self.notify(f"Input error: {e!s}", severity="error", timeout=60)
+            self.notify(
+                f"Input error: {e!s}", severity="error", timeout=60, markup=False
+            )
             return False
         except Exception:
-            # TODO: and need to make the error also print the traceback to paste into the GitHub issue!!!
             self.notify(
                 "An unexpected error occurred. Please report this issue on GitHub.",
                 severity="error",
@@ -814,7 +843,12 @@ class ScheduleScreen(Screen):
                     "Changes saved successfully", severity="information", timeout=20
                 )
         except Exception as e:
-            self.notify(f"Error saving changes: {e!s}", severity="error", timeout=60)
+            self.notify(
+                f"Error saving changes: {e!s}",
+                severity="error",
+                timeout=60,
+                markup=False,
+            )
 
 
 class ScheduleApp(App):
