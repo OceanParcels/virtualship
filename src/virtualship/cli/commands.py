@@ -1,3 +1,4 @@
+import webbrowser
 from pathlib import Path
 
 import click
@@ -74,8 +75,13 @@ def init(path, from_mfp):
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
 def plan(path):
-    """Launch UI to help build schedule and ship config files."""
-    server = Server(f"python -m virtualship.cli._plan {Path(path)}")
+    """Launch UI to help build schedule and ship config files. Opens in web browser, hosted on the user's local machine only."""
+    server = Server(
+        command=f"python -m virtualship.cli._plan {Path(path)}",
+        title="VirtualShip plan",
+    )
+    url = "http://localhost:8000"
+    webbrowser.open(url)
     server.serve()
 
 
