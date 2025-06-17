@@ -1,10 +1,10 @@
 from pathlib import Path
 
 import click
+from textual_serve.server import Server
 
 from virtualship import utils
 from virtualship.cli._fetch import _fetch
-from virtualship.cli._plan import _plan
 from virtualship.expedition.do_expedition import do_expedition
 from virtualship.utils import (
     SCHEDULE,
@@ -75,7 +75,8 @@ def init(path, from_mfp):
 )
 def plan(path):
     """Launch UI to help build schedule and ship config files."""
-    _plan(Path(path))
+    server = Server(f"python -m virtualship.cli._plan {Path(path)}")
+    server.serve()
 
 
 @click.command()

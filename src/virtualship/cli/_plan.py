@@ -1,4 +1,5 @@
 import datetime
+import sys
 from typing import ClassVar
 
 from pydantic import ValidationError
@@ -36,6 +37,9 @@ from virtualship.models.space_time_region import (
     SpatialRange,
     TimeRange,
 )
+
+# TODO: add TEXTUAL_SERVE dependency if end up using it...
+
 
 # TODO: I wonder whether it would be a good idea to be able to recognise all the subcomponents of a pydantic model
 # TODO: such as the instrument configuration, and be able to loop (?) rather than explicitly type each one out
@@ -1024,15 +1028,13 @@ class ScheduleApp(App):
         self.theme = "textual-light"
 
 
-def _plan(path: str) -> None:
+if __name__ == "__main__":
+    # parse path
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
+    else:
+        raise ValueError("No path argument provided")
+
+    # run app
     app = ScheduleApp(path)
     app.run()
-
-
-# FOR DEV?!
-
-# if __name__ == "__main__":
-#     _plan(".")
-
-# # FOR RUNNING IN DEV MODE:
-# # PYTHONPATH="/Users/Atkin004/Documents/virtualship/src" textual run --dev virtualship.cli._plan
