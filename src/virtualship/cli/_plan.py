@@ -7,6 +7,7 @@ from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
 from textual.screen import Screen
+from textual.validation import Function
 from textual.widgets import (
     Button,
     Collapsible,
@@ -38,28 +39,31 @@ from virtualship.models.space_time_region import (
     TimeRange,
 )
 
+# TODO: need to do a big round of edits where tidy up all the error messaging.
+# - given a lot of the validation of entry is done natively now in textual, this should mean that all other
+#   errors associated with inputting to the app should be 'unexpected' and therefore call to the report-to-GitHub workflow
+# - errors associated with ship_config and schedule.verify() should, however, provide in-UI messaging ideally
+#   to notify the user that their selections are not valid...
+
 # TODO: add TEXTUAL_SERVE dependency if end up using it...
 
+# TODO: add a flag to the `virtualship plan` command which allows toggle between hosting the UI in terminal or web browser..
 
-# TODO: I wonder whether it would be a good idea to be able to recognise all the subcomponents of a pydantic model
-# TODO: such as the instrument configuration, and be able to loop (?) rather than explicitly type each one out
-# TODO: maybe in some kind of form where it's stored externally so as to facilitate it being in one place and helps there be more ease of adding instruments
-# TODO: down the line without having to make changes in so many places...?
-# TODO: but is this possible given the different requirements/units etc. that they all require?
+# TODO: need to handle how to add the start_ and end_ datetimes automatically to Space-Time Region!
+# TODO: because I think the .yaml that comes from `virtualship init` will not have these as standard and we don't expect students to go add themselves...
 
-# TODO: NEED TO MAKE SURE THE CHANGES OVERWRITTEN TO THE YAML FILES DO IT IN THE RIGHT ORDER, IT DOESN'T SAVE PROPERLY AT CURRENT
+# TODO: look through all error handling in both _plan.py and command.py scripts to check redudancy
+# TODO: also add more error handling for 1) if there are no yamls found in the specified *path*
+# TODO: and also for if there are errors in the yaml being opened, for example if what should be a float has been manaully changed to something invalid
+# TODO: or if indeed any of the pydantic model components associated with the yamls are missing
+
+
+# TODO: make sure 'Save' writes the yaml file components in the right order? Or does this not matter?
+# TODO: test via full run through of an expedition using yamls edited by `virtualship plan`
 # TODO: implement action for 'Save' button
-# TODO: probably with a second pop up that says "are you sure you want to save, this will overwrite schedule. and ship_config.yaml"
-
-
-# TODO: error handling needs to be better! E.g. if elements of the pydantic model are missing then they should be specifically flagged
-# TODO: e.g. if you remove ship_speed_knots from the ship_config.yaml it fails but the error message is misleading (starts going on about adcp_config)
-
 
 # TODO: Can the whole lot be tidied up by moving some classes/methods to a new directory/files?!
 
-
-# ------
 # TODO: the valid entry + User errors etc. need to be added to the Schedule editor (currently on the Config Editor)
 
 
@@ -70,7 +74,7 @@ class WaypointWidget(Static):
         self.index = index
 
     def compose(self) -> ComposeResult:
-        with Collapsible(title=f"[b]Waypoint {self.index + 1}[/b]", collapsed=False):
+        with Collapsible(title=f"[b]Waypoint {self.index + 1}[/b]", collapsed=True):
             if self.index > 0:
                 yield Button(
                     "Copy from Previous", id=f"wp{self.index}_copy", variant="warning"
@@ -158,15 +162,7 @@ class WaypointWidget(Static):
         if self.index > 0:
             schedule_editor = self.parent
             if schedule_editor:
-                prev_lat = schedule_editor.query_one(f"#wp{self.index - 1}_lat")
-                prev_lon = schedule_editor.query_one(f"#wp{self.index - 1}_lon")
-                curr_lat = self.query_one(f"#wp{self.index}_lat")
-                curr_lon = self.query_one(f"#wp{self.index}_lon")
-
-                if prev_lat and prev_lon and curr_lat and curr_lon:
-                    curr_lat.value = prev_lat.value
-                    curr_lon.value = prev_lon.value
-
+                # Only copy time components and instruments, not lat/lon
                 time_components = ["year", "month", "day", "hour", "minute"]
                 for comp in time_components:
                     prev = schedule_editor.query_one(f"#wp{self.index - 1}_{comp}")
@@ -201,7 +197,7 @@ class ScheduleEditor(Static):
             yield Rule(line_style="heavy")
 
             with Collapsible(
-                title="[b]Waypoints[/b]",
+                title="[b]Waypoints & Instrument Selection[/b]",
                 collapsed=True,
             ):
                 for i, waypoint in enumerate(self.schedule.waypoints):
@@ -272,6 +268,8 @@ class ScheduleEditor(Static):
 
     def save_changes(self) -> bool:
         """Save changes to schedule.yaml."""
+        # TODO: SAVE_CHANGES() NEEDS TO BE LARGELY RE-WORKED NOW THAT MORE VALIDATION IS BUILT INTO THE INPUTS
+        # TODO: and should proabably now be more focussed on .verify() methods
         try:
             # spacetime region
             spatial_range = SpatialRange(
@@ -334,6 +332,138 @@ class ScheduleEditor(Static):
             return False
 
 
+# TODO: perhaps these methods could be housed elsewhere for neatness?!
+
+
+def get_field_type(model_class, field_name):
+    """Get Pydantic model class data type."""
+    return model_class.model_fields[field_name].annotation
+
+
+def type_to_textual(field_type):
+    """Convert data type to str which Textual can interpret for type = setting in Input objects."""
+    if field_type in (float, datetime.timedelta):
+        return "number"
+    elif field_type is int:
+        return "integer"
+    else:
+        return "text"
+
+
+# Pydantic field constraint attributes used for validation and introspection
+FIELD_CONSTRAINT_ATTRS = ("gt", "ge", "lt", "le")
+
+
+def get_field_conditions(model_class, field_name):
+    """Determine and return what conditions (and associated reference value) a Pydantic model sets on inputs."""
+    field_info = model_class.model_fields[field_name]
+    conditions = {}
+    for meta in field_info.metadata:
+        for attr in dir(meta):
+            if not attr.startswith("_") and getattr(meta, attr) is not None:
+                if attr in FIELD_CONSTRAINT_ATTRS:
+                    conditions[attr] = getattr(meta, attr)
+                else:
+                    raise ValueError(
+                        f"Unexpected constraint '{attr}' found on field '{field_name}'. "
+                        f"Allowed constraints: {FIELD_CONSTRAINT_ATTRS}"
+                    )
+    return list(conditions.keys()), list(conditions.values())
+
+
+def make_validator(condition, reference, value_type):
+    """
+    Make a validator function based on the Pydantic model field conditions returned by get_field_conditions().
+
+    TODO: Textual validator tools do not currently support additional arguments (such as 'reference') being fed into the validator functions (such as is_gt0) at present.
+    TODO: Therefore, reference values cannot be fed in dynamically and necessitates hard coding depending onthe condition and reference value combination.
+    TODO: At present, Pydantic models only require gt/ge/lt/le relative to **0.0** so `reference` is always checked as being == 0.0
+    TODO: Additional custom conditions can be "hard-coded" as new condition and reference combinations
+    TODO: if Pydantic model specifications change in the future and/or new instruments are added to VirtualShip etc.
+    TODO: Perhaps there's scope here though for a more robust implementation in a future PR...
+
+    Note, docstrings describing the conditional are required in the child functions (e.g. is_gt0), and is checked by require_docstring().
+    Docstrings will be used to generate informative UI invalid entry messages, so them being informative and accurate is important!
+
+    """
+
+    def require_docstring(func):
+        if func.__doc__ is None or not func.__doc__.strip():
+            raise ValueError(f"Function '{func.__name__}' must have a docstring.")
+        return func
+
+    def convert(value):
+        try:
+            return value_type(value)
+        except Exception:
+            return None
+
+    if value_type in (float, int) and reference == 0.0:
+        ref_zero = 0.0
+    elif value_type is datetime.timedelta and reference == datetime.timedelta():
+        ref_zero = datetime.timedelta()
+    else:
+        raise ValueError(
+            f"Unsupported value_type/reference combination: {value_type}, {reference}"
+        )
+
+    if condition == "gt" and reference == ref_zero:
+
+        @require_docstring
+        def is_gt0(value: str) -> bool:
+            """Greater than 0."""
+            v = convert(value)
+            return v is not None and v > ref_zero
+
+        return is_gt0
+
+    if condition == "ge" and reference == ref_zero:
+
+        @require_docstring
+        def is_ge0(value: str) -> bool:
+            """Greater than or equal to 0."""
+            v = convert(value)
+            return v is not None and v >= ref_zero
+
+        return is_ge0
+
+    if condition == "lt" and reference == ref_zero:
+
+        @require_docstring
+        def is_lt0(value: str) -> bool:
+            """Less than 0."""
+            v = convert(value)
+            return v is not None and v < ref_zero
+
+        return is_lt0
+
+    if condition == "le" and reference == ref_zero:
+
+        @require_docstring
+        def is_le0(value: str) -> bool:
+            """Less than or equal to 0."""
+            v = convert(value)
+            return v is not None and v <= ref_zero
+
+        return is_le0
+
+    else:
+        raise ValueError(
+            f"Unknown condition: {condition} and reference value: {reference} combination."
+        )
+
+
+def group_validators(model, attr):
+    """Bundle all validators for Input into singular list."""
+    return [
+        make_validator(cond, ref, get_field_type(model, attr))
+        for cond, ref in zip(
+            *get_field_conditions(model, attr),
+            strict=False,
+        )
+    ]
+
+
 class ConfigEditor(Container):
     DEFAULT_ADCP_CONFIG: ClassVar[dict[str, float]] = {
         "num_bins": 40,
@@ -355,12 +485,21 @@ class ConfigEditor(Container):
             yield Label("[b]Ship Config Editor[/b]", id="title", markup=True)
             yield Rule(line_style="heavy")
 
-            # ship speed and onboard measurement selection
-            with Collapsible(title="[b]Ship Speed and Onboard Measurements[/b]"):
+            with Collapsible(title="[b]Ship Speed & Onboard Measurements[/b]"):
+                attr = "ship_speed_knots"
+                validators = group_validators(ShipConfig, attr)
                 with Horizontal(classes="ship_speed"):
                     yield Label("[b]Ship Speed (knots):[/b]")
                     yield Input(
                         id="speed",
+                        type=type_to_textual(get_field_type(ShipConfig, attr)),
+                        validators=[
+                            Function(
+                                validator,
+                                f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                            )
+                            for validator in validators
+                        ],
                         classes="ship_speed_input",
                         placeholder="knots",
                         value=str(
@@ -369,6 +508,7 @@ class ConfigEditor(Container):
                             else ""
                         ),
                     )
+                yield Label("", id="validation-failure-label", classes="-hidden")
 
                 with Horizontal(classes="ts-section"):
                     yield Label("[b]Onboard Temperature/Salinity:[/b]")
@@ -397,24 +537,43 @@ class ConfigEditor(Container):
                 title="[b]Instrument Configurations[/b] (advanced users only)",
                 collapsed=True,
             ):
-                # TODO: could all of the below be a loop instead?! Extracting each of the sub parameters for each instrument config?
-
                 with Collapsible(
                     title="[b]Onboard ADCP Configuration[/b]", collapsed=True
                 ):
                     with Container(classes="instrument-config"):
+                        attr = "num_bins"
+                        validators = group_validators(ADCPConfig, attr)
                         yield Label("Number of Bins:")
                         yield Input(
                             id="adcp_num_bins",
+                            type=type_to_textual(get_field_type(ADCPConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.adcp_config.num_bins
                                 if self.config.adcp_config
                                 else ""
                             ),
                         )
+
+                        attr = "period"
+                        validators = group_validators(ADCPConfig, attr)
                         yield Label("Period (minutes):")
                         yield Input(
                             id="adcp_period",
+                            type=type_to_textual(get_field_type(ADCPConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.adcp_config.period.total_seconds() / 60.0
                                 if self.config.adcp_config
@@ -427,9 +586,21 @@ class ConfigEditor(Container):
                     collapsed=True,
                 ):
                     with Container(classes="instrument-config"):
+                        attr = "period"
+                        validators = group_validators(ShipUnderwaterSTConfig, attr)
                         yield Label("Period (minutes):")
                         yield Input(
                             id="ts_period",
+                            type=type_to_textual(
+                                get_field_type(ShipUnderwaterSTConfig, attr)
+                            ),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.ship_underwater_st_config.period.total_seconds()
                                 / 60.0
@@ -440,27 +611,57 @@ class ConfigEditor(Container):
 
                 with Collapsible(title="[b]CTD Configuration[/b]", collapsed=True):
                     with Container(classes="instrument-config"):
+                        attr = "max_depth_meter"
+                        validators = group_validators(CTDConfig, attr)
                         yield Label("Maximum Depth (meters):")
                         yield Input(
                             id="ctd_max_depth",
+                            type=type_to_textual(get_field_type(CTDConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.ctd_config.max_depth_meter
                                 if self.config.ctd_config
                                 else ""
                             ),
                         )
+                        attr = "min_depth_meter"
+                        validators = group_validators(CTDConfig, attr)
                         yield Label("Minimum Depth (meters):")
                         yield Input(
                             id="ctd_min_depth",
+                            type=type_to_textual(get_field_type(CTDConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.ctd_config.min_depth_meter
                                 if self.config.ctd_config
                                 else ""
                             ),
                         )
+                        attr = "stationkeeping_time"
+                        validators = group_validators(CTDConfig, attr)
                         yield Label("Stationkeeping Time (minutes):")
                         yield Input(
                             id="ctd_stationkeeping_time",
+                            type=type_to_textual(get_field_type(CTDConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.ctd_config.stationkeeping_time.total_seconds()
                                 / 60.0
@@ -471,27 +672,57 @@ class ConfigEditor(Container):
 
                 with Collapsible(title="[b]CTD-BGC Configuration[/b]", collapsed=True):
                     with Container(classes="instrument-config"):
+                        attr = "max_depth_meter"
+                        validators = group_validators(CTD_BGCConfig, attr)
                         yield Label("Maximum Depth (meters):")
                         yield Input(
                             id="ctd_bgc_max_depth",
+                            type=type_to_textual(get_field_type(CTD_BGCConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.ctd_bgc_config.max_depth_meter
                                 if self.config.ctd_bgc_config
                                 else ""
                             ),
                         )
+                        attr = "min_depth_meter"
+                        validators = group_validators(CTD_BGCConfig, attr)
                         yield Label("Minimum Depth (meters):")
                         yield Input(
                             id="ctd_bgc_min_depth",
+                            type=type_to_textual(get_field_type(CTD_BGCConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.ctd_bgc_config.min_depth_meter
                                 if self.config.ctd_bgc_config
                                 else ""
                             ),
                         )
+                        attr = "stationkeeping_time"
+                        validators = group_validators(CTD_BGCConfig, attr)
                         yield Label("Stationkeeping Time (minutes):")
                         yield Input(
                             id="ctd_bgc_stationkeeping_time",
+                            type=type_to_textual(get_field_type(CTD_BGCConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.ctd_bgc_config.stationkeeping_time.total_seconds()
                                 / 60.0
@@ -502,36 +733,76 @@ class ConfigEditor(Container):
 
                 with Collapsible(title="[b]XBT Configuration[/b]", collapsed=True):
                     with Container(classes="instrument-config"):
+                        attr = "max_depth_meter"
+                        validators = group_validators(XBTConfig, attr)
                         yield Label("Maximum Depth (meters):")
                         yield Input(
                             id="xbt_max_depth",
+                            type=type_to_textual(get_field_type(XBTConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.xbt_config.max_depth_meter
                                 if self.config.xbt_config
                                 else ""
                             ),
                         )
+                        attr = "min_depth_meter"
+                        validators = group_validators(XBTConfig, attr)
                         yield Label("Minimum Depth (meters):")
                         yield Input(
                             id="xbt_min_depth",
+                            type=type_to_textual(get_field_type(XBTConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.xbt_config.min_depth_meter
                                 if self.config.xbt_config
                                 else ""
                             ),
                         )
+                        attr = "fall_speed_meter_per_second"
+                        validators = group_validators(XBTConfig, attr)
                         yield Label("Fall Speed (meters/second):")
                         yield Input(
                             id="xbt_fall_speed",
+                            type=type_to_textual(get_field_type(XBTConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.xbt_config.fall_speed_meter_per_second
                                 if self.config.xbt_config
                                 else ""
                             ),
                         )
+                        attr = "deceleration_coefficient"
+                        validators = group_validators(XBTConfig, attr)
                         yield Label("Deceleration Coefficient:")
                         yield Input(
                             id="xbt_decel_coeff",
+                            type=type_to_textual(get_field_type(XBTConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.xbt_config.deceleration_coefficient
                                 if self.config.xbt_config
@@ -543,54 +814,114 @@ class ConfigEditor(Container):
                     title="[b]Argo Float Configuration[/b]", collapsed=True
                 ):
                     with Container(classes="instrument-config"):
+                        attr = "cycle_days"
+                        validators = group_validators(ArgoFloatConfig, attr)
                         yield Label("Cycle Days:")
                         yield Input(
                             id="argo_cycle_days",
+                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.argo_float_config.cycle_days
                                 if self.config.argo_float_config
                                 else ""
                             ),
                         )
+                        attr = "drift_days"
+                        validators = group_validators(ArgoFloatConfig, attr)
                         yield Label("Drift Days:")
                         yield Input(
                             id="argo_drift_days",
+                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.argo_float_config.drift_days
                                 if self.config.argo_float_config
                                 else ""
                             ),
                         )
+                        attr = "drift_depth_meter"
+                        validators = group_validators(ArgoFloatConfig, attr)
                         yield Label("Drift Depth (meters):")
                         yield Input(
                             id="argo_drift_depth",
+                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.argo_float_config.drift_depth_meter
                                 if self.config.argo_float_config
                                 else ""
                             ),
                         )
+                        attr = "max_depth_meter"
+                        validators = group_validators(ArgoFloatConfig, attr)
                         yield Label("Maximum Depth (meters):")
                         yield Input(
                             id="argo_max_depth",
+                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.argo_float_config.max_depth_meter
                                 if self.config.argo_float_config
                                 else ""
                             ),
                         )
+                        attr = "min_depth_meter"
+                        validators = group_validators(ArgoFloatConfig, attr)
                         yield Label("Minimum Depth (meters):")
                         yield Input(
                             id="argo_min_depth",
+                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.argo_float_config.min_depth_meter
                                 if self.config.argo_float_config
                                 else ""
                             ),
                         )
+                        attr = "vertical_speed_meter_per_second"
+                        validators = group_validators(ArgoFloatConfig, attr)
                         yield Label("Vertical Speed (meters/second):")
                         yield Input(
                             id="argo_vertical_speed",
+                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.argo_float_config.vertical_speed_meter_per_second
                                 if self.config.argo_float_config
@@ -600,18 +931,38 @@ class ConfigEditor(Container):
 
                 with Collapsible(title="[b]Drifter Configuration[/b]", collapsed=True):
                     with Container(classes="instrument-config"):
+                        attr = "depth_meter"
+                        validators = group_validators(DrifterConfig, attr)
                         yield Label("Depth (meters):")
                         yield Input(
                             id="drifter_depth",
+                            type=type_to_textual(get_field_type(DrifterConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.drifter_config.depth_meter
                                 if self.config.drifter_config
                                 else ""
                             ),
                         )
+                        attr = "lifetime"
+                        validators = group_validators(DrifterConfig, attr)
                         yield Label("Lifetime (minutes):")
                         yield Input(
                             id="drifter_lifetime",
+                            type=type_to_textual(get_field_type(DrifterConfig, attr)),
+                            validators=[
+                                Function(
+                                    validator,
+                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                )
+                                for validator in validators
+                            ],
                             value=str(
                                 self.config.drifter_config.lifetime.total_seconds()
                                 / 60.0
@@ -622,6 +973,23 @@ class ConfigEditor(Container):
 
         except Exception as e:
             yield Label(f"Error loading ship config: {e!s}")
+
+    @on(Input.Changed)
+    def show_invalid_reasons(self, event: Input.Changed) -> None:
+        label = self.query_one("#validation-failure-label", Label)
+        if not event.validation_result.is_valid:
+            message = (
+                "\n".join(event.validation_result.failure_descriptions)
+                if isinstance(event.validation_result.failure_descriptions, list)
+                else str(event.validation_result.failure_descriptions)
+            )
+            label.update(message)
+            label.remove_class("-hidden")
+            label.add_class("validation-failure")
+        else:
+            label.update("")
+            label.add_class("-hidden")
+            label.remove_class("validation-failure")
 
     def on_mount(self) -> None:
         self.show_hide_adcp_type(bool(self.config.adcp_config))
@@ -686,6 +1054,8 @@ class ConfigEditor(Container):
             ) from e
 
     def save_changes(self) -> bool:
+        # TODO: SAVE_CHANGES() NEEDS TO BE LARGELY RE-WORKED NOW THAT MORE VALIDATION IS BUILT INTO THE INPUTS
+        # TODO: and should proabably now be more focussed on .verify() methods
         """Save changes to ship_config.yaml."""
         try:
             # ship speed
@@ -707,12 +1077,14 @@ class ConfigEditor(Container):
                             "max_depth_meter": -1000.0
                             if self.query_one("#adcp_deep", Switch).value
                             else -150.0,
-                            "num_bins": int(self.query_one("#adcp_num_bins").value),
-                            "period": float(self.query_one("#adcp_period").value),
+                            "num_bins": self.query_one("#adcp_num_bins").value,
+                            "period": float(
+                                self.query_one("#adcp_period").value
+                            ),  # must be inputted as float, "period" in ADCPConfig will not handle str (to convert to timedelta), Pydantic will try to coerce the str to the relevant type in case of other params e.g. num_bins
                         },
                         "ADCP",
                     )
-                except (ValueError, ValidationError) as e:
+                except (ValueError, ValidationError, TypeError) as e:
                     raise UserError(f"Invalid ADCP configuration: {e!s}") from e
             else:
                 self.config.adcp_config = None
@@ -726,9 +1098,9 @@ class ConfigEditor(Container):
                         {"period": float(self.query_one("#ts_period").value)},
                         "Temperature/Salinity",
                     )
-                except (ValueError, ValidationError) as e:
+                except (ValueError, ValidationError, TypeError) as e:
                     raise UserError(
-                        f"Invalid Temperature/Salinity configuration: {e!s}"
+                        f"Invalid Onboard Temperature/Salinity configuration: {e!s}"
                     ) from e
             else:
                 self.config.ship_underwater_st_config = None
@@ -736,81 +1108,81 @@ class ConfigEditor(Container):
             # CTD config
             try:
                 self.config.ctd_config = CTDConfig(
-                    max_depth_meter=float(self.query_one("#ctd_max_depth").value),
-                    min_depth_meter=float(self.query_one("#ctd_min_depth").value),
+                    max_depth_meter=self.query_one("#ctd_max_depth").value,
+                    min_depth_meter=self.query_one("#ctd_min_depth").value,
                     stationkeeping_time=float(
                         self.query_one("#ctd_stationkeeping_time").value
                     ),
                 )
-            except (ValueError, ValidationError) as e:
+            except (ValueError, ValidationError, TypeError) as e:
                 raise UserError(f"Invalid CTD configuration: {e!s}") from e
 
             # CTD-BGC config
             try:
                 self.config.ctd_bgc_config = CTD_BGCConfig(
-                    max_depth_meter=float(self.query_one("#ctd_bgc_max_depth").value),
-                    min_depth_meter=float(self.query_one("#ctd_bgc_min_depth").value),
+                    max_depth_meter=self.query_one("#ctd_bgc_max_depth").value,
+                    min_depth_meter=self.query_one("#ctd_bgc_min_depth").value,
                     stationkeeping_time=float(
                         self.query_one("#ctd_bgc_stationkeeping_time").value
                     ),
                 )
-            except (ValueError, ValidationError) as e:
+            except (ValueError, ValidationError, TypeError) as e:
                 raise UserError(f"Invalid CTD-BGC configuration: {e!s}") from e
 
             # XBT config
             try:
                 self.config.xbt_config = XBTConfig(
-                    min_depth_meter=float(self.query_one("#xbt_min_depth").value),
-                    max_depth_meter=float(self.query_one("#xbt_max_depth").value),
-                    fall_speed_meter_per_second=float(
-                        self.query_one("#xbt_fall_speed").value
-                    ),
-                    deceleration_coefficient=float(
-                        self.query_one("#xbt_decel_coeff").value
-                    ),
+                    min_depth_meter=self.query_one("#xbt_min_depth").value,
+                    max_depth_meter=self.query_one("#xbt_max_depth").value,
+                    fall_speed_meter_per_second=self.query_one("#xbt_fall_speed").value,
+                    deceleration_coefficient=self.query_one("#xbt_decel_coeff").value,
                 )
-            except (ValueError, ValidationError) as e:
+            except (ValueError, ValidationError, TypeError) as e:
                 raise UserError(f"Invalid XBT configuration: {e!s}") from e
 
             # Argo config
             try:
                 self.config.argo_float_config = ArgoFloatConfig(
-                    min_depth_meter=float(self.query_one("#argo_min_depth").value),
-                    max_depth_meter=float(self.query_one("#argo_max_depth").value),
-                    drift_depth_meter=float(self.query_one("#argo_drift_depth").value),
-                    vertical_speed_meter_per_second=float(
-                        self.query_one("#argo_vertical_speed").value
-                    ),
-                    cycle_days=float(self.query_one("#argo_cycle_days").value),
-                    drift_days=float(self.query_one("#argo_drift_days").value),
+                    min_depth_meter=self.query_one("#argo_min_depth").value,
+                    max_depth_meter=self.query_one("#argo_max_depth").value,
+                    drift_depth_meter=self.query_one("#argo_drift_depth").value,
+                    vertical_speed_meter_per_second=self.query_one(
+                        "#argo_vertical_speed"
+                    ).value,
+                    cycle_days=self.query_one("#argo_cycle_days").value,
+                    drift_days=self.query_one("#argo_drift_days").value,
                 )
-            except (ValueError, ValidationError) as e:
+            except (ValueError, ValidationError, TypeError) as e:
                 raise UserError(f"Invalid Argo Float configuration: {e!s}") from e
 
             # Drifter config
             try:
                 self.config.drifter_config = DrifterConfig(
-                    depth_meter=float(self.query_one("#drifter_depth").value),
-                    lifetime=float(self.query_one("#drifter_lifetime").value),
+                    depth_meter=self.query_one("#drifter_depth").value,
+                    lifetime=self.query_one("#drifter_lifetime").value,
                 )
-            except (ValueError, ValidationError) as e:
+            except (ValueError, ValidationError, TypeError) as e:
                 raise UserError(f"Invalid Drifter configuration: {e!s}") from e
 
             # save
             self.config.to_yaml(f"{self.path}/ship_config.yaml")
             return True
 
-        except UserError as e:
-            self.notify(
-                f"Input error: {e!s}", severity="error", timeout=60, markup=False
-            )
-            return False
+        # TODO: error message here which says "Unexpected error, quitting application in x seconds, please report issue and traceback on GitHub"
         except Exception:
             self.notify(
-                "An unexpected error occurred. Please report this issue on GitHub.",
+                "An unexpected error occurred. The application will quit in 10 seconds.\n"
+                "Please report this issue and the traceback on the VirtualShip issue tracker at: xyz.com",
                 severity="error",
-                timeout=60,
+                timeout=10,
             )
+            import asyncio
+
+            async def quit_app():
+                await asyncio.sleep(10)
+                self.app.exit()
+
+            self._quit_task = asyncio.create_task(quit_app())
             return False
 
 
@@ -841,6 +1213,8 @@ class ScheduleScreen(Screen):
         try:
             config_saved = config_editor.save_changes()
             schedule_saved = schedule_editor.save_changes()
+
+            # TODO: don't need this error handling here if it's handled in the respective save_changes() functions for ship and schedule configs?!
 
             if config_saved and schedule_saved:
                 self.notify(
@@ -890,6 +1264,13 @@ class ScheduleApp(App):
 
     WaypointWidget > Collapsible > .collapsible--content {
         padding: 1;
+    }
+
+    Input.-valid {
+        border: tall $success 60%;
+    }
+    Input.-valid:focus {
+        border: tall $success;
     }
 
     Input {
@@ -1016,6 +1397,10 @@ class ScheduleApp(App):
 
     .hour-select, .minute-select {
         width: 15;
+    }
+
+    Label.validation-failure {
+        color: $error;
     }
     """
 

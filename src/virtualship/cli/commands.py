@@ -82,7 +82,8 @@ def plan(path):
     )
     url = "http://localhost:8000"
     webbrowser.open(url)
-    server.serve()
+    # TODO: remove debug = True when goes live
+    server.serve(debug=True)
 
 
 @click.command()
