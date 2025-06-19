@@ -47,7 +47,7 @@ from virtualship.models.space_time_region import (
 
 # TODO: add TEXTUAL_SERVE dependency if end up using it...
 
-# TODO: add a flag to the `virtualship plan` command which allows toggle between hosting the UI in terminal or web browser..
+# TODO: add a flag to the `virtualship plan` command which allows toggle between hosting the UI in terminal or web browser..defo useful for when/if hosted on cloud based JupyterLab type environments/terminals...
 
 # TODO: need to handle how to add the start_ and end_ datetimes automatically to Space-Time Region!
 # TODO: because I think the .yaml that comes from `virtualship init` will not have these as standard and we don't expect students to go add themselves...
@@ -472,6 +472,73 @@ class ConfigEditor(Container):
 
     DEFAULT_TS_CONFIG: ClassVar[dict[str, float]] = {"period_minutes": 5.0}
 
+    INSTRUMENT_FIELDS: ClassVar[dict[str, dict]] = {
+        "adcp_config": {
+            "class": ADCPConfig,
+            "title": "Onboard ADCP",
+            "attributes": [
+                {"name": "max_depth_meter"},
+                {"name": "num_bins"},
+                {"name": "period", "minutes": True},
+            ],
+        },
+        "ship_underwater_st_config": {
+            "class": ShipUnderwaterSTConfig,
+            "title": "Onboard Temperature/Salinity",
+            "attributes": [
+                {"name": "period", "minutes": True},
+            ],
+        },
+        "ctd_config": {
+            "class": CTDConfig,
+            "title": "CTD",
+            "attributes": [
+                {"name": "max_depth_meter"},
+                {"name": "min_depth_meter"},
+                {"name": "stationkeeping_time", "minutes": True},
+            ],
+        },
+        "ctd_bgc_config": {
+            "class": CTD_BGCConfig,
+            "title": "CTD-BGC",
+            "attributes": [
+                {"name": "max_depth_meter"},
+                {"name": "min_depth_meter"},
+                {"name": "stationkeeping_time", "minutes": True},
+            ],
+        },
+        "xbt_config": {
+            "class": XBTConfig,
+            "title": "XBT",
+            "attributes": [
+                {"name": "min_depth_meter"},
+                {"name": "max_depth_meter"},
+                {"name": "fall_speed_meter_per_second"},
+                {"name": "deceleration_coefficient"},
+            ],
+        },
+        "argo_float_config": {
+            "class": ArgoFloatConfig,
+            "title": "Argo Float",
+            "attributes": [
+                {"name": "min_depth_meter"},
+                {"name": "max_depth_meter"},
+                {"name": "drift_depth_meter"},
+                {"name": "vertical_speed_meter_per_second"},
+                {"name": "cycle_days"},
+                {"name": "drift_days"},
+            ],
+        },
+        "drifter_config": {
+            "class": DrifterConfig,
+            "title": "Drifter",
+            "attributes": [
+                {"name": "depth_meter"},
+                {"name": "lifetime", "minutes": True},
+            ],
+        },
+    }
+
     # TODO: Also incorporate verify methods!
 
     def __init__(self, path: str):
@@ -481,6 +548,8 @@ class ConfigEditor(Container):
 
     def compose(self) -> ComposeResult:
         try:
+            ## UI SECTION: Ship Speed & Onboard Measurements
+
             self.config = ShipConfig.from_yaml(f"{self.path}/ship_config.yaml")
             yield Label("[b]Ship Config Editor[/b]", id="title", markup=True)
             yield Rule(line_style="heavy")
@@ -532,444 +601,55 @@ class ConfigEditor(Container):
                     yield Label("   SeaSeven:")
                     yield Switch(value=not is_deep, id="adcp_shallow")
 
-            # specific instrument configurations
+            ## UI SECTION: Instrument Configurations (advanced users only)
+
             with Collapsible(
                 title="[b]Instrument Configurations[/b] (advanced users only)",
                 collapsed=True,
             ):
-                with Collapsible(
-                    title="[b]Onboard ADCP Configuration[/b]", collapsed=True
-                ):
-                    with Container(classes="instrument-config"):
-                        attr = "num_bins"
-                        validators = group_validators(ADCPConfig, attr)
-                        yield Label("Number of Bins:")
-                        yield Input(
-                            id="adcp_num_bins",
-                            type=type_to_textual(get_field_type(ADCPConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.adcp_config.num_bins
-                                if self.config.adcp_config
-                                else ""
-                            ),
-                        )
+                for instrument_name, info in self.INSTRUMENT_FIELDS.items():
+                    config_class = info["class"]
+                    attributes = info["attributes"]
+                    config_instance = getattr(self.config, instrument_name, None)
+                    title = info.get("title", instrument_name.replace("_", " ").title())
 
-                        attr = "period"
-                        validators = group_validators(ADCPConfig, attr)
-                        yield Label("Period (minutes):")
-                        yield Input(
-                            id="adcp_period",
-                            type=type_to_textual(get_field_type(ADCPConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                    with Collapsible(
+                        title=f"[b]{title}[/b]",
+                        collapsed=True,
+                    ):
+                        with Container(classes="instrument-config"):
+                            for attr_meta in attributes:
+                                attr = attr_meta["name"]
+                                is_minutes = attr_meta.get("minutes", False)
+                                validators = group_validators(config_class, attr)
+                                if config_instance:
+                                    raw_value = getattr(config_instance, attr, "")
+                                    if is_minutes and raw_value != "":
+                                        try:
+                                            value = str(
+                                                raw_value.total_seconds() / 60.0
+                                            )
+                                        except AttributeError:
+                                            value = str(raw_value)
+                                    else:
+                                        value = str(raw_value)
+                                else:
+                                    value = ""
+                                yield Label(f"{attr.replace('_', ' ').title()}:")
+                                yield Input(
+                                    id=f"{instrument_name}_{attr}",
+                                    type=type_to_textual(
+                                        get_field_type(config_class, attr)
+                                    ),
+                                    validators=[
+                                        Function(
+                                            validator,
+                                            f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                        )
+                                        for validator in validators
+                                    ],
+                                    value=value,
                                 )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.adcp_config.period.total_seconds() / 60.0
-                                if self.config.adcp_config
-                                else ""
-                            ),
-                        )
-
-                with Collapsible(
-                    title="[b]Onboard Temperature/Salinity Configuration[/b]",
-                    collapsed=True,
-                ):
-                    with Container(classes="instrument-config"):
-                        attr = "period"
-                        validators = group_validators(ShipUnderwaterSTConfig, attr)
-                        yield Label("Period (minutes):")
-                        yield Input(
-                            id="ts_period",
-                            type=type_to_textual(
-                                get_field_type(ShipUnderwaterSTConfig, attr)
-                            ),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.ship_underwater_st_config.period.total_seconds()
-                                / 60.0
-                                if self.config.ship_underwater_st_config
-                                else ""
-                            ),
-                        )
-
-                with Collapsible(title="[b]CTD Configuration[/b]", collapsed=True):
-                    with Container(classes="instrument-config"):
-                        attr = "max_depth_meter"
-                        validators = group_validators(CTDConfig, attr)
-                        yield Label("Maximum Depth (meters):")
-                        yield Input(
-                            id="ctd_max_depth",
-                            type=type_to_textual(get_field_type(CTDConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.ctd_config.max_depth_meter
-                                if self.config.ctd_config
-                                else ""
-                            ),
-                        )
-                        attr = "min_depth_meter"
-                        validators = group_validators(CTDConfig, attr)
-                        yield Label("Minimum Depth (meters):")
-                        yield Input(
-                            id="ctd_min_depth",
-                            type=type_to_textual(get_field_type(CTDConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.ctd_config.min_depth_meter
-                                if self.config.ctd_config
-                                else ""
-                            ),
-                        )
-                        attr = "stationkeeping_time"
-                        validators = group_validators(CTDConfig, attr)
-                        yield Label("Stationkeeping Time (minutes):")
-                        yield Input(
-                            id="ctd_stationkeeping_time",
-                            type=type_to_textual(get_field_type(CTDConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.ctd_config.stationkeeping_time.total_seconds()
-                                / 60.0
-                                if self.config.ctd_config
-                                else ""
-                            ),
-                        )
-
-                with Collapsible(title="[b]CTD-BGC Configuration[/b]", collapsed=True):
-                    with Container(classes="instrument-config"):
-                        attr = "max_depth_meter"
-                        validators = group_validators(CTD_BGCConfig, attr)
-                        yield Label("Maximum Depth (meters):")
-                        yield Input(
-                            id="ctd_bgc_max_depth",
-                            type=type_to_textual(get_field_type(CTD_BGCConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.ctd_bgc_config.max_depth_meter
-                                if self.config.ctd_bgc_config
-                                else ""
-                            ),
-                        )
-                        attr = "min_depth_meter"
-                        validators = group_validators(CTD_BGCConfig, attr)
-                        yield Label("Minimum Depth (meters):")
-                        yield Input(
-                            id="ctd_bgc_min_depth",
-                            type=type_to_textual(get_field_type(CTD_BGCConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.ctd_bgc_config.min_depth_meter
-                                if self.config.ctd_bgc_config
-                                else ""
-                            ),
-                        )
-                        attr = "stationkeeping_time"
-                        validators = group_validators(CTD_BGCConfig, attr)
-                        yield Label("Stationkeeping Time (minutes):")
-                        yield Input(
-                            id="ctd_bgc_stationkeeping_time",
-                            type=type_to_textual(get_field_type(CTD_BGCConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.ctd_bgc_config.stationkeeping_time.total_seconds()
-                                / 60.0
-                                if self.config.ctd_bgc_config
-                                else ""
-                            ),
-                        )
-
-                with Collapsible(title="[b]XBT Configuration[/b]", collapsed=True):
-                    with Container(classes="instrument-config"):
-                        attr = "max_depth_meter"
-                        validators = group_validators(XBTConfig, attr)
-                        yield Label("Maximum Depth (meters):")
-                        yield Input(
-                            id="xbt_max_depth",
-                            type=type_to_textual(get_field_type(XBTConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.xbt_config.max_depth_meter
-                                if self.config.xbt_config
-                                else ""
-                            ),
-                        )
-                        attr = "min_depth_meter"
-                        validators = group_validators(XBTConfig, attr)
-                        yield Label("Minimum Depth (meters):")
-                        yield Input(
-                            id="xbt_min_depth",
-                            type=type_to_textual(get_field_type(XBTConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.xbt_config.min_depth_meter
-                                if self.config.xbt_config
-                                else ""
-                            ),
-                        )
-                        attr = "fall_speed_meter_per_second"
-                        validators = group_validators(XBTConfig, attr)
-                        yield Label("Fall Speed (meters/second):")
-                        yield Input(
-                            id="xbt_fall_speed",
-                            type=type_to_textual(get_field_type(XBTConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.xbt_config.fall_speed_meter_per_second
-                                if self.config.xbt_config
-                                else ""
-                            ),
-                        )
-                        attr = "deceleration_coefficient"
-                        validators = group_validators(XBTConfig, attr)
-                        yield Label("Deceleration Coefficient:")
-                        yield Input(
-                            id="xbt_decel_coeff",
-                            type=type_to_textual(get_field_type(XBTConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.xbt_config.deceleration_coefficient
-                                if self.config.xbt_config
-                                else ""
-                            ),
-                        )
-
-                with Collapsible(
-                    title="[b]Argo Float Configuration[/b]", collapsed=True
-                ):
-                    with Container(classes="instrument-config"):
-                        attr = "cycle_days"
-                        validators = group_validators(ArgoFloatConfig, attr)
-                        yield Label("Cycle Days:")
-                        yield Input(
-                            id="argo_cycle_days",
-                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.argo_float_config.cycle_days
-                                if self.config.argo_float_config
-                                else ""
-                            ),
-                        )
-                        attr = "drift_days"
-                        validators = group_validators(ArgoFloatConfig, attr)
-                        yield Label("Drift Days:")
-                        yield Input(
-                            id="argo_drift_days",
-                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.argo_float_config.drift_days
-                                if self.config.argo_float_config
-                                else ""
-                            ),
-                        )
-                        attr = "drift_depth_meter"
-                        validators = group_validators(ArgoFloatConfig, attr)
-                        yield Label("Drift Depth (meters):")
-                        yield Input(
-                            id="argo_drift_depth",
-                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.argo_float_config.drift_depth_meter
-                                if self.config.argo_float_config
-                                else ""
-                            ),
-                        )
-                        attr = "max_depth_meter"
-                        validators = group_validators(ArgoFloatConfig, attr)
-                        yield Label("Maximum Depth (meters):")
-                        yield Input(
-                            id="argo_max_depth",
-                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.argo_float_config.max_depth_meter
-                                if self.config.argo_float_config
-                                else ""
-                            ),
-                        )
-                        attr = "min_depth_meter"
-                        validators = group_validators(ArgoFloatConfig, attr)
-                        yield Label("Minimum Depth (meters):")
-                        yield Input(
-                            id="argo_min_depth",
-                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.argo_float_config.min_depth_meter
-                                if self.config.argo_float_config
-                                else ""
-                            ),
-                        )
-                        attr = "vertical_speed_meter_per_second"
-                        validators = group_validators(ArgoFloatConfig, attr)
-                        yield Label("Vertical Speed (meters/second):")
-                        yield Input(
-                            id="argo_vertical_speed",
-                            type=type_to_textual(get_field_type(ArgoFloatConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.argo_float_config.vertical_speed_meter_per_second
-                                if self.config.argo_float_config
-                                else ""
-                            ),
-                        )
-
-                with Collapsible(title="[b]Drifter Configuration[/b]", collapsed=True):
-                    with Container(classes="instrument-config"):
-                        attr = "depth_meter"
-                        validators = group_validators(DrifterConfig, attr)
-                        yield Label("Depth (meters):")
-                        yield Input(
-                            id="drifter_depth",
-                            type=type_to_textual(get_field_type(DrifterConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.drifter_config.depth_meter
-                                if self.config.drifter_config
-                                else ""
-                            ),
-                        )
-                        attr = "lifetime"
-                        validators = group_validators(DrifterConfig, attr)
-                        yield Label("Lifetime (minutes):")
-                        yield Input(
-                            id="drifter_lifetime",
-                            type=type_to_textual(get_field_type(DrifterConfig, attr)),
-                            validators=[
-                                Function(
-                                    validator,
-                                    f"*INVALID*: entry must be {validator.__doc__.lower()}",
-                                )
-                                for validator in validators
-                            ],
-                            value=str(
-                                self.config.drifter_config.lifetime.total_seconds()
-                                / 60.0
-                                if self.config.drifter_config
-                                else ""
-                            ),
-                        )
 
         except Exception as e:
             yield Label(f"Error loading ship config: {e!s}")
