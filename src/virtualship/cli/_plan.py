@@ -1,8 +1,9 @@
 import datetime
+import os
 import sys
+import traceback
 from typing import ClassVar
 
-from pydantic import ValidationError
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
@@ -19,7 +20,6 @@ from textual.widgets import (
     Switch,
 )
 
-from virtualship.errors import UserError
 from virtualship.models.location import Location
 from virtualship.models.schedule import Schedule, Waypoint
 from virtualship.models.ship_config import (
@@ -38,6 +38,11 @@ from virtualship.models.space_time_region import (
     SpatialRange,
     TimeRange,
 )
+
+# TODO: check: how does it handle (all) the fields being empty upon reading-in? Need to add redundancy here...?
+# - currently the application fails on start-up if something is missing or null (apart from ADCP and ST)
+# - there is also a bug where if ADCP is null on start up, and then you switch it on in the UI then it crashes, so this bug fix is TODO!
+# - otherwise, in terms of missing data on start up handling, best to throw an error to the user stating that x field is missing a value
 
 # TODO: need to do a big round of edits where tidy up all the error messaging.
 # - given a lot of the validation of entry is done natively now in textual, this should mean that all other
@@ -77,7 +82,9 @@ class WaypointWidget(Static):
         with Collapsible(title=f"[b]Waypoint {self.index + 1}[/b]", collapsed=True):
             if self.index > 0:
                 yield Button(
-                    "Copy from Previous", id=f"wp{self.index}_copy", variant="warning"
+                    "Copy Time & Instruments from Previous",
+                    id=f"wp{self.index}_copy",
+                    variant="warning",
                 )
             yield Label("Location:")
             yield Label("    Latitude:")
@@ -332,138 +339,6 @@ class ScheduleEditor(Static):
             return False
 
 
-# TODO: perhaps these methods could be housed elsewhere for neatness?!
-
-
-def get_field_type(model_class, field_name):
-    """Get Pydantic model class data type."""
-    return model_class.model_fields[field_name].annotation
-
-
-def type_to_textual(field_type):
-    """Convert data type to str which Textual can interpret for type = setting in Input objects."""
-    if field_type in (float, datetime.timedelta):
-        return "number"
-    elif field_type is int:
-        return "integer"
-    else:
-        return "text"
-
-
-# Pydantic field constraint attributes used for validation and introspection
-FIELD_CONSTRAINT_ATTRS = ("gt", "ge", "lt", "le")
-
-
-def get_field_conditions(model_class, field_name):
-    """Determine and return what conditions (and associated reference value) a Pydantic model sets on inputs."""
-    field_info = model_class.model_fields[field_name]
-    conditions = {}
-    for meta in field_info.metadata:
-        for attr in dir(meta):
-            if not attr.startswith("_") and getattr(meta, attr) is not None:
-                if attr in FIELD_CONSTRAINT_ATTRS:
-                    conditions[attr] = getattr(meta, attr)
-                else:
-                    raise ValueError(
-                        f"Unexpected constraint '{attr}' found on field '{field_name}'. "
-                        f"Allowed constraints: {FIELD_CONSTRAINT_ATTRS}"
-                    )
-    return list(conditions.keys()), list(conditions.values())
-
-
-def make_validator(condition, reference, value_type):
-    """
-    Make a validator function based on the Pydantic model field conditions returned by get_field_conditions().
-
-    TODO: Textual validator tools do not currently support additional arguments (such as 'reference') being fed into the validator functions (such as is_gt0) at present.
-    TODO: Therefore, reference values cannot be fed in dynamically and necessitates hard coding depending onthe condition and reference value combination.
-    TODO: At present, Pydantic models only require gt/ge/lt/le relative to **0.0** so `reference` is always checked as being == 0.0
-    TODO: Additional custom conditions can be "hard-coded" as new condition and reference combinations
-    TODO: if Pydantic model specifications change in the future and/or new instruments are added to VirtualShip etc.
-    TODO: Perhaps there's scope here though for a more robust implementation in a future PR...
-
-    Note, docstrings describing the conditional are required in the child functions (e.g. is_gt0), and is checked by require_docstring().
-    Docstrings will be used to generate informative UI invalid entry messages, so them being informative and accurate is important!
-
-    """
-
-    def require_docstring(func):
-        if func.__doc__ is None or not func.__doc__.strip():
-            raise ValueError(f"Function '{func.__name__}' must have a docstring.")
-        return func
-
-    def convert(value):
-        try:
-            return value_type(value)
-        except Exception:
-            return None
-
-    if value_type in (float, int) and reference == 0.0:
-        ref_zero = 0.0
-    elif value_type is datetime.timedelta and reference == datetime.timedelta():
-        ref_zero = datetime.timedelta()
-    else:
-        raise ValueError(
-            f"Unsupported value_type/reference combination: {value_type}, {reference}"
-        )
-
-    if condition == "gt" and reference == ref_zero:
-
-        @require_docstring
-        def is_gt0(value: str) -> bool:
-            """Greater than 0."""
-            v = convert(value)
-            return v is not None and v > ref_zero
-
-        return is_gt0
-
-    if condition == "ge" and reference == ref_zero:
-
-        @require_docstring
-        def is_ge0(value: str) -> bool:
-            """Greater than or equal to 0."""
-            v = convert(value)
-            return v is not None and v >= ref_zero
-
-        return is_ge0
-
-    if condition == "lt" and reference == ref_zero:
-
-        @require_docstring
-        def is_lt0(value: str) -> bool:
-            """Less than 0."""
-            v = convert(value)
-            return v is not None and v < ref_zero
-
-        return is_lt0
-
-    if condition == "le" and reference == ref_zero:
-
-        @require_docstring
-        def is_le0(value: str) -> bool:
-            """Less than or equal to 0."""
-            v = convert(value)
-            return v is not None and v <= ref_zero
-
-        return is_le0
-
-    else:
-        raise ValueError(
-            f"Unknown condition: {condition} and reference value: {reference} combination."
-        )
-
-
-def group_validators(model, attr):
-    """Bundle all validators for Input into singular list."""
-    return [
-        make_validator(cond, ref, get_field_type(model, attr))
-        for cond, ref in zip(
-            *get_field_conditions(model, attr),
-            strict=False,
-        )
-    ]
-
-
 class ConfigEditor(Container):
     DEFAULT_ADCP_CONFIG: ClassVar[dict[str, float]] = {
         "num_bins": 40,
@@ -477,7 +352,6 @@ class ConfigEditor(Container):
             "class": ADCPConfig,
             "title": "Onboard ADCP",
             "attributes": [
-                {"name": "max_depth_meter"},
                 {"name": "num_bins"},
                 {"name": "period", "minutes": True},
             ],
@@ -539,6 +413,13 @@ class ConfigEditor(Container):
         },
     }
 
+    FIELD_CONSTRAINT_ATTRS: ClassVar[tuple] = (
+        "gt",
+        "ge",
+        "lt",
+        "le",
+    )  # Pydantic field constraint attributes used for validation and introspection
+
     # TODO: Also incorporate verify methods!
 
     def __init__(self, path: str):
@@ -548,7 +429,7 @@ class ConfigEditor(Container):
 
     def compose(self) -> ComposeResult:
         try:
-            ## UI SECTION: Ship Speed & Onboard Measurements
+            ## SECTION: "Ship Speed & Onboard Measurements"
 
             self.config = ShipConfig.from_yaml(f"{self.path}/ship_config.yaml")
             yield Label("[b]Ship Config Editor[/b]", id="title", markup=True)
@@ -556,16 +437,18 @@ class ConfigEditor(Container):
 
             with Collapsible(title="[b]Ship Speed & Onboard Measurements[/b]"):
                 attr = "ship_speed_knots"
-                validators = group_validators(ShipConfig, attr)
+                validators = self.group_validators(ShipConfig, attr)
                 with Horizontal(classes="ship_speed"):
                     yield Label("[b]Ship Speed (knots):[/b]")
                     yield Input(
                         id="speed",
-                        type=type_to_textual(get_field_type(ShipConfig, attr)),
+                        type=self.type_to_textual(
+                            self.get_field_type(ShipConfig, attr)
+                        ),
                         validators=[
                             Function(
                                 validator,
-                                f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                f"INVALID: value must be {validator.__doc__.lower()}",
                             )
                             for validator in validators
                         ],
@@ -577,7 +460,7 @@ class ConfigEditor(Container):
                             else ""
                         ),
                     )
-                yield Label("", id="validation-failure-label", classes="-hidden")
+                yield Label("", id="validation-failure-label-speed", classes="-hidden")
 
                 with Horizontal(classes="ts-section"):
                     yield Label("[b]Onboard Temperature/Salinity:[/b]")
@@ -601,7 +484,7 @@ class ConfigEditor(Container):
                     yield Label("   SeaSeven:")
                     yield Switch(value=not is_deep, id="adcp_shallow")
 
-            ## UI SECTION: Instrument Configurations (advanced users only)
+            ## SECTION: "Instrument Configurations (advanced users only)""
 
             with Collapsible(
                 title="[b]Instrument Configurations[/b] (advanced users only)",
@@ -621,7 +504,7 @@ class ConfigEditor(Container):
                             for attr_meta in attributes:
                                 attr = attr_meta["name"]
                                 is_minutes = attr_meta.get("minutes", False)
-                                validators = group_validators(config_class, attr)
+                                validators = self.group_validators(config_class, attr)
                                 if config_instance:
                                     raw_value = getattr(config_instance, attr, "")
                                     if is_minutes and raw_value != "":
@@ -638,17 +521,22 @@ class ConfigEditor(Container):
                                 yield Label(f"{attr.replace('_', ' ').title()}:")
                                 yield Input(
                                     id=f"{instrument_name}_{attr}",
-                                    type=type_to_textual(
-                                        get_field_type(config_class, attr)
+                                    type=self.type_to_textual(
+                                        self.get_field_type(config_class, attr)
                                     ),
                                     validators=[
                                         Function(
                                             validator,
-                                            f"*INVALID*: entry must be {validator.__doc__.lower()}",
+                                            f"INVALID: value must be {validator.__doc__.lower()}",
                                         )
                                         for validator in validators
                                     ],
                                     value=value,
+                                )
+                                yield Label(
+                                    "",
+                                    id=f"validation-failure-label-{instrument_name}_{attr}",
+                                    classes="-hidden validation-failure",
                                 )
 
         except Exception as e:
@@ -656,7 +544,9 @@ class ConfigEditor(Container):
 
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:
-        label = self.query_one("#validation-failure-label", Label)
+        input_id = event.input.id
+        label_id = f"validation-failure-label-{input_id}"
+        label = self.query_one(f"#{label_id}", Label)
         if not event.validation_result.is_valid:
             message = (
                 "\n".join(event.validation_result.failure_descriptions)
@@ -721,17 +611,126 @@ class ConfigEditor(Container):
             deep = self.query_one("#adcp_deep", Switch)
             deep.value = False
 
-    def _try_create_config(self, config_class, input_values, config_name):
-        """Helper to create config with error handling."""
-        try:
-            return config_class(**input_values)
-        except ValueError as e:
-            field = (
-                str(e).split()[0] if str(e).split() else "unknown field"
-            )  # extract field name from Pydantic error
-            raise UserError(
-                f"Invalid {config_name} configuration: {field} - {e!s}"
-            ) from e
+    def get_field_type(self, model_class, field_name):
+        """Get Pydantic model class data type."""
+        return model_class.model_fields[field_name].annotation
+
+    def type_to_textual(self, field_type):
+        """Convert data type to str which Textual can interpret for type = setting in Input objects."""
+        if field_type in (float, datetime.timedelta):
+            return "number"
+        elif field_type is int:
+            return "integer"
+        else:
+            return "text"
+
+    def get_field_conditions(self, model_class, field_name):
+        """Determine and return what conditions (and associated reference value) a Pydantic model sets on inputs."""
+        field_info = model_class.model_fields[field_name]
+        conditions = {}
+        for meta in field_info.metadata:
+            for attr in dir(meta):
+                if not attr.startswith("_") and getattr(meta, attr) is not None:
+                    if attr in self.FIELD_CONSTRAINT_ATTRS:
+                        conditions[attr] = getattr(meta, attr)
+                    else:
+                        raise ValueError(
+                            f"Unexpected constraint '{attr}' found on field '{field_name}'. "
+                            f"Allowed constraints: {self.FIELD_CONSTRAINT_ATTRS}"
+                        )
+        return list(conditions.keys()), list(conditions.values())
+
+    def make_validator(self, condition, reference, value_type):
+        """
+        Make a validator function based on the Pydantic model field conditions returned by get_field_conditions().
+
+        N.B. #1 Textual validator tools do not currently support additional arguments (such as 'reference') being fed into the validator functions (such as is_gt0) at present.
+        Therefore, reference values cannot be fed in dynamically and necessitates hard coding depending onthe condition and reference value combination.
+        At present, Pydantic models only require gt/ge/lt/le relative to **0.0** so `reference` is always checked as being == 0.0
+        Additional custom conditions can be "hard-coded" as new condition and reference combinations if Pydantic model specifications change in the future and/or new instruments are added to VirtualShip etc.
+        TODO: Perhaps there's scope here though for a more robust implementation in a future PR...
+
+        N.B. #2, docstrings describing the conditional are required in the child functions (e.g. is_gt0), and presence is checked by require_docstring().
+        Docstrings will be used to generate informative UI invalid entry messages, so them being informative and accurate is important!
+
+        """
+
+        def require_docstring(func):
+            if func.__doc__ is None or not func.__doc__.strip():
+                raise ValueError(f"Function '{func.__name__}' must have a docstring.")
+            return func
+
+        def convert(value):
+            try:
+                if value_type is datetime.timedelta:
+                    return datetime.timedelta(minutes=float(value))
+                return value_type(value)
+            except Exception:
+                return None
+
+        if value_type in (float, int) and reference == 0.0:
+            ref_zero = 0.0
+        elif value_type is datetime.timedelta and reference == datetime.timedelta():
+            ref_zero = datetime.timedelta()
+        else:
+            raise ValueError(
+                f"Unsupported value_type/reference combination: {value_type}, {reference}"
+            )
+
+        if condition == "gt" and reference == ref_zero:
+
+            @require_docstring
+            def is_gt0(value: str) -> bool:
+                """Greater than 0."""
+                v = convert(value)
+                return v is not None and v > ref_zero
+
+            return is_gt0
+
+        if condition == "ge" and reference == ref_zero:
+
+            @require_docstring
+            def is_ge0(value: str) -> bool:
+                """Greater than or equal to 0."""
+                v = convert(value)
+                return v is not None and v >= ref_zero
+
+            return is_ge0
+
+        if condition == "lt" and reference == ref_zero:
+
+            @require_docstring
+            def is_lt0(value: str) -> bool:
+                """Less than 0."""
+                v = convert(value)
+                return v is not None and v < ref_zero
+
+            return is_lt0
+
+        if condition == "le" and reference == ref_zero:
+
+            @require_docstring
+            def is_le0(value: str) -> bool:
+                """Less than or equal to 0."""
+                v = convert(value)
+                return v is not None and v <= ref_zero
+
+            return is_le0
+
+        else:
+            raise ValueError(
+                f"Unknown condition: {condition} and reference value: {reference} combination."
+            )
+
+    def group_validators(self, model, attr):
+        """Bundle all validators for Input into singular list."""
+        return [
+            self.make_validator(cond, ref, self.get_field_type(model, attr))
+            for cond, ref in zip(
+                *self.get_field_conditions(model, attr),
+                strict=False,
+            )
+        ]
 
     def save_changes(self) -> bool:
         # TODO: SAVE_CHANGES() NEEDS TO BE LARGELY RE-WORKED NOW THAT MORE VALIDATION IS BUILT INTO THE INPUTS
@@ -739,110 +738,52 @@ class ConfigEditor(Container):
         """Save changes to ship_config.yaml."""
         try:
             # ship speed
-            try:
-                speed = float(self.query_one("#speed").value)
-                if speed <= 0:
-                    raise UserError("Ship speed must be greater than 0")
-                self.config.ship_speed_knots = speed
-            except ValueError:
-                raise UserError("Ship speed must be a valid number") from None
+            attr = "ship_speed_knots"
+            field_type = self.get_field_type(self.config, attr)
+            value = field_type(self.query_one("#speed").value)
+            ShipConfig.model_validate(
+                {**self.config.model_dump(), attr: value}
+            )  # validate using a temporary model (raises if invalid)
+            self.config.ship_speed_knots = value
 
-            # ADCP config
-            has_adcp = self.query_one("#has_adcp", Switch).value
-            if has_adcp:
-                try:
-                    self.config.adcp_config = self._try_create_config(
-                        ADCPConfig,
-                        {
-                            "max_depth_meter": -1000.0
-                            if self.query_one("#adcp_deep", Switch).value
-                            else -150.0,
-                            "num_bins": self.query_one("#adcp_num_bins").value,
-                            "period": float(
-                                self.query_one("#adcp_period").value
-                            ),  # must be inputted as float, "period" in ADCPConfig will not handle str (to convert to timedelta), Pydantic will try to coerce the str to the relevant type in case of other params e.g. num_bins
-                        },
-                        "ADCP",
-                    )
-                except (ValueError, ValidationError, TypeError) as e:
-                    raise UserError(f"Invalid ADCP configuration: {e!s}") from e
-            else:
-                self.config.adcp_config = None
+            # individual instrument configurations
+            for instrument_name, info in self.INSTRUMENT_FIELDS.items():
+                config_class = info["class"]
+                attributes = info["attributes"]
+                kwargs = {}
+                for attr_meta in attributes:
+                    attr = attr_meta["name"]
+                    is_minutes = attr_meta.get("minutes", False)
+                    input_id = f"{instrument_name}_{attr}"
+                    value = self.query_one(f"#{input_id}").value
+                    field_type = self.get_field_type(config_class, attr)
+                    if is_minutes and field_type is datetime.timedelta:
+                        value = datetime.timedelta(minutes=float(value))
+                    else:
+                        value = field_type(value)
+                    kwargs[attr] = value
 
-            # T/S config
-            has_ts = self.query_one("#has_onboard_ts", Switch).value
-            if has_ts:
-                try:
-                    self.config.ship_underwater_st_config = self._try_create_config(
-                        ShipUnderwaterSTConfig,
-                        {"period": float(self.query_one("#ts_period").value)},
-                        "Temperature/Salinity",
-                    )
-                except (ValueError, ValidationError, TypeError) as e:
-                    raise UserError(
-                        f"Invalid Onboard Temperature/Salinity configuration: {e!s}"
-                    ) from e
-            else:
-                self.config.ship_underwater_st_config = None
+                # TODO: the special handling does not seem to work for both instruments
+                # TODO: in the ADCP case it causes an error, in the T/S case it saves but doesn't actually write anything...
 
-            # CTD config
-            try:
-                self.config.ctd_config = CTDConfig(
-                    max_depth_meter=self.query_one("#ctd_max_depth").value,
-                    min_depth_meter=self.query_one("#ctd_min_depth").value,
-                    stationkeeping_time=float(
-                        self.query_one("#ctd_stationkeeping_time").value
-                    ),
-                )
-            except (ValueError, ValidationError, TypeError) as e:
-                raise UserError(f"Invalid CTD configuration: {e!s}") from e
+                # special handling for onboard ADCP, conditional on whether it's selected by user in Switch (overwrite with None if switch is off)
+                if instrument_name == "adcp_config":
+                    has_adcp = self.query_one("#has_adcp", Switch).value
+                    if has_adcp:  # determine max_depth_meter value based on sub-Switch selection by user, i.e. deep or shallow ADCP
+                        if self.query_one("#adcp_deep", Switch).value:
+                            kwargs["max_depth_meter"] = -1000.0
+                        else:
+                            kwargs["max_depth_meter"] = -150.0
+                    else:
+                        setattr(self.config, instrument_name, None)
 
-            # CTD-BGC config
-            try:
-                self.config.ctd_bgc_config = CTD_BGCConfig(
-                    max_depth_meter=self.query_one("#ctd_bgc_max_depth").value,
-                    min_depth_meter=self.query_one("#ctd_bgc_min_depth").value,
-                    stationkeeping_time=float(
-                        self.query_one("#ctd_bgc_stationkeeping_time").value
-                    ),
-                )
-            except (ValueError, ValidationError, TypeError) as e:
-                raise UserError(f"Invalid CTD-BGC configuration: {e!s}") from e
+                # special handling for onboard T/S, conditional on whether it's selected by user (overwrite with None if switch is off)
+                if instrument_name == "ship_underwater_st_config":
+                    has_ts = self.query_one("#has_onboard_ts", Switch).value
+                    if not has_ts:
+                        setattr(self.config, instrument_name, None)
 
-            # XBT config
-            try:
-                self.config.xbt_config = XBTConfig(
-                    min_depth_meter=self.query_one("#xbt_min_depth").value,
-                    max_depth_meter=self.query_one("#xbt_max_depth").value,
-                    fall_speed_meter_per_second=self.query_one("#xbt_fall_speed").value,
-                    deceleration_coefficient=self.query_one("#xbt_decel_coeff").value,
-                )
-            except (ValueError, ValidationError, TypeError) as e:
-                raise UserError(f"Invalid XBT configuration: {e!s}") from e
-
-            # Argo config
-            try:
-                self.config.argo_float_config = ArgoFloatConfig(
-                    min_depth_meter=self.query_one("#argo_min_depth").value,
-                    max_depth_meter=self.query_one("#argo_max_depth").value,
-                    drift_depth_meter=self.query_one("#argo_drift_depth").value,
-                    vertical_speed_meter_per_second=self.query_one(
-                        "#argo_vertical_speed"
-                    ).value,
-                    cycle_days=self.query_one("#argo_cycle_days").value,
-                    drift_days=self.query_one("#argo_drift_days").value,
-                )
-            except (ValueError, ValidationError, TypeError) as e:
-                raise UserError(f"Invalid Argo Float configuration: {e!s}") from e
-
-            # Drifter config
-            try:
-                self.config.drifter_config = DrifterConfig(
-                    depth_meter=self.query_one("#drifter_depth").value,
-                    lifetime=self.query_one("#drifter_lifetime").value,
-                )
-            except (ValueError, ValidationError, TypeError) as e:
-                raise UserError(f"Invalid Drifter configuration: {e!s}") from e
+                setattr(self.config, instrument_name, config_class(**kwargs))
 
             # save
             self.config.to_yaml(f"{self.path}/ship_config.yaml")
@@ -850,19 +791,31 @@ class ConfigEditor(Container):
 
         # TODO: error message here which says "Unexpected error, quitting application in x seconds, please report issue and traceback on GitHub"
         except Exception:
+            # TODO: this traceback strategy is not working...
+            # print traceback in terminal if running in a terminal, else (e.g. running in browser) save to file
+            if sys.stdout.isatty():
+                traceback.print_exc()
+            else:
+                error_log_path = os.path.join(self.path, "virtualship_error.txt")
+                with open(error_log_path, "a") as f:
+                    traceback.print_exc(file=f)
+
             self.notify(
-                "An unexpected error occurred. The application will quit in 10 seconds.\n"
-                "Please report this issue and the traceback on the VirtualShip issue tracker at: xyz.com",
+                "ERROR: An unexpected error occurred.\n"
+                "\nPlease ensure that all entries are valid (all typed entry boxes must have green borders and no warnings).\n"
+                "\nIf the problem persists, please report this issue, with a description and the traceback (to be printed in the terminal upon exiting the application) "
+                "on the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues",
+                # The application will quit in 10 seconds.\n"
                 severity="error",
                 timeout=10,
             )
-            import asyncio
+            # import asyncio
 
-            async def quit_app():
-                await asyncio.sleep(10)
-                self.app.exit()
+            # async def quit_app():
+            #     await asyncio.sleep(10)
+            #     self.app.exit()
 
-            self._quit_task = asyncio.create_task(quit_app())
+            # self._quit_task = asyncio.create_task(quit_app())
             return False
 
 
@@ -875,7 +828,6 @@ class ScheduleScreen(Screen):
         with VerticalScroll():
             yield ConfigEditor(self.path)
             yield ScheduleEditor(self.path)
-            # Move buttons to screen level
             with Horizontal():
                 yield Button("Save Changes", id="save_button", variant="success")
                 yield Button("Exit", id="exit_button", variant="error")
