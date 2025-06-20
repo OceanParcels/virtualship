@@ -20,6 +20,7 @@ from textual.widgets import (
     Switch,
 )
 
+from virtualship.errors import UnexpectedError
 from virtualship.models.location import Location
 from virtualship.models.schedule import Schedule, Waypoint
 from virtualship.models.ship_config import (
@@ -733,8 +734,6 @@ class ConfigEditor(Container):
         ]
 
     def save_changes(self) -> bool:
-        # TODO: SAVE_CHANGES() NEEDS TO BE LARGELY RE-WORKED NOW THAT MORE VALIDATION IS BUILT INTO THE INPUTS
-        # TODO: and should proabably now be more focussed on .verify() methods
         """Save changes to ship_config.yaml."""
         try:
             # ship speed
@@ -789,34 +788,21 @@ class ConfigEditor(Container):
             self.config.to_yaml(f"{self.path}/ship_config.yaml")
             return True
 
-        # TODO: error message here which says "Unexpected error, quitting application in x seconds, please report issue and traceback on GitHub"
-        except Exception:
-            # TODO: this traceback strategy is not working...
-            # print traceback in terminal if running in a terminal, else (e.g. running in browser) save to file
-            if sys.stdout.isatty():
-                traceback.print_exc()
-            else:
-                error_log_path = os.path.join(self.path, "virtualship_error.txt")
-                with open(error_log_path, "a") as f:
-                    traceback.print_exc(file=f)
+        except Exception as e:
+            # write error log
+            error_log_path = os.path.join(self.path, "virtualship_error.txt")
+            with open(error_log_path, "w") as f:
+                f.write("Error saving ship config:\n")
+                traceback.print_exception(
+                    type(e), e, e.__traceback__, file=f, chain=True
+                )
+                f.write("\n")
 
-            self.notify(
-                "ERROR: An unexpected error occurred.\n"
-                "\nPlease ensure that all entries are valid (all typed entry boxes must have green borders and no warnings).\n"
-                "\nIf the problem persists, please report this issue, with a description and the traceback (to be printed in the terminal upon exiting the application) "
-                "on the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues",
-                # The application will quit in 10 seconds.\n"
-                severity="error",
-                timeout=10,
-            )
-            # import asyncio
-
-            # async def quit_app():
-            #     await asyncio.sleep(10)
-            #     self.app.exit()
-
-            # self._quit_task = asyncio.create_task(quit_app())
-            return False
+            raise UnexpectedError(
+                "\n1) Please ensure that all entries are valid (all typed entry boxes must have green borders and no warnings).\n"
+                "\n2) If the problem persists, please report this issue, with a description and the traceback, "
+                "to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
+            ) from None
 
 
 class ScheduleScreen(Screen):
@@ -838,7 +824,7 @@ class ScheduleScreen(Screen):
 
     @on(Button.Pressed, "#save_button")
     def save_pressed(self) -> None:
-        """Handle save button press."""
+        """Save button press."""
         config_editor = self.query_one(ConfigEditor)
         schedule_editor = self.query_one(ScheduleEditor)
 
@@ -846,19 +832,18 @@ class ScheduleScreen(Screen):
             config_saved = config_editor.save_changes()
             schedule_saved = schedule_editor.save_changes()
 
-            # TODO: don't need this error handling here if it's handled in the respective save_changes() functions for ship and schedule configs?!
-
             if config_saved and schedule_saved:
                 self.notify(
                     "Changes saved successfully", severity="information", timeout=20
                 )
+
         except Exception as e:
             self.notify(
-                f"Error saving changes: {e!s}",
+                f"*** Error saving changes ***:\n\n{e}\n\nTraceback will be logged in `{self.path}/virtualship_error.txt`. Please copy the file and/or its contents when submitting an issue.",
                 severity="error",
-                timeout=60,
-                markup=False,
+                timeout=20,
             )
+            return False
 
 
 class ScheduleApp(App):

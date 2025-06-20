@@ -28,7 +28,7 @@ class ConfigError(RuntimeError):
     pass
 
 
-class UserError(Exception):
-    """Error raised when user input is invalid."""
+class UnexpectedError(Exception):
+    """Error raised when there is an unexpected problem."""
 
     pass
