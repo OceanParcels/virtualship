@@ -74,16 +74,30 @@ def init(path, from_mfp):
     "path",
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
-def plan(path):
-    """Launch UI to help build schedule and ship config files. Opens in web browser, hosted on the user's local machine only."""
-    server = Server(
-        command=f"python -m virtualship.cli._plan {Path(path)}",
-        title="VirtualShip plan",
-    )
-    url = "http://localhost:8000"
-    webbrowser.open(url)
-    # TODO: remove debug = True when goes live
-    server.serve(debug=True)
+@click.option(
+    "--terminal/--web",
+    default=False,
+    help="Run the VirtualShip planner in the terminal (default: web browser).",
+)
+
+# TODO: implement auto detection of whether running remotely e.g. in JupyterLab (already in browser) to automatically run in terminal
+# TODO: rather than launching in browser from the browser...
+
+def plan(path, terminal):
+    """Launch UI to help build schedule and ship config files. Opens in web browser by default, or in the terminal with --terminal."""
+    if terminal:
+        from virtualship.cli._plan import _plan
+
+        _plan(Path(path))
+    else:
+        server = Server(
+            command=f"python -m virtualship.cli._plan {Path(path)}",
+            title="VirtualShip plan",
+        )
+        url = "http://localhost:8000"
+        webbrowser.open(url)
+        # TODO: remove debug = True when goes live
+        server.serve(debug=True)
 
 
 @click.command()

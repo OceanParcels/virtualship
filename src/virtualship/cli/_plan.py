@@ -1,6 +1,5 @@
 import datetime
 import os
-import sys
 import traceback
 from typing import ClassVar
 
@@ -20,7 +19,14 @@ from textual.widgets import (
     Switch,
 )
 
-from virtualship.errors import UnexpectedError
+from virtualship.cli.validator_utils import (
+    get_field_type,
+    group_validators,
+    is_valid_lat,
+    is_valid_lon,
+    type_to_textual,
+)
+from virtualship.errors import UnexpectedError, UserError
 from virtualship.models.location import Location
 from virtualship.models.schedule import Schedule, Waypoint
 from virtualship.models.ship_config import (
@@ -40,6 +46,12 @@ from virtualship.models.space_time_region import (
     TimeRange,
 )
 
+# TODO: need to distinguish in error handling between usererrors such as faulty yaml read in add pointers to the User to make fixes,
+# TODO: and errors which are genuinely unexpected, are likely bugs and need attention on GitHub...!
+
+# TODO: will need to some scenario testing where introduce a bug which affects save_changes() to show that the GitHub issues related error
+# TODO: message is definitely thrown when the error is unexpected.
+
 # TODO: check: how does it handle (all) the fields being empty upon reading-in? Need to add redundancy here...?
 # - currently the application fails on start-up if something is missing or null (apart from ADCP and ST)
 # - there is also a bug where if ADCP is null on start up, and then you switch it on in the UI then it crashes, so this bug fix is TODO!
@@ -50,10 +62,14 @@ from virtualship.models.space_time_region import (
 #   errors associated with inputting to the app should be 'unexpected' and therefore call to the report-to-GitHub workflow
 # - errors associated with ship_config and schedule.verify() should, however, provide in-UI messaging ideally
 #   to notify the user that their selections are not valid...
+# TODO: perhaps error messaging could be wrapped into one of the higher level functions i.e. ScheduleScreen?!
 
 # TODO: add TEXTUAL_SERVE dependency if end up using it...
 
-# TODO: add a flag to the `virtualship plan` command which allows toggle between hosting the UI in terminal or web browser..defo useful for when/if hosted on cloud based JupyterLab type environments/terminals...
+# TODO: I think remove web browser option for now, build stable version for terminal only (especially because VSC being mostly run in browser atm)
+# TODO: Textual-serve / browser support for a future PR...
+
+# TODO: test in JupyterLab terminal!...
 
 # TODO: need to handle how to add the start_ and end_ datetimes automatically to Space-Time Region!
 # TODO: because I think the .yaml that comes from `virtualship init` will not have these as standard and we don't expect students to go add themselves...
@@ -62,6 +78,8 @@ from virtualship.models.space_time_region import (
 # TODO: also add more error handling for 1) if there are no yamls found in the specified *path*
 # TODO: and also for if there are errors in the yaml being opened, for example if what should be a float has been manaully changed to something invalid
 # TODO: or if indeed any of the pydantic model components associated with the yamls are missing
+
+# TODO: or indeed how error messages such as those in make_validators are handled in the hypothetical situation that they are thrown...
 
 
 # TODO: make sure 'Save' writes the yaml file components in the right order? Or does this not matter?
@@ -73,6 +91,38 @@ from virtualship.models.space_time_region import (
 # TODO: the valid entry + User errors etc. need to be added to the Schedule editor (currently on the Config Editor)
 
 
+UNEXPECTED_MSG = (
+    "\n1) Please ensure that all entries are valid (all typed entry boxes must have green borders and no warnings).\n"
+    "\n2) If the problem persists, please report this issue, with a description and the traceback, "
+    "to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
+)
+
+
+def log_exception_to_file(
+    exception: Exception,
+    path: str,
+    filename: str = "virtualship_error.txt",
+    context_message: str = "Error occurred:",
+):
+    """
+    Log an exception and its traceback to a file.
+
+    Args:
+        exception (Exception): The exception to log.
+        path (str): Directory where the log file will be saved.
+        filename (str, optional): Log file name. Defaults to 'virtualship_error.txt'.
+        context_message (str, optional): Message to write before the traceback.
+
+    """
+    error_log_path = os.path.join(path, filename)
+    with open(error_log_path, "w") as f:
+        f.write(f"{context_message}\n")
+        traceback.print_exception(
+            type(exception), exception, exception.__traceback__, file=f, chain=True
+        )
+        f.write("\n")
+
+
 class WaypointWidget(Static):
     def __init__(self, waypoint: Waypoint, index: int):
         super().__init__()
@@ -80,111 +130,175 @@ class WaypointWidget(Static):
         self.index = index
 
     def compose(self) -> ComposeResult:
-        with Collapsible(title=f"[b]Waypoint {self.index + 1}[/b]", collapsed=True):
-            if self.index > 0:
-                yield Button(
-                    "Copy Time & Instruments from Previous",
-                    id=f"wp{self.index}_copy",
-                    variant="warning",
-                )
-            yield Label("Location:")
-            yield Label("    Latitude:")
-            yield Input(
-                id=f"wp{self.index}_lat",
-                value=str(self.waypoint.location.lat),
-            )
-            yield Label("    Longitude:")
-            yield Input(
-                id=f"wp{self.index}_lon",
-                value=str(self.waypoint.location.lon),
-            )
-            yield Label("Time:")
-            with Horizontal():
-                yield Label("Year:")
-                yield Select(
-                    [
-                        (str(year), year)
-                        for year in range(
-                            datetime.datetime.now().year - 3,
-                            datetime.datetime.now().year + 1,
+        try:
+            with Collapsible(title=f"[b]Waypoint {self.index + 1}[/b]", collapsed=True):
+                if self.index > 0:
+                    yield Button(
+                        "Copy Time & Instruments from Previous",
+                        id=f"wp{self.index}_copy",
+                        variant="warning",
+                    )
+                yield Label("Location:")
+                yield Label("    Latitude:")
+                yield Input(
+                    id=f"wp{self.index}_lat",
+                    value=str(self.waypoint.location.lat)
+                    if self.waypoint.location.lat
+                    else "",
+                    validators=[
+                        Function(
+                            is_valid_lat,
+                            f"INVALID: value must be {is_valid_lat.__doc__.lower()}",
                         )
                     ],
-                    id=f"wp{self.index}_year",
-                    value=int(self.waypoint.time.year)
-                    if self.waypoint.time
-                    else Select.BLANK,
-                    prompt="YYYY",
-                    classes="year-select",
+                    type="number",
+                    placeholder="°N",
+                    classes="latitude-input",
                 )
-                yield Label("Month:")
-                yield Select(
-                    [(f"{m:02d}", m) for m in range(1, 13)],
-                    id=f"wp{self.index}_month",
-                    value=int(self.waypoint.time.month)
-                    if self.waypoint.time
-                    else Select.BLANK,
-                    prompt="MM",
-                    classes="month-select",
-                )
-                yield Label("Day:")
-                yield Select(
-                    [(f"{d:02d}", d) for d in range(1, 32)],
-                    id=f"wp{self.index}_day",
-                    value=int(self.waypoint.time.day)
-                    if self.waypoint.time
-                    else Select.BLANK,
-                    prompt="DD",
-                    classes="day-select",
-                )
-                yield Label("Hour:")
-                yield Select(
-                    [(f"{h:02d}", h) for h in range(24)],
-                    id=f"wp{self.index}_hour",
-                    value=int(self.waypoint.time.hour)
-                    if self.waypoint.time
-                    else Select.BLANK,
-                    prompt="hh",
-                    classes="hour-select",
-                )
-                yield Label("Min:")
-                yield Select(
-                    [(f"{m:02d}", m) for m in range(0, 60, 5)],
-                    id=f"wp{self.index}_minute",
-                    value=int(self.waypoint.time.minute)
-                    if self.waypoint.time
-                    else Select.BLANK,
-                    prompt="mm",
-                    classes="minute-select",
+                yield Label(
+                    "",
+                    id=f"validation-failure-label-wp{self.index}_lat",
+                    classes="-hidden validation-failure",
                 )
 
-            yield Label("Instruments:")
-            for instrument in InstrumentType:
-                is_selected = instrument in (self.waypoint.instrument or [])
+                yield Label("    Longitude:")
+                yield Input(
+                    id=f"wp{self.index}_lon",
+                    value=str(self.waypoint.location.lon)
+                    if self.waypoint.location.lon
+                    else "",
+                    validators=[
+                        Function(
+                            is_valid_lon,
+                            f"INVALID: value must be {is_valid_lon.__doc__.lower()}",
+                        )
+                    ],
+                    type="number",
+                    placeholder="°W",
+                    classes="longitude-input",
+                )
+                yield Label(
+                    "",
+                    id=f"validation-failure-label-wp{self.index}_lon",
+                    classes="-hidden validation-failure",
+                )
+
+                yield Label("Time:")
                 with Horizontal():
-                    yield Label(instrument.value)
-                    yield Switch(
-                        value=is_selected, id=f"wp{self.index}_{instrument.value}"
+                    yield Label("Year:")
+                    yield Select(
+                        [
+                            (str(year), year)
+                            for year in range(
+                                datetime.datetime.now().year - 3,
+                                datetime.datetime.now().year + 1,
+                            )
+                        ],
+                        id=f"wp{self.index}_year",
+                        value=int(self.waypoint.time.year)
+                        if self.waypoint.time
+                        else Select.BLANK,
+                        prompt="YYYY",
+                        classes="year-select",
                     )
+                    yield Label("Month:")
+                    yield Select(
+                        [(f"{m:02d}", m) for m in range(1, 13)],
+                        id=f"wp{self.index}_month",
+                        value=int(self.waypoint.time.month)
+                        if self.waypoint.time
+                        else Select.BLANK,
+                        prompt="MM",
+                        classes="month-select",
+                    )
+                    yield Label("Day:")
+                    yield Select(
+                        [(f"{d:02d}", d) for d in range(1, 32)],
+                        id=f"wp{self.index}_day",
+                        value=int(self.waypoint.time.day)
+                        if self.waypoint.time
+                        else Select.BLANK,
+                        prompt="DD",
+                        classes="day-select",
+                    )
+                    yield Label("Hour:")
+                    yield Select(
+                        [(f"{h:02d}", h) for h in range(24)],
+                        id=f"wp{self.index}_hour",
+                        value=int(self.waypoint.time.hour)
+                        if self.waypoint.time
+                        else Select.BLANK,
+                        prompt="hh",
+                        classes="hour-select",
+                    )
+                    yield Label("Min:")
+                    yield Select(
+                        [(f"{m:02d}", m) for m in range(0, 60, 5)],
+                        id=f"wp{self.index}_minute",
+                        value=int(self.waypoint.time.minute)
+                        if self.waypoint.time
+                        else Select.BLANK,
+                        prompt="mm",
+                        classes="minute-select",
+                    )
+
+                yield Label("Instruments:")
+                for instrument in InstrumentType:
+                    is_selected = instrument in (self.waypoint.instrument or [])
+                    with Horizontal():
+                        yield Label(instrument.value)
+                        yield Switch(
+                            value=is_selected, id=f"wp{self.index}_{instrument.value}"
+                        )
+
+        except Exception:
+            raise  # raise the exception to prevent incomplete UI build
+            # TODO: could follow this through to be included in a generic 'unexpected error' please post on Github issue in say ScheduleApp?
 
     def copy_from_previous(self) -> None:
-        if self.index > 0:
-            schedule_editor = self.parent
-            if schedule_editor:
-                # Only copy time components and instruments, not lat/lon
-                time_components = ["year", "month", "day", "hour", "minute"]
-                for comp in time_components:
-                    prev = schedule_editor.query_one(f"#wp{self.index - 1}_{comp}")
-                    curr = self.query_one(f"#wp{self.index}_{comp}")
-                    if prev and curr:
-                        curr.value = prev.value
+        try:
+            if self.index > 0:
+                schedule_editor = self.parent
+                if schedule_editor:
+                    # only copy time components and instruments, not lat/lon
+                    time_components = ["year", "month", "day", "hour", "minute"]
+                    for comp in time_components:
+                        prev = schedule_editor.query_one(f"#wp{self.index - 1}_{comp}")
+                        curr = self.query_one(f"#wp{self.index}_{comp}")
+                        if prev and curr:
+                            curr.value = prev.value
 
-                for instrument in InstrumentType:
-                    prev_switch = schedule_editor.query_one(
-                        f"#wp{self.index - 1}_{instrument.value}"
-                    )
-                    curr_switch = self.query_one(f"#wp{self.index}_{instrument.value}")
-                    if prev_switch and curr_switch:
-                        curr_switch.value = prev_switch.value
+                    for instrument in InstrumentType:
+                        prev_switch = schedule_editor.query_one(
+                            f"#wp{self.index - 1}_{instrument.value}"
+                        )
+                        curr_switch = self.query_one(
+                            f"#wp{self.index}_{instrument.value}"
+                        )
+                        if prev_switch and curr_switch:
+                            curr_switch.value = prev_switch.value
+        except Exception:
+            raise  # raise the exception to prevent incomplete UI build
+            # TODO: could follow this through to be included in a generic 'unexpected error' please post on Github issue in say ScheduleApp?
+
+    @on(Input.Changed)
+    def show_invalid_reasons(self, event: Input.Changed) -> None:
+        input_id = event.input.id
+        label_id = f"validation-failure-label-{input_id}"
+        label = self.query_one(f"#{label_id}", Label)
+        if not event.validation_result.is_valid:
+            message = (
+                "\n".join(event.validation_result.failure_descriptions)
+                if isinstance(event.validation_result.failure_descriptions, list)
+                else str(event.validation_result.failure_descriptions)
+            )
+            label.update(message)
+            label.remove_class("-hidden")
+            label.add_class("validation-failure")
+        else:
+            label.update("")
+            label.add_class("-hidden")
+            label.remove_class("validation-failure")
 
     @on(Button.Pressed, "Button")
     def button_pressed(self, event: Button.Pressed) -> None:
@@ -201,8 +315,17 @@ class ScheduleEditor(Static):
     def compose(self) -> ComposeResult:
         try:
             self.schedule = Schedule.from_yaml(f"{self.path}/schedule.yaml")
+        except Exception:
+            # TODO: this error message needs far more detail, just a placeholder for now!
+            raise UserError(
+                "There is something wrong with schedule.yaml. Please fix."
+            ) from None
+
+        try:
             yield Label("[b]Schedule Editor[/b]", id="title", markup=True)
             yield Rule(line_style="heavy")
+
+            # SECTION: "Waypoints & Instrument Selection"
 
             with Collapsible(
                 title="[b]Waypoints & Instrument Selection[/b]",
@@ -211,7 +334,8 @@ class ScheduleEditor(Static):
                 for i, waypoint in enumerate(self.schedule.waypoints):
                     yield WaypointWidget(waypoint, i)
 
-            # Space-Time Region Section
+            # SECTION: "Space-Time Region"
+
             # TODO: MAY NEED TO ADD A FEATURE ON SAVE CHANGES WHICH AUTOMATICALLY DETECTS MAX AND MIN TIME
             # TODO: FOR THE SCENARIO WHERE YAML LOADED IN IS NULL AND USER DOES NOT EDIT THEMSELVES
             with Collapsible(
@@ -271,8 +395,8 @@ class ScheduleEditor(Static):
                         ),
                     )
 
-        except Exception as e:
-            yield Label(f"Error loading schedule: {e!s}")
+        except Exception:
+            raise UnexpectedError(UNEXPECTED_MSG) from None
 
     def save_changes(self) -> bool:
         """Save changes to schedule.yaml."""
@@ -414,13 +538,6 @@ class ConfigEditor(Container):
         },
     }
 
-    FIELD_CONSTRAINT_ATTRS: ClassVar[tuple] = (
-        "gt",
-        "ge",
-        "lt",
-        "le",
-    )  # Pydantic field constraint attributes used for validation and introspection
-
     # TODO: Also incorporate verify methods!
 
     def __init__(self, path: str):
@@ -430,22 +547,27 @@ class ConfigEditor(Container):
 
     def compose(self) -> ComposeResult:
         try:
+            self.config = ShipConfig.from_yaml(f"{self.path}/ship_config.yaml")
+        except Exception:
+            # TODO: this error message needs far more detail, just a placeholder for now!
+            raise UserError(
+                "There is something wrong with ship_config.yaml. Please fix."
+            ) from None
+
+        try:
             ## SECTION: "Ship Speed & Onboard Measurements"
 
-            self.config = ShipConfig.from_yaml(f"{self.path}/ship_config.yaml")
             yield Label("[b]Ship Config Editor[/b]", id="title", markup=True)
             yield Rule(line_style="heavy")
 
             with Collapsible(title="[b]Ship Speed & Onboard Measurements[/b]"):
                 attr = "ship_speed_knots"
-                validators = self.group_validators(ShipConfig, attr)
+                validators = group_validators(ShipConfig, attr)
                 with Horizontal(classes="ship_speed"):
                     yield Label("[b]Ship Speed (knots):[/b]")
                     yield Input(
                         id="speed",
-                        type=self.type_to_textual(
-                            self.get_field_type(ShipConfig, attr)
-                        ),
+                        type=type_to_textual(get_field_type(ShipConfig, attr)),
                         validators=[
                             Function(
                                 validator,
@@ -496,16 +618,22 @@ class ConfigEditor(Container):
                     attributes = info["attributes"]
                     config_instance = getattr(self.config, instrument_name, None)
                     title = info.get("title", instrument_name.replace("_", " ").title())
-
                     with Collapsible(
                         title=f"[b]{title}[/b]",
                         collapsed=True,
                     ):
+                        if instrument_name in (
+                            "adcp_config",
+                            "ship_underwater_st_config",
+                        ):
+                            yield Label(
+                                f"NOTE: entries will be ignored here if {info['title']} is OFF in Ship Speed & Onboard Measurements."
+                            )
                         with Container(classes="instrument-config"):
                             for attr_meta in attributes:
                                 attr = attr_meta["name"]
                                 is_minutes = attr_meta.get("minutes", False)
-                                validators = self.group_validators(config_class, attr)
+                                validators = group_validators(config_class, attr)
                                 if config_instance:
                                     raw_value = getattr(config_instance, attr, "")
                                     if is_minutes and raw_value != "":
@@ -522,8 +650,8 @@ class ConfigEditor(Container):
                                 yield Label(f"{attr.replace('_', ' ').title()}:")
                                 yield Input(
                                     id=f"{instrument_name}_{attr}",
-                                    type=self.type_to_textual(
-                                        self.get_field_type(config_class, attr)
+                                    type=type_to_textual(
+                                        get_field_type(config_class, attr)
                                     ),
                                     validators=[
                                         Function(
@@ -540,8 +668,9 @@ class ConfigEditor(Container):
                                     classes="-hidden validation-failure",
                                 )
 
-        except Exception as e:
-            yield Label(f"Error loading ship config: {e!s}")
+        except Exception:
+            raise  # raise the exception to prevent incomplete UI build
+            # TODO: could follow this through to be included in a generic 'unexpected error' please post on Github issue in say ScheduleApp?
 
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:
@@ -563,7 +692,10 @@ class ConfigEditor(Container):
             label.remove_class("validation-failure")
 
     def on_mount(self) -> None:
-        self.show_hide_adcp_type(bool(self.config.adcp_config))
+        adcp_present = (
+            getattr(self.config, "adcp_config", None) if self.config else False
+        )
+        self.show_hide_adcp_type(bool(adcp_present))
 
     def show_hide_adcp_type(self, show: bool) -> None:
         container = self.query_one("#adcp_type_container")
@@ -573,17 +705,17 @@ class ConfigEditor(Container):
             container.add_class("-hidden")
 
     def _set_adcp_default_values(self):
-        self.query_one("#adcp_num_bins").value = str(
+        self.query_one("#adcp_config_num_bins").value = str(
             self.DEFAULT_ADCP_CONFIG["num_bins"]
         )
-        self.query_one("#adcp_period").value = str(
+        self.query_one("#adcp_config_period").value = str(
             self.DEFAULT_ADCP_CONFIG["period_minutes"]
         )
-        self.query_one("#adcp_shallow").value = True
-        self.query_one("#adcp_deep").value = False
+        self.query_one("#adcp_shallow").value = False
+        self.query_one("#adcp_deep").value = True
 
     def _set_ts_default_values(self):
-        self.query_one("#ts_period").value = str(
+        self.query_one("#ship_underwater_st_config_period").value = str(
             self.DEFAULT_TS_CONFIG["period_minutes"]
         )
 
@@ -612,133 +744,12 @@ class ConfigEditor(Container):
             deep = self.query_one("#adcp_deep", Switch)
             deep.value = False
 
-    def get_field_type(self, model_class, field_name):
-        """Get Pydantic model class data type."""
-        return model_class.model_fields[field_name].annotation
-
-    def type_to_textual(self, field_type):
-        """Convert data type to str which Textual can interpret for type = setting in Input objects."""
-        if field_type in (float, datetime.timedelta):
-            return "number"
-        elif field_type is int:
-            return "integer"
-        else:
-            return "text"
-
-    def get_field_conditions(self, model_class, field_name):
-        """Determine and return what conditions (and associated reference value) a Pydantic model sets on inputs."""
-        field_info = model_class.model_fields[field_name]
-        conditions = {}
-        for meta in field_info.metadata:
-            for attr in dir(meta):
-                if not attr.startswith("_") and getattr(meta, attr) is not None:
-                    if attr in self.FIELD_CONSTRAINT_ATTRS:
-                        conditions[attr] = getattr(meta, attr)
-                    else:
-                        raise ValueError(
-                            f"Unexpected constraint '{attr}' found on field '{field_name}'. "
-                            f"Allowed constraints: {self.FIELD_CONSTRAINT_ATTRS}"
-                        )
-        return list(conditions.keys()), list(conditions.values())
-
-    def make_validator(self, condition, reference, value_type):
-        """
-        Make a validator function based on the Pydantic model field conditions returned by get_field_conditions().
-
-        N.B. #1 Textual validator tools do not currently support additional arguments (such as 'reference') being fed into the validator functions (such as is_gt0) at present.
-        Therefore, reference values cannot be fed in dynamically and necessitates hard coding depending onthe condition and reference value combination.
-        At present, Pydantic models only require gt/ge/lt/le relative to **0.0** so `reference` is always checked as being == 0.0
-        Additional custom conditions can be "hard-coded" as new condition and reference combinations if Pydantic model specifications change in the future and/or new instruments are added to VirtualShip etc.
-        TODO: Perhaps there's scope here though for a more robust implementation in a future PR...
-
-        N.B. #2, docstrings describing the conditional are required in the child functions (e.g. is_gt0), and presence is checked by require_docstring().
-        Docstrings will be used to generate informative UI invalid entry messages, so them being informative and accurate is important!
-
-        """
-
-        def require_docstring(func):
-            if func.__doc__ is None or not func.__doc__.strip():
-                raise ValueError(f"Function '{func.__name__}' must have a docstring.")
-            return func
-
-        def convert(value):
-            try:
-                if value_type is datetime.timedelta:
-                    return datetime.timedelta(minutes=float(value))
-                return value_type(value)
-            except Exception:
-                return None
-
-        if value_type in (float, int) and reference == 0.0:
-            ref_zero = 0.0
-        elif value_type is datetime.timedelta and reference == datetime.timedelta():
-            ref_zero = datetime.timedelta()
-        else:
-            raise ValueError(
-                f"Unsupported value_type/reference combination: {value_type}, {reference}"
-            )
-
-        if condition == "gt" and reference == ref_zero:
-
-            @require_docstring
-            def is_gt0(value: str) -> bool:
-                """Greater than 0."""
-                v = convert(value)
-                return v is not None and v > ref_zero
-
-            return is_gt0
-
-        if condition == "ge" and reference == ref_zero:
-
-            @require_docstring
-            def is_ge0(value: str) -> bool:
-                """Greater than or equal to 0."""
-                v = convert(value)
-                return v is not None and v >= ref_zero
-
-            return is_ge0
-
-        if condition == "lt" and reference == ref_zero:
-
-            @require_docstring
-            def is_lt0(value: str) -> bool:
-                """Less than 0."""
-                v = convert(value)
-                return v is not None and v < ref_zero
-
-            return is_lt0
-
-        if condition == "le" and reference == ref_zero:
-
-            @require_docstring
-            def is_le0(value: str) -> bool:
-                """Less than or equal to 0."""
-                v = convert(value)
-                return v is not None and v <= ref_zero
-
-            return is_le0
-
-        else:
-            raise ValueError(
-                f"Unknown condition: {condition} and reference value: {reference} combination."
-            )
-
-    def group_validators(self, model, attr):
-        """Bundle all validators for Input into singular list."""
-        return [
-            self.make_validator(cond, ref, self.get_field_type(model, attr))
-            for cond, ref in zip(
-                *self.get_field_conditions(model, attr),
-                strict=False,
-            )
-        ]
-
     def save_changes(self) -> bool:
         """Save changes to ship_config.yaml."""
         try:
             # ship speed
             attr = "ship_speed_knots"
-            field_type = self.get_field_type(self.config, attr)
+            field_type = get_field_type(self.config, attr)
             value = field_type(self.query_one("#speed").value)
             ShipConfig.model_validate(
                 {**self.config.model_dump(), attr: value}
@@ -750,37 +761,38 @@ class ConfigEditor(Container):
                 config_class = info["class"]
                 attributes = info["attributes"]
                 kwargs = {}
+
+                # special handling for onboard ADCP and T/S
+                # will skip to next instrument if toggle is off
+                if instrument_name == "adcp_config":
+                    has_adcp = self.query_one("#has_adcp", Switch).value
+                    if not has_adcp:
+                        setattr(self.config, instrument_name, None)
+                        continue
+                if instrument_name == "ship_underwater_st_config":
+                    has_ts = self.query_one("#has_onboard_ts", Switch).value
+                    if not has_ts:
+                        setattr(self.config, instrument_name, None)
+                        continue
+
                 for attr_meta in attributes:
                     attr = attr_meta["name"]
                     is_minutes = attr_meta.get("minutes", False)
                     input_id = f"{instrument_name}_{attr}"
                     value = self.query_one(f"#{input_id}").value
-                    field_type = self.get_field_type(config_class, attr)
+                    field_type = get_field_type(config_class, attr)
                     if is_minutes and field_type is datetime.timedelta:
                         value = datetime.timedelta(minutes=float(value))
                     else:
                         value = field_type(value)
                     kwargs[attr] = value
 
-                # TODO: the special handling does not seem to work for both instruments
-                # TODO: in the ADCP case it causes an error, in the T/S case it saves but doesn't actually write anything...
-
-                # special handling for onboard ADCP, conditional on whether it's selected by user in Switch (overwrite with None if switch is off)
+                # ADCP max_depth_meter based on deep/shallow switch
                 if instrument_name == "adcp_config":
-                    has_adcp = self.query_one("#has_adcp", Switch).value
-                    if has_adcp:  # determine max_depth_meter value based on sub-Switch selection by user, i.e. deep or shallow ADCP
-                        if self.query_one("#adcp_deep", Switch).value:
-                            kwargs["max_depth_meter"] = -1000.0
-                        else:
-                            kwargs["max_depth_meter"] = -150.0
+                    if self.query_one("#adcp_deep", Switch).value:
+                        kwargs["max_depth_meter"] = -1000.0
                     else:
-                        setattr(self.config, instrument_name, None)
-
-                # special handling for onboard T/S, conditional on whether it's selected by user (overwrite with None if switch is off)
-                if instrument_name == "ship_underwater_st_config":
-                    has_ts = self.query_one("#has_onboard_ts", Switch).value
-                    if not has_ts:
-                        setattr(self.config, instrument_name, None)
+                        kwargs["max_depth_meter"] = -150.0
 
                 setattr(self.config, instrument_name, config_class(**kwargs))
 
@@ -790,19 +802,11 @@ class ConfigEditor(Container):
 
         except Exception as e:
             # write error log
-            error_log_path = os.path.join(self.path, "virtualship_error.txt")
-            with open(error_log_path, "w") as f:
-                f.write("Error saving ship config:\n")
-                traceback.print_exception(
-                    type(e), e, e.__traceback__, file=f, chain=True
-                )
-                f.write("\n")
+            log_exception_to_file(
+                e, self.path, context_message="Error saving ship config:"
+            )
 
-            raise UnexpectedError(
-                "\n1) Please ensure that all entries are valid (all typed entry boxes must have green borders and no warnings).\n"
-                "\n2) If the problem persists, please report this issue, with a description and the traceback, "
-                "to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
-            ) from None
+            raise UnexpectedError(UNEXPECTED_MSG) from None
 
 
 class ScheduleScreen(Screen):
@@ -839,7 +843,7 @@ class ScheduleScreen(Screen):
 
         except Exception as e:
             self.notify(
-                f"*** Error saving changes ***:\n\n{e}\n\nTraceback will be logged in `{self.path}/virtualship_error.txt`. Please copy the file and/or its contents when submitting an issue.",
+                f"*** Error saving changes ***:\n\n{e}\n\nTraceback will be logged in `{self.path}/virtualship_error.txt`. Please attach the file and/or its contents when submitting an issue.\n",
                 severity="error",
                 timeout=20,
             )
@@ -1030,13 +1034,20 @@ class ScheduleApp(App):
         self.theme = "textual-light"
 
 
-if __name__ == "__main__":
-    # parse path
-    if len(sys.argv) > 1:
-        path = sys.argv[1]
-    else:
-        raise ValueError("No path argument provided")
-
-    # run app
+def _plan(path: str) -> None:
+    """Run UI in terminal."""
     app = ScheduleApp(path)
     app.run()
+
+
+# if __name__ == "__main__":
+#     """Used if running UI in browser via `python -m ...` command."""
+#     # parse path
+#     if len(sys.argv) > 1:
+#         path = sys.argv[1]
+#     else:
+#         raise ValueError("No path argument provided")
+
+#     # run app
+#     app = ScheduleApp(path)
+#     app.run()

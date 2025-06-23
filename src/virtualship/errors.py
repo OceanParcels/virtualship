@@ -28,6 +28,12 @@ class ConfigError(RuntimeError):
     pass
 
 
+class UserError(Exception):
+    """Error raised when there is an user error."""
+
+    pass
+
+
 class UnexpectedError(Exception):
     """Error raised when there is an unexpected problem."""
 
