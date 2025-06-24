@@ -32,13 +32,13 @@ def is_valid_lat(value: str) -> bool:
 
 @require_docstring
 def is_valid_lon(value: str) -> bool:
-    """(-180 < lon < 360)."""
+    """(-180 < lon < 180)."""
     try:
         v = float(value)
     except ValueError:
         return None
 
-    return -180 < v < 360
+    return -180 < v < 180
 
 
 # SHIP CONFIG INPUTS VALIDATION
