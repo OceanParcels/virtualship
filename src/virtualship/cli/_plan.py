@@ -22,8 +22,10 @@ from textual.widgets import (
 from virtualship.cli.validator_utils import (
     get_field_type,
     group_validators,
+    is_valid_depth,
     is_valid_lat,
     is_valid_lon,
+    is_valid_timestr,
     type_to_textual,
 )
 from virtualship.errors import UnexpectedError, UserError
@@ -174,7 +176,7 @@ class WaypointWidget(Static):
                         )
                     ],
                     type="number",
-                    placeholder="°W",
+                    placeholder="°E",
                     classes="longitude-input",
                 )
                 yield Label(
@@ -315,10 +317,10 @@ class ScheduleEditor(Static):
     def compose(self) -> ComposeResult:
         try:
             self.schedule = Schedule.from_yaml(f"{self.path}/schedule.yaml")
-        except Exception:
+        except Exception as e:
             # TODO: this error message needs far more detail, just a placeholder for now!
             raise UserError(
-                "There is something wrong with schedule.yaml. Please fix."
+                f"There is something wrong with schedule.yaml. Please fix. More detail: {e}"
             ) from None
 
         try:
@@ -334,8 +336,6 @@ class ScheduleEditor(Static):
                 for i, waypoint in enumerate(self.schedule.waypoints):
                     yield WaypointWidget(waypoint, i)
 
-            # SECTION: "Space-Time Region"
-
             # TODO: MAY NEED TO ADD A FEATURE ON SAVE CHANGES WHICH AUTOMATICALLY DETECTS MAX AND MIN TIME
             # TODO: FOR THE SCENARIO WHERE YAML LOADED IN IS NULL AND USER DOES NOT EDIT THEMSELVES
             with Collapsible(
@@ -344,36 +344,123 @@ class ScheduleEditor(Static):
             ):
                 if self.schedule.space_time_region:
                     str_data = self.schedule.space_time_region
+
                     yield Label("Minimum Latitude:")
                     yield Input(
                         id="min_lat",
-                        value=str(str_data.spatial_range.minimum_latitude),
+                        value=str(str_data.spatial_range.minimum_latitude)
+                        if str_data.spatial_range.minimum_latitude
+                        else "",
+                        validators=[
+                            Function(
+                                is_valid_lat,
+                                f"INVALID: value must be {is_valid_lat.__doc__.lower()}",
+                            )
+                        ],
+                        type="number",
+                        placeholder="°N",
                     )
+                    yield Label(
+                        "",
+                        id="validation-failure-label-min_lat",
+                        classes="-hidden validation-failure",
+                    )
+
                     yield Label("Maximum Latitude:")
                     yield Input(
                         id="max_lat",
                         value=str(str_data.spatial_range.maximum_latitude),
+                        validators=[
+                            Function(
+                                is_valid_lat,
+                                f"INVALID: value must be {is_valid_lat.__doc__.lower()}",
+                            )
+                        ],
+                        type="number",
+                        placeholder="°N",
                     )
+                    yield Label(
+                        "",
+                        id="validation-failure-label-max_lat",
+                        classes="-hidden validation-failure",
+                    )
+
                     yield Label("Minimum Longitude:")
                     yield Input(
                         id="min_lon",
                         value=str(str_data.spatial_range.minimum_longitude),
+                        validators=[
+                            Function(
+                                is_valid_lon,
+                                f"INVALID: value must be {is_valid_lon.__doc__.lower()}",
+                            )
+                        ],
+                        type="number",
+                        placeholder="°E",
                     )
+                    yield Label(
+                        "",
+                        id="validation-failure-label-min_lon",
+                        classes="-hidden validation-failure",
+                    )
+
                     yield Label("Maximum Longitude:")
                     yield Input(
                         id="max_lon",
                         value=str(str_data.spatial_range.maximum_longitude),
+                        validators=[
+                            Function(
+                                is_valid_lon,
+                                f"INVALID: value must be {is_valid_lon.__doc__.lower()}",
+                            )
+                        ],
+                        type="number",
+                        placeholder="°E",
                     )
+                    yield Label(
+                        "",
+                        id="validation-failure-label-max_lon",
+                        classes="-hidden validation-failure",
+                    )
+
                     yield Label("Minimum Depth (meters):")
                     yield Input(
                         id="min_depth",
                         value=str(str_data.spatial_range.minimum_depth),
+                        validators=[
+                            Function(
+                                is_valid_depth,
+                                f"INVALID: value must be {is_valid_depth.__doc__.lower()}",
+                            )
+                        ],
+                        type="number",
+                        placeholder="m",
                     )
+                    yield Label(
+                        "",
+                        id="validation-failure-label-min_depth",
+                        classes="-hidden validation-failure",
+                    )
+
                     yield Label("Maximum Depth (meters):")
                     yield Input(
                         id="max_depth",
                         value=str(str_data.spatial_range.maximum_depth),
+                        validators=[
+                            Function(
+                                is_valid_depth,
+                                f"INVALID: value must be {is_valid_depth.__doc__.lower()}",
+                            )
+                        ],
+                        type="number",
+                        placeholder="m",
                     )
+                    yield Label(
+                        "",
+                        id="validation-failure-label-max_depth",
+                        classes="-hidden validation-failure",
+                    )
+
                     yield Label("Start Time:")
                     yield Input(
                         id="start_time",
@@ -383,7 +470,20 @@ class ScheduleEditor(Static):
                             if str_data.time_range and str_data.time_range.start_time
                             else ""
                         ),
+                        validators=[
+                            Function(
+                                is_valid_timestr,
+                                f"INVALID: value must be {is_valid_timestr.__doc__.lower()}",
+                            )
+                        ],
+                        type="text",
                     )
+                    yield Label(
+                        "",
+                        id="validation-failure-label-start_time",
+                        classes="-hidden validation-failure",
+                    )
+
                     yield Label("End Time:")
                     yield Input(
                         id="end_time",
@@ -393,10 +493,40 @@ class ScheduleEditor(Static):
                             if str_data.time_range and str_data.time_range.end_time
                             else ""
                         ),
+                        validators=[
+                            Function(
+                                is_valid_timestr,
+                                f"INVALID: value must be {is_valid_timestr.__doc__.lower()}",
+                            )
+                        ],
+                        type="text",
                     )
-
+                    yield Label(
+                        "",
+                        id="validation-failure-label-end_time",
+                        classes="-hidden validation-failure",
+                    )
         except Exception:
             raise UnexpectedError(UNEXPECTED_MSG) from None
+
+    @on(Input.Changed)
+    def show_invalid_reasons(self, event: Input.Changed) -> None:
+        input_id = event.input.id
+        label_id = f"validation-failure-label-{input_id}"
+        label = self.query_one(f"#{label_id}", Label)
+        if not event.validation_result.is_valid:
+            message = (
+                "\n".join(event.validation_result.failure_descriptions)
+                if isinstance(event.validation_result.failure_descriptions, list)
+                else str(event.validation_result.failure_descriptions)
+            )
+            label.update(message)
+            label.remove_class("-hidden")
+            label.add_class("validation-failure")
+        else:
+            label.update("")
+            label.add_class("-hidden")
+            label.remove_class("validation-failure")
 
     def save_changes(self) -> bool:
         """Save changes to schedule.yaml."""
@@ -548,10 +678,10 @@ class ConfigEditor(Container):
     def compose(self) -> ComposeResult:
         try:
             self.config = ShipConfig.from_yaml(f"{self.path}/ship_config.yaml")
-        except Exception:
+        except Exception as e:
             # TODO: this error message needs far more detail, just a placeholder for now!
             raise UserError(
-                "There is something wrong with ship_config.yaml. Please fix."
+                f"There is something wrong with ship_config.yaml. Please fix. More detail: {e}"
             ) from None
 
         try:
