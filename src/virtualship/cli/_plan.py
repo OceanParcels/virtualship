@@ -50,9 +50,6 @@ from virtualship.models.space_time_region import (
 # TODO: need to build TESTS for the UI!
 # - look into best way of testing this kind of thing...
 
-# TODO: need to distinguish in error handling between usererrors such as faulty yaml read in add pointers to the User to make fixes,
-# TODO: and errors which are genuinely unexpected, are likely bugs and need attention on GitHub...!
-
 # TODO: will need to some scenario testing where introduce a bug which affects save_changes() to show that the GitHub issues related error
 # TODO: message is definitely thrown when the error is unexpected.
 
@@ -81,23 +78,27 @@ from virtualship.models.space_time_region import (
 # TODO: look through all error handling in both _plan.py and command.py scripts to check redudancy
 # TODO: also add more error handling for 1) if there are no yamls found in the specified *path*
 # TODO: and also for if there are errors in the yaml being opened, for example if what should be a float has been manaully changed to something invalid
-# TODO: or if indeed any of the pydantic model components associated with the yamls are missing
 
 # TODO: or indeed how error messages such as those in make_validators are handled in the hypothetical situation that they are thrown...
-
 
 # TODO: make sure 'Save' writes the yaml file components in the right order? Or does this not matter?
 # TODO: test via full run through of an expedition using yamls edited by `virtualship plan`
 # TODO: implement action for 'Save' button
-
-# TODO: Can the whole lot be tidied up by moving some classes/methods to a new directory/files?!
 
 # TODO: the valid entry + User errors etc. need to be added to the Schedule editor (currently on the Config Editor)
 
 # TODO: add a check if instruments selections are left empty?
 
 
-UNEXPECTED_MSG = (
+def unexpected_msg_compose(e):
+    return (
+        f"\n\nUNEXPECTED ERROR:\n\n{e}"
+        "\n\nPlease report this issue, with a description and the traceback, "
+        "to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
+    )
+
+
+UNEXPECTED_MSG_ONSAVE = (
     "Please ensure that:\n"
     "\n1) All typed entries are valid (all boxes in all sections must have green borders and no warnings).\n"
     "\n2) Time selections exist for all waypoints.\n"
@@ -259,9 +260,11 @@ class WaypointWidget(Static):
                             value=is_selected, id=f"wp{self.index}_{instrument.value}"
                         )
 
-        except Exception:
-            raise  # raise the exception to prevent incomplete UI build
-            # TODO: could follow this through to be included in a generic 'unexpected error' please post on Github issue in say ScheduleApp?
+        except Exception as e:
+            raise UnexpectedError(unexpected_msg_compose(e)) from None
+
+        # raise the exception to prevent incomplete UI build
+        # TODO: could follow this through to be included in a generic 'unexpected error' please post on Github issue in say ScheduleApp?
 
     def copy_from_previous(self) -> None:
         try:
@@ -509,8 +512,8 @@ class ScheduleEditor(Static):
                         id="validation-failure-label-end_time",
                         classes="-hidden validation-failure",
                     )
-        except Exception:
-            raise UnexpectedError(UNEXPECTED_MSG) from None
+        except Exception as e:
+            raise UnexpectedError(unexpected_msg_compose(e)) from None
 
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:
@@ -584,7 +587,7 @@ class ScheduleEditor(Static):
                 e, self.path, context_message="Error saving ship config:"
             )
 
-            raise UnexpectedError(UNEXPECTED_MSG) from None
+            raise UnexpectedError(UNEXPECTED_MSG_ONSAVE) from None
 
 
 class ConfigEditor(Container):
@@ -788,9 +791,8 @@ class ConfigEditor(Container):
                                     classes="-hidden validation-failure",
                                 )
 
-        except Exception:
-            raise  # raise the exception to prevent incomplete UI build
-            # TODO: could follow this through to be included in a generic 'unexpected error' please post on Github issue in say ScheduleApp?
+        except Exception as e:
+            raise UnexpectedError(unexpected_msg_compose(e)) from None
 
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:
@@ -926,7 +928,7 @@ class ConfigEditor(Container):
                 e, self.path, context_message="Error saving ship config:"
             )
 
-            raise UnexpectedError(UNEXPECTED_MSG) from None
+            raise UnexpectedError(UNEXPECTED_MSG_ONSAVE) from None
 
 
 class ScheduleScreen(Screen):
@@ -935,12 +937,15 @@ class ScheduleScreen(Screen):
         self.path = path
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll():
-            yield ConfigEditor(self.path)
-            yield ScheduleEditor(self.path)
-            with Horizontal():
-                yield Button("Save Changes", id="save_button", variant="success")
-                yield Button("Exit", id="exit_button", variant="error")
+        try:
+            with VerticalScroll():
+                yield ConfigEditor(self.path)
+                yield ScheduleEditor(self.path)
+                with Horizontal():
+                    yield Button("Save Changes", id="save_button", variant="success")
+                    yield Button("Exit", id="exit_button", variant="error")
+        except Exception as e:
+            raise UnexpectedError(unexpected_msg_compose(e)) from None
 
     @on(Button.Pressed, "#exit_button")
     def exit_pressed(self) -> None:
