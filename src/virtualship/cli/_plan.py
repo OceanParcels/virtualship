@@ -43,10 +43,12 @@ from virtualship.models.ship_config import (
     XBTConfig,
 )
 from virtualship.models.space_time_region import (
-    SpaceTimeRegion,
     SpatialRange,
     TimeRange,
 )
+
+# TODO: need to build TESTS for the UI!
+# - look into best way of testing this kind of thing...
 
 # TODO: need to distinguish in error handling between usererrors such as faulty yaml read in add pointers to the User to make fixes,
 # TODO: and errors which are genuinely unexpected, are likely bugs and need attention on GitHub...!
@@ -92,10 +94,14 @@ from virtualship.models.space_time_region import (
 
 # TODO: the valid entry + User errors etc. need to be added to the Schedule editor (currently on the Config Editor)
 
+# TODO: add a check if instruments selections are left empty?
+
 
 UNEXPECTED_MSG = (
-    "\n1) Please ensure that all entries are valid (all typed entry boxes must have green borders and no warnings).\n"
-    "\n2) If the problem persists, please report this issue, with a description and the traceback, "
+    "Please ensure that:\n"
+    "\n1) All typed entries are valid (all boxes in all sections must have green borders and no warnings).\n"
+    "\n2) Time selections exist for all waypoints.\n"
+    "\nIf the problem persists, please report this issue, with a description and the traceback, "
     "to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
 )
 
@@ -318,10 +324,7 @@ class ScheduleEditor(Static):
         try:
             self.schedule = Schedule.from_yaml(f"{self.path}/schedule.yaml")
         except Exception as e:
-            # TODO: this error message needs far more detail, just a placeholder for now!
-            raise UserError(
-                f"There is something wrong with schedule.yaml. Please fix. More detail: {e}"
-            ) from None
+            raise UserError(f"There is an issue in schedule.yaml:\n\n{e}") from None
 
         try:
             yield Label("[b]Schedule Editor[/b]", id="title", markup=True)
@@ -530,10 +533,10 @@ class ScheduleEditor(Static):
 
     def save_changes(self) -> bool:
         """Save changes to schedule.yaml."""
-        # TODO: SAVE_CHANGES() NEEDS TO BE LARGELY RE-WORKED NOW THAT MORE VALIDATION IS BUILT INTO THE INPUTS
         # TODO: and should proabably now be more focussed on .verify() methods
         try:
             # spacetime region
+
             spatial_range = SpatialRange(
                 minimum_longitude=self.query_one("#min_lon").value,
                 maximum_longitude=self.query_one("#max_lon").value,
@@ -548,20 +551,16 @@ class ScheduleEditor(Static):
                 end_time=self.query_one("#end_time").value,
             )
 
-            space_time_region = SpaceTimeRegion(
-                spatial_range=spatial_range, time_range=time_range
-            )
-
-            self.schedule.space_time_region = space_time_region
+            self.schedule.space_time_region.spatial_range = spatial_range
+            self.schedule.space_time_region.time_range = time_range
 
             # waypoints
-            waypoints = []
-            for i in range(len(self.schedule.waypoints)):
-                location = Location(
+            for i, wp in enumerate(self.schedule.waypoints):
+                wp.location = Location(
                     latitude=float(self.query_one(f"#wp{i}_lat").value),
                     longitude=float(self.query_one(f"#wp{i}_lon").value),
                 )
-                time = datetime.datetime(
+                wp.time = datetime.datetime(
                     int(self.query_one(f"#wp{i}_year").value),
                     int(self.query_one(f"#wp{i}_month").value),
                     int(self.query_one(f"#wp{i}_day").value),
@@ -569,29 +568,23 @@ class ScheduleEditor(Static):
                     int(self.query_one(f"#wp{i}_minute").value),
                     0,
                 )
-                instruments = [
+                wp.instrument = [
                     instrument
                     for instrument in InstrumentType
                     if self.query_one(f"#wp{i}_{instrument.value}").value
                 ]
 
-                waypoints.append(
-                    Waypoint(location=location, time=time, instrument=instruments)
-                )
-
             # save
-            self.schedule.waypoints = waypoints
             self.schedule.to_yaml(f"{self.path}/schedule.yaml")
             return True
 
         except Exception as e:
-            self.notify(
-                f"Error saving schedule: {e!r}",
-                severity="error",
-                timeout=60,
-                markup=False,
+            # write error log
+            log_exception_to_file(
+                e, self.path, context_message="Error saving ship config:"
             )
-            return False
+
+            raise UnexpectedError(UNEXPECTED_MSG) from None
 
 
 class ConfigEditor(Container):
@@ -679,10 +672,7 @@ class ConfigEditor(Container):
         try:
             self.config = ShipConfig.from_yaml(f"{self.path}/ship_config.yaml")
         except Exception as e:
-            # TODO: this error message needs far more detail, just a placeholder for now!
-            raise UserError(
-                f"There is something wrong with ship_config.yaml. Please fix. More detail: {e}"
-            ) from None
+            raise UserError(f"There is an issue in ship_config.yaml:\n\n{e}") from None
 
         try:
             ## SECTION: "Ship Speed & Onboard Measurements"
@@ -987,7 +977,6 @@ class ScheduleApp(App):
     }
 
     ConfigEditor {
-        background: $panel;
         padding: 1;
         margin-bottom: 1;
         height: auto;
@@ -1009,7 +998,7 @@ class ScheduleApp(App):
 
     WaypointWidget > Collapsible {
         margin: 1;
-        background: $boost;
+        background: $panel;
         border: solid $primary;
     }
 
@@ -1097,7 +1086,7 @@ class ScheduleApp(App):
 
     Collapsible > .collapsible--content > Collapsible {
         margin: 0 1;
-        background: $surface;
+        background: $panel;
     }
 
     .-hidden {
@@ -1168,16 +1157,3 @@ def _plan(path: str) -> None:
     """Run UI in terminal."""
     app = ScheduleApp(path)
     app.run()
-
-
-# if __name__ == "__main__":
-#     """Used if running UI in browser via `python -m ...` command."""
-#     # parse path
-#     if len(sys.argv) > 1:
-#         path = sys.argv[1]
-#     else:
-#         raise ValueError("No path argument provided")
-
-#     # run app
-#     app = ScheduleApp(path)
-#     app.run()

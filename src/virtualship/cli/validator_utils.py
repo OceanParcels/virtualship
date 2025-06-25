@@ -16,7 +16,7 @@ def require_docstring(func):
     return func
 
 
-# SCHEDULE INUTS VALIDATION
+# SCHEDULE INPUTS VALIDATION
 
 
 @require_docstring
