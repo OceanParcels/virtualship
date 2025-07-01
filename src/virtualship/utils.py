@@ -76,15 +76,10 @@ def load_coordinates(file_path):
 
 def validate_coordinates(coordinates_data):
     # Expected column headers
-    expected_columns = {"Station Type", "Name", "Latitude", "Longitude", "Instrument"}
+    expected_columns = {"Station Type", "Name", "Latitude", "Longitude"}
 
     # Check if the headers match the expected ones
     actual_columns = set(coordinates_data.columns)
-
-    if "Instrument" not in actual_columns:
-        raise ValueError(
-            "Error: Missing column 'Instrument'. Have you added this column after exporting from MFP?"
-        )
 
     missing_columns = expected_columns - actual_columns
     if missing_columns:
@@ -140,7 +135,6 @@ def mfp_to_yaml(coordinates_file_path: str, yaml_output_path: str):  # noqa: D41
 
     """
     from virtualship.models import (
-        InstrumentType,
         Location,
         Schedule,
         SpaceTimeRegion,
@@ -163,24 +157,13 @@ def mfp_to_yaml(coordinates_file_path: str, yaml_output_path: str):  # noqa: D41
         "ARGO_FLOAT": 2000,
     }
 
-    unique_instruments = set()
-
-    for instrument_list in coordinates_data["Instrument"]:
-        instruments = instrument_list.split(", ")
-        unique_instruments |= set(instruments)
-
-    # Determine the maximum depth based on the unique instruments
-    maximum_depth = max(
-        instrument_max_depths.get(instrument, 0) for instrument in unique_instruments
-    )
-
     spatial_range = SpatialRange(
         minimum_longitude=coordinates_data["Longitude"].min(),
         maximum_longitude=coordinates_data["Longitude"].max(),
         minimum_latitude=coordinates_data["Latitude"].min(),
         maximum_latitude=coordinates_data["Latitude"].max(),
         minimum_depth=0,
-        maximum_depth=maximum_depth,
+        maximum_depth=max(instrument_max_depths.values()),
     )
 
     # Create space-time region object
@@ -192,21 +175,9 @@ def mfp_to_yaml(coordinates_file_path: str, yaml_output_path: str):  # noqa: D41
     # Generate waypoints
     waypoints = []
     for _, row in coordinates_data.iterrows():
-        try:
-            instruments = [
-                InstrumentType(instrument)
-                for instrument in row["Instrument"].split(", ")
-            ]
-        except ValueError as err:
-            raise ValueError(
-                f"Error: Invalid instrument type in row {row.name}. "
-                "Please ensure that the instrument type is one of: "
-                f"{[instrument.name for instrument in InstrumentType]}. "
-                "Also be aware that these are case-sensitive."
-            ) from err
         waypoints.append(
             Waypoint(
-                instrument=instruments,
+                instrument=None,  # instruments blank, to be built by user using `virtualship plan` UI or by interacting directly with YAML files
                 location=Location(latitude=row["Latitude"], longitude=row["Longitude"]),
             )
         )

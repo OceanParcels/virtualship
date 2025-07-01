@@ -77,6 +77,8 @@ from virtualship.models.space_time_region import (
 
 # 12) will need to update quickstart guide and documentation to handle the fact that no longer adding column to excel for `virtualship init`
 
+# 13) incorp functionality to determine the max depth for space time region based on instrument choice (as previously existed in mfp_to_yaml)
+
 
 UNEXPECTED_MSG_ONSAVE = (
     "Please ensure that:\n"
