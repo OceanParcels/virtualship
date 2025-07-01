@@ -47,55 +47,35 @@ from virtualship.models.space_time_region import (
     TimeRange,
 )
 
-# TODO: need to build TESTS for the UI!
+# TODO list:
+
+# 1) for future PR...remove instrument config from ship_config.yaml if instrument not selected in schedule?
+
+# 2) when testing full workflow, through to `run` etc, check if can handle e.g. ADCP being null or whether needs to be removed from .yaml if off
+
+# 3) need to build TESTS for the UI!
 # - look into best way of testing this kind of thing...
 
-# TODO: will need to some scenario testing where introduce a bug which affects save_changes() to show that the GitHub issues related error
-# TODO: message is definitely thrown when the error is unexpected.
+# 4) errors associated with ship_config and schedule.verify() should, however, provide in-UI messaging ideally
 
-# TODO: check: how does it handle (all) the fields being empty upon reading-in? Need to add redundancy here...?
-# - currently the application fails on start-up if something is missing or null (apart from ADCP and ST)
-# - there is also a bug where if ADCP is null on start up, and then you switch it on in the UI then it crashes, so this bug fix is TODO!
-# - otherwise, in terms of missing data on start up handling, best to throw an error to the user stating that x field is missing a value
+# 5) I think remove web browser option for now, build stable version for terminal only (especially because VSC being mostly run in browser atm)
+# - Textual-serve / browser support for a future PR...
 
-# TODO: need to do a big round of edits where tidy up all the error messaging.
-# - given a lot of the validation of entry is done natively now in textual, this should mean that all other
-#   errors associated with inputting to the app should be 'unexpected' and therefore call to the report-to-GitHub workflow
-# - errors associated with ship_config and schedule.verify() should, however, provide in-UI messaging ideally
-#   to notify the user that their selections are not valid...
-# TODO: perhaps error messaging could be wrapped into one of the higher level functions i.e. ScheduleScreen?!
+# 6) test in JupyterLab terminal!...
 
-# TODO: add TEXTUAL_SERVE dependency if end up using it...
+# 7) need to handle how to add the start_ and end_ datetimes automatically to Space-Time Region!
+# - because I think the .yaml that comes from `virtualship init` will not have these as standard and we don't expect students to go add themselves...
 
-# TODO: I think remove web browser option for now, build stable version for terminal only (especially because VSC being mostly run in browser atm)
-# TODO: Textual-serve / browser support for a future PR...
+# 8) add more error handling for if there are no yamls found in the specified *path*
 
-# TODO: test in JupyterLab terminal!...
+# 9) make sure 'Save' writes the yaml file components in the right order? Or does this not matter?
+# - test via full run through of an expedition using yamls edited by `virtualship plan`
 
-# TODO: need to handle how to add the start_ and end_ datetimes automatically to Space-Time Region!
-# TODO: because I think the .yaml that comes from `virtualship init` will not have these as standard and we don't expect students to go add themselves...
+# 10) the valid entry + User errors etc. need to be added to the Schedule editor (currently on the Config Editor)
 
-# TODO: look through all error handling in both _plan.py and command.py scripts to check redudancy
-# TODO: also add more error handling for 1) if there are no yamls found in the specified *path*
-# TODO: and also for if there are errors in the yaml being opened, for example if what should be a float has been manaully changed to something invalid
+# 11) add a check if instruments selections are left empty?
 
-# TODO: or indeed how error messages such as those in make_validators are handled in the hypothetical situation that they are thrown...
-
-# TODO: make sure 'Save' writes the yaml file components in the right order? Or does this not matter?
-# TODO: test via full run through of an expedition using yamls edited by `virtualship plan`
-# TODO: implement action for 'Save' button
-
-# TODO: the valid entry + User errors etc. need to be added to the Schedule editor (currently on the Config Editor)
-
-# TODO: add a check if instruments selections are left empty?
-
-
-def unexpected_msg_compose(e):
-    return (
-        f"\n\nUNEXPECTED ERROR:\n\n{e}"
-        "\n\nPlease report this issue, with a description and the traceback, "
-        "to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
-    )
+# 12) will need to update quickstart guide and documentation to handle the fact that no longer adding column to excel for `virtualship init`
 
 
 UNEXPECTED_MSG_ONSAVE = (
@@ -105,6 +85,14 @@ UNEXPECTED_MSG_ONSAVE = (
     "\nIf the problem persists, please report this issue, with a description and the traceback, "
     "to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
 )
+
+
+def unexpected_msg_compose(e):
+    return (
+        f"\n\nUNEXPECTED ERROR:\n\n{e}"
+        "\n\nPlease report this issue, with a description and the traceback, "
+        "to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
+    )
 
 
 def log_exception_to_file(
@@ -262,9 +250,6 @@ class WaypointWidget(Static):
 
         except Exception as e:
             raise UnexpectedError(unexpected_msg_compose(e)) from None
-
-        # raise the exception to prevent incomplete UI build
-        # TODO: could follow this through to be included in a generic 'unexpected error' please post on Github issue in say ScheduleApp?
 
     def copy_from_previous(self) -> None:
         try:
@@ -576,6 +561,34 @@ class ScheduleEditor(Static):
                     for instrument in InstrumentType
                     if self.query_one(f"#wp{i}_{instrument.value}").value
                 ]
+
+            # ---------------------------------------------------------------------------
+
+            # TODO: this block is currently not working as expected! Needs attention.
+            # - Not sure if it's verifying properly, actually checking that in timing order or just causing other errors and being picked up as timing error
+            # - And can't dynamically load in ship speed yet
+
+            # verify schedule and save
+
+            # # TODO: NEEDS TO BE ABLE TO TAKE SHIP SPEED VALUE FROM INPUT IN CONFIG EDITOR...!!!
+
+            # try:
+            #     self.schedule.verify(
+            #         10.0,  # TODO: currently hardcoded for dev purposes only!!
+            #         input_data=None,
+            #         check_space_time_region=True,
+            #         ignore_missing_fieldsets=True,
+            #     )
+
+            #     # save
+            #     self.schedule.to_yaml(f"{self.path}/schedule.yaml")
+            #     return True
+
+            # except Exception as e:
+            #     self.notify(f"SCHEDULE ERROR: {e}", severity="error", timeout=20)
+            #     return False
+
+            # ---------------------------------------------------------------------------
 
             # save
             self.schedule.to_yaml(f"{self.path}/schedule.yaml")
