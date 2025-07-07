@@ -59,6 +59,10 @@ def is_valid_depth(value: str) -> bool:
 @require_docstring
 def is_valid_timestr(value: str) -> bool:
     """Format YYYY-MM-DD hh:mm:ss."""
+    if (
+        not value.strip()
+    ):  # return as valid if blank, UI logic will auto fill on save if so
+        return True
     try:
         datetime.datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
         return True

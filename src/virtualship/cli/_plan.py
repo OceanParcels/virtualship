@@ -49,26 +49,21 @@ from virtualship.models.space_time_region import (
 
 # TODO list:
 
-# 1) for future PR...remove instrument config from ship_config.yaml if instrument not selected in schedule?
-
-# 2) when testing full workflow, through to `run` etc, check if can handle e.g. ADCP being null or whether needs to be removed from .yaml if off
+# 2) when testing full workflow, through to `run` etc, check if can handle e.g.
+#       - ADCP being null or whether needs to be removed from .yaml if off
+#       - instrument lists being empty...
 
 # 3) need to build TESTS for the UI!
 # - look into best way of testing this kind of thing...
 
 # 6) test in JupyterLab terminal!...
 
-# 7) need to handle how to add the start_ and end_ datetimes automatically to Space-Time Region!
-# - because I think the .yaml that comes from `virtualship init` will not have these as standard and we don't expect students to go add themselves...
-
 # 9) make sure 'Save' writes the yaml file components in the right order? Or does this not matter?
 # - test via full run through of an expedition using yamls edited by `virtualship plan`
 
 # 11) add a check if instruments selections are left empty?
 
-# 12) will need to update quickstart guide and documentation to handle the fact that no longer adding column to excel for `virtualship init`
-
-# 13) incorp functionality to determine the max depth for space time region based on instrument choice (as previously existed in mfp_to_yaml)
+#! 13) incorp functionality to determine the max depth for space time region based on instrument choice (as previously existed in mfp_to_yaml)
 
 
 UNEXPECTED_MSG_ONSAVE = (
@@ -181,7 +176,7 @@ class WaypointWidget(Static):
                             (str(year), year)
                             # TODO: change from hard coding...flexibility for different datasets...
                             for year in range(
-                                2022,
+                                2023,
                                 datetime.datetime.now().year + 1,
                             )
                         ],
@@ -267,9 +262,8 @@ class WaypointWidget(Static):
                         )
                         if prev_switch and curr_switch:
                             curr_switch.value = prev_switch.value
-        except Exception:
-            raise  # raise the exception to prevent incomplete UI build
-            # TODO: could follow this through to be included in a generic 'unexpected error' please post on Github issue in say ScheduleApp?
+        except Exception as e:
+            raise UnexpectedError(unexpected_msg_compose(e)) from None
 
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:
@@ -321,8 +315,6 @@ class ScheduleEditor(Static):
                 for i, waypoint in enumerate(self.schedule.waypoints):
                     yield WaypointWidget(waypoint, i)
 
-            # TODO: MAY NEED TO ADD A FEATURE ON SAVE CHANGES WHICH AUTOMATICALLY DETECTS MAX AND MIN TIME
-            # TODO: FOR THE SCENARIO WHERE YAML LOADED IN IS NULL AND USER DOES NOT EDIT THEMSELVES
             with Collapsible(
                 title="[b]Space-Time Region[/b] (advanced users only)",
                 collapsed=True,
@@ -446,7 +438,9 @@ class ScheduleEditor(Static):
                         classes="-hidden validation-failure",
                     )
 
-                    yield Label("Start Time:")
+                    yield Label(
+                        "Start Time (will be auto determined from waypoints if left blank):"
+                    )
                     yield Input(
                         id="start_time",
                         placeholder="YYYY-MM-DD hh:mm:ss",
@@ -469,7 +463,9 @@ class ScheduleEditor(Static):
                         classes="-hidden validation-failure",
                     )
 
-                    yield Label("End Time:")
+                    yield Label(
+                        "End Time (will be auto determined from waypoints if left blank):"
+                    )
                     yield Input(
                         id="end_time",
                         placeholder="YYYY-MM-DD hh:mm:ss",
@@ -517,8 +513,7 @@ class ScheduleEditor(Static):
     def save_changes(self) -> bool:
         """Save changes to schedule.yaml."""
         try:
-            # spacetime region
-
+            ## spacetime region
             spatial_range = SpatialRange(
                 minimum_longitude=self.query_one("#min_lon").value,
                 maximum_longitude=self.query_one("#max_lon").value,
@@ -528,15 +523,36 @@ class ScheduleEditor(Static):
                 maximum_depth=self.query_one("#max_depth").value,
             )
 
+            # auto fill start and end times if input is blank
+            start_time_input = self.query_one("#start_time").value
+            end_time_input = self.query_one("#end_time").value
+            waypoint_times = [
+                wp.time
+                for wp in self.schedule.waypoints
+                if hasattr(wp, "time") and wp.time
+            ]
+
+            if not start_time_input and waypoint_times:
+                start_time = min(waypoint_times)
+            else:
+                start_time = start_time_input
+
+            if not end_time_input and waypoint_times:
+                end_time = max(waypoint_times) + datetime.timedelta(
+                    days=3
+                )  # with buffer
+            else:
+                end_time = end_time_input
+
             time_range = TimeRange(
-                start_time=self.query_one("#start_time").value,
-                end_time=self.query_one("#end_time").value,
+                start_time=start_time,
+                end_time=end_time,
             )
 
             self.schedule.space_time_region.spatial_range = spatial_range
             self.schedule.space_time_region.time_range = time_range
 
-            # waypoints
+            ## waypoints
             for i, wp in enumerate(self.schedule.waypoints):
                 wp.location = Location(
                     latitude=float(self.query_one(f"#wp{i}_lat").value),
