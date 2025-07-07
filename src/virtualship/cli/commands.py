@@ -1,11 +1,10 @@
-import webbrowser
 from pathlib import Path
 
 import click
-from textual_serve.server import Server
 
 from virtualship import utils
 from virtualship.cli._fetch import _fetch
+from virtualship.cli._plan import _plan
 from virtualship.expedition.do_expedition import do_expedition
 from virtualship.utils import (
     SCHEDULE,
@@ -56,10 +55,12 @@ def init(path, from_mfp):
         click.echo(f"Generating schedule from {mfp_file}...")
         mfp_to_yaml(mfp_file, schedule)
         click.echo(
-            "\n⚠️  The generated schedule does not contain time values. "
-            "\nPlease either use the 'virtualship plan` app to complete the schedule configuration, "
-            "\nOR edit 'schedule.yaml' and manually add the necessary time values."
-            "\n🕒  Expected time format: 'YYYY-MM-DD HH:MM:SS' (e.g., '2023-10-20 01:00:00').\n"
+            "\n⚠️  The generated schedule does not contain TIME values or INSTRUMENT selections.  ⚠️"
+            "\n\nNow please either use the 'virtualship plan` app to complete the schedule configuration, "
+            "\nOR edit 'schedule.yaml' and manually add the necessary time values and instrument selections."
+            "\n\n🕒  Expected time format: 'YYYY-MM-DD HH:MM:SS' (e.g., '2023-10-20 01:00:00')."
+            "\n\n🌡️   Expected instrument(s) format: one line per instrument e.g."
+            f"\n\n{' ' * 15}waypoints:\n{' ' * 15}- instrument:\n{' ' * 19}- CTD\n{' ' * 19}- ARGO_FLOAT\n"
         )
     else:
         # Create a default example schedule
@@ -74,30 +75,9 @@ def init(path, from_mfp):
     "path",
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
-@click.option(
-    "--terminal/--web",
-    default=False,
-    help="Run the VirtualShip planner in the terminal (default: web browser).",
-)
-
-# TODO: implement auto detection of whether running remotely e.g. in JupyterLab (already in browser) to automatically run in terminal
-# TODO: rather than launching in browser from the browser...
-
-def plan(path, terminal):
+def plan(path):
     """Launch UI to help build schedule and ship config files. Opens in web browser by default, or in the terminal with --terminal."""
-    if terminal:
-        from virtualship.cli._plan import _plan
-
-        _plan(Path(path))
-    else:
-        server = Server(
-            command=f"python -m virtualship.cli._plan {Path(path)}",
-            title="VirtualShip plan",
-        )
-        url = "http://localhost:8000"
-        webbrowser.open(url)
-        # TODO: remove debug = True when goes live
-        server.serve(debug=True)
+    _plan(Path(path))
 
 
 @click.command()

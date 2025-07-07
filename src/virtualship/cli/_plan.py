@@ -56,22 +56,13 @@ from virtualship.models.space_time_region import (
 # 3) need to build TESTS for the UI!
 # - look into best way of testing this kind of thing...
 
-# 4) errors associated with ship_config and schedule.verify() should, however, provide in-UI messaging ideally
-
-# 5) I think remove web browser option for now, build stable version for terminal only (especially because VSC being mostly run in browser atm)
-# - Textual-serve / browser support for a future PR...
-
 # 6) test in JupyterLab terminal!...
 
 # 7) need to handle how to add the start_ and end_ datetimes automatically to Space-Time Region!
 # - because I think the .yaml that comes from `virtualship init` will not have these as standard and we don't expect students to go add themselves...
 
-# 8) add more error handling for if there are no yamls found in the specified *path*
-
 # 9) make sure 'Save' writes the yaml file components in the right order? Or does this not matter?
 # - test via full run through of an expedition using yamls edited by `virtualship plan`
-
-# 10) the valid entry + User errors etc. need to be added to the Schedule editor (currently on the Config Editor)
 
 # 11) add a check if instruments selections are left empty?
 
@@ -188,8 +179,9 @@ class WaypointWidget(Static):
                     yield Select(
                         [
                             (str(year), year)
+                            # TODO: change from hard coding...flexibility for different datasets...
                             for year in range(
-                                datetime.datetime.now().year - 3,
+                                2022,
                                 datetime.datetime.now().year + 1,
                             )
                         ],
@@ -499,6 +491,7 @@ class ScheduleEditor(Static):
                         id="validation-failure-label-end_time",
                         classes="-hidden validation-failure",
                     )
+
         except Exception as e:
             raise UnexpectedError(unexpected_msg_compose(e)) from None
 
@@ -523,7 +516,6 @@ class ScheduleEditor(Static):
 
     def save_changes(self) -> bool:
         """Save changes to schedule.yaml."""
-        # TODO: and should proabably now be more focussed on .verify() methods
         try:
             # spacetime region
 
@@ -563,34 +555,6 @@ class ScheduleEditor(Static):
                     for instrument in InstrumentType
                     if self.query_one(f"#wp{i}_{instrument.value}").value
                 ]
-
-            # ---------------------------------------------------------------------------
-
-            # TODO: this block is currently not working as expected! Needs attention.
-            # - Not sure if it's verifying properly, actually checking that in timing order or just causing other errors and being picked up as timing error
-            # - And can't dynamically load in ship speed yet
-
-            # verify schedule and save
-
-            # # TODO: NEEDS TO BE ABLE TO TAKE SHIP SPEED VALUE FROM INPUT IN CONFIG EDITOR...!!!
-
-            # try:
-            #     self.schedule.verify(
-            #         10.0,  # TODO: currently hardcoded for dev purposes only!!
-            #         input_data=None,
-            #         check_space_time_region=True,
-            #         ignore_missing_fieldsets=True,
-            #     )
-
-            #     # save
-            #     self.schedule.to_yaml(f"{self.path}/schedule.yaml")
-            #     return True
-
-            # except Exception as e:
-            #     self.notify(f"SCHEDULE ERROR: {e}", severity="error", timeout=20)
-            #     return False
-
-            # ---------------------------------------------------------------------------
 
             # save
             self.schedule.to_yaml(f"{self.path}/schedule.yaml")
@@ -678,8 +642,6 @@ class ConfigEditor(Container):
             ],
         },
     }
-
-    # TODO: Also incorporate verify methods!
 
     def __init__(self, path: str):
         super().__init__()
@@ -962,6 +924,23 @@ class ScheduleScreen(Screen):
         except Exception as e:
             raise UnexpectedError(unexpected_msg_compose(e)) from None
 
+    def sync_ui_waypoints(self):
+        """Update the waypoints models with current UI values (spacetime only) from the live UI inputs."""
+        schedule_editor = self.query_one(ScheduleEditor)
+        for i, wp in enumerate(schedule_editor.schedule.waypoints):
+            wp.location = Location(
+                latitude=float(schedule_editor.query_one(f"#wp{i}_lat").value),
+                longitude=float(schedule_editor.query_one(f"#wp{i}_lon").value),
+            )
+            wp.time = datetime.datetime(
+                int(schedule_editor.query_one(f"#wp{i}_year").value),
+                int(schedule_editor.query_one(f"#wp{i}_month").value),
+                int(schedule_editor.query_one(f"#wp{i}_day").value),
+                int(schedule_editor.query_one(f"#wp{i}_hour").value),
+                int(schedule_editor.query_one(f"#wp{i}_minute").value),
+                0,
+            )
+
     @on(Button.Pressed, "#exit_button")
     def exit_pressed(self) -> None:
         self.app.exit()
@@ -973,6 +952,20 @@ class ScheduleScreen(Screen):
         schedule_editor = self.query_one(ScheduleEditor)
 
         try:
+            ship_speed_value = float(
+                config_editor.query_one("#speed").value
+            )  # get ship speed from config
+
+            self.sync_ui_waypoints()  # call to ensure waypoint inputs are synced
+
+            # verify schedule
+            schedule_editor.schedule.verify(
+                ship_speed_value,
+                input_data=None,
+                check_space_time_region=True,
+                ignore_missing_fieldsets=True,
+            )
+
             config_saved = config_editor.save_changes()
             schedule_saved = schedule_editor.save_changes()
 
@@ -983,7 +976,7 @@ class ScheduleScreen(Screen):
 
         except Exception as e:
             self.notify(
-                f"*** Error saving changes ***:\n\n{e}\n\nTraceback will be logged in `{self.path}/virtualship_error.txt`. Please attach the file and/or its contents when submitting an issue.\n",
+                f"*** Error saving changes ***:\n\n{e}\n",
                 severity="error",
                 timeout=20,
             )
