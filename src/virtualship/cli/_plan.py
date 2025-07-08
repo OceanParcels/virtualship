@@ -49,22 +49,8 @@ from virtualship.models.space_time_region import (
 
 # TODO list:
 
-# 2) when testing full workflow, through to `run` etc, check if can handle e.g.
-#       - ADCP being null or whether needs to be removed from .yaml if off
-#       - instrument lists being empty...
-
-# 3) need to build TESTS for the UI!
+# Need to build TESTS for the UI!
 # - look into best way of testing this kind of thing...
-
-# 6) test in JupyterLab terminal!...
-
-# 9) make sure 'Save' writes the yaml file components in the right order? Or does this not matter?
-# - test via full run through of an expedition using yamls edited by `virtualship plan`
-
-# 11) add a check if instruments selections are left empty?
-
-#! 13) incorp functionality to determine the max depth for space time region based on instrument choice (as previously existed in mfp_to_yaml)
-
 
 UNEXPECTED_MSG_ONSAVE = (
     "Please ensure that:\n"
@@ -176,7 +162,7 @@ class WaypointWidget(Static):
                             (str(year), year)
                             # TODO: change from hard coding...flexibility for different datasets...
                             for year in range(
-                                2023,
+                                2022,
                                 datetime.datetime.now().year + 1,
                             )
                         ],
@@ -539,8 +525,8 @@ class ScheduleEditor(Static):
 
             if not end_time_input and waypoint_times:
                 end_time = max(waypoint_times) + datetime.timedelta(
-                    days=3
-                )  # with buffer
+                    minutes=60480.0
+                )  # with buffer (corresponds to default drifter lifetime)
             else:
                 end_time = end_time_input
 
@@ -582,7 +568,10 @@ class ScheduleEditor(Static):
                 e, self.path, context_message="Error saving ship config:"
             )
 
-            raise UnexpectedError(UNEXPECTED_MSG_ONSAVE) from None
+            raise UnexpectedError(
+                UNEXPECTED_MSG_ONSAVE
+                + f"\n\nTraceback will be logged in {self.path}/virtualship_error.txt. Please attach this/copy the contents to any issue submitted."
+            ) from None
 
 
 class ConfigEditor(Container):

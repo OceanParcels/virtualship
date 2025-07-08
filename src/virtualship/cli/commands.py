@@ -56,8 +56,9 @@ def init(path, from_mfp):
         mfp_to_yaml(mfp_file, schedule)
         click.echo(
             "\n⚠️  The generated schedule does not contain TIME values or INSTRUMENT selections.  ⚠️"
-            "\n\nNow please either use the 'virtualship plan` app to complete the schedule configuration, "
+            "\n\nNow please either use the `\033[4mvirtualship plan\033[0m` app to complete the schedule configuration, "
             "\nOR edit 'schedule.yaml' and manually add the necessary time values and instrument selections."
+            "\n\nIf editing 'schedule.yaml' manually:"
             "\n\n🕒  Expected time format: 'YYYY-MM-DD HH:MM:SS' (e.g., '2023-10-20 01:00:00')."
             "\n\n🌡️   Expected instrument(s) format: one line per instrument e.g."
             f"\n\n{' ' * 15}waypoints:\n{' ' * 15}- instrument:\n{' ' * 19}- CTD\n{' ' * 19}- ARGO_FLOAT\n"
