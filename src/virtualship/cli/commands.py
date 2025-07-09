@@ -77,7 +77,11 @@ def init(path, from_mfp):
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
 def plan(path):
-    """Launch UI to help build schedule and ship config files. Opens in web browser by default, or in the terminal with --terminal."""
+    """
+    Launch UI to help build schedule and ship config files.
+
+    Should you encounter any issues with using this tool, please report an issue describing the problem to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
+    """
     _plan(Path(path))
 
 
