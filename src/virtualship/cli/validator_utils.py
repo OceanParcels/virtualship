@@ -120,9 +120,9 @@ def make_validator(condition, reference, value_type):
     Docstrings will be used to generate informative UI invalid entry messages, so them being informative and accurate is important!
 
     N.B. #2 Textual validator tools do not currently support additional arguments (such as 'reference' values) being fed into the validator functions (such as is_gt0) at present.
-    Therefore, reference values for the conditions cannot be fed in dynamically and necessitates "hard-coding" the condition and reference value combination.
-    At present, Pydantic models in VirtualShip only require gt/ge/lt/le relative to **0.0** so "reference" is always checked as being == 0.0
-    Additional custom conditions can be "hard-coded" as new condition and reference combinations if Pydantic model specifications change in the future and/or new instruments are added to VirtualShip etc.
+    Therefore, reference values for the conditions cannot be fed in dynamically and necessitates 'hard-coding' the condition and reference value combination.
+    At present, Pydantic models in VirtualShip only require gt/ge/lt/le relative to **0.0** so the 'reference' value is always checked as being == 0.0
+    Additional custom conditions can be 'hard-coded' as new condition and reference combinations if Pydantic model specifications change in the future and/or new instruments are added to VirtualShip etc.
     TODO: Perhaps there's scope here though for a more flexible implementation in a future PR...
 
     """

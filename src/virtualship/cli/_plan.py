@@ -47,11 +47,6 @@ from virtualship.models.space_time_region import (
     TimeRange,
 )
 
-# TODO list:
-
-# Need to build TESTS for the UI!
-# - look into best way of testing this kind of thing...
-
 UNEXPECTED_MSG_ONSAVE = (
     "Please ensure that:\n"
     "\n1) All typed entries are valid (all boxes in all sections must have green borders and no warnings).\n"
@@ -75,16 +70,7 @@ def log_exception_to_file(
     filename: str = "virtualship_error.txt",
     context_message: str = "Error occurred:",
 ):
-    """
-    Log an exception and its traceback to a file.
-
-    Args:
-        exception (Exception): The exception to log.
-        path (str): Directory where the log file will be saved.
-        filename (str, optional): Log file name. Defaults to 'virtualship_error.txt'.
-        context_message (str, optional): Message to write before the traceback.
-
-    """
+    """Log an exception and its traceback to a file."""
     error_log_path = os.path.join(path, filename)
     with open(error_log_path, "w") as f:
         f.write(f"{context_message}\n")
@@ -166,7 +152,7 @@ class WaypointWidget(Static):
                     yield Select(
                         [
                             (str(year), year)
-                            # TODO: change from hard coding...flexibility for different datasets...
+                            # TODO: change from hard coding? ...flexibility for different datasets...
                             for year in range(
                                 2022,
                                 datetime.datetime.now().year + 1,
@@ -233,11 +219,11 @@ class WaypointWidget(Static):
             raise UnexpectedError(unexpected_msg_compose(e)) from None
 
     def copy_from_previous(self) -> None:
+        """Copy inputs from previous waypoint widget (time and instruments only, not lat/lon)."""
         try:
             if self.index > 0:
                 schedule_editor = self.parent
                 if schedule_editor:
-                    # only copy time components and instruments, not lat/lon
                     time_components = ["year", "month", "day", "hour", "minute"]
                     for comp in time_components:
                         prev = schedule_editor.query_one(f"#wp{self.index - 1}_{comp}")
@@ -307,6 +293,8 @@ class ScheduleEditor(Static):
             ):
                 for i, waypoint in enumerate(self.schedule.waypoints):
                     yield WaypointWidget(waypoint, i)
+
+            # SECTION: "Space-Time Region"
 
             with Collapsible(
                 title="[b]Space-Time Region[/b] (advanced users only)",
@@ -570,7 +558,6 @@ class ScheduleEditor(Static):
             return True
 
         except Exception as e:
-            # write error log
             log_exception_to_file(
                 e, self.path, context_message="Error saving ship config:"
             )
@@ -721,7 +708,7 @@ class ConfigEditor(Container):
                     yield Label("   SeaSeven:")
                     yield Switch(value=not is_deep, id="adcp_shallow")
 
-            ## SECTION: "Instrument Configurations (advanced users only)""
+            ## SECTION: "Instrument Configurations""
 
             with Collapsible(
                 title="[b]Instrument Configurations[/b] (advanced users only)",
@@ -914,7 +901,6 @@ class ConfigEditor(Container):
             return True
 
         except Exception as e:
-            # write error log
             log_exception_to_file(
                 e, self.path, context_message="Error saving ship config:"
             )
