@@ -29,7 +29,7 @@ async def simulate_input(pilot, box, new_value):
 
 @pytest.mark.asyncio
 async def test_UI_changes():
-    """Test making changes to UI inputs and saving to YAML."""
+    """Test making changes to UI inputs and saving to YAML (simulated botton presses and typing inputs)."""
     tmpdir = Path(tempfile.mkdtemp())
 
     shutil.copy(
@@ -76,6 +76,16 @@ async def test_UI_changes():
         )
         await simulate_input(pilot, lat_input, NEW_LAT)
         await simulate_input(pilot, lon_input, NEW_LON)
+
+        # toggle CTD on first waypoint
+        await pilot.click("#wp0_CTD")
+        await pilot.pause(0.1)
+
+        # toggle XBT on first waypoint
+        await pilot.click("#wp0_XBT")
+        await pilot.pause(0.1)
+
+        # re-collapse widget editors to make save button visible on screen
         wp_collapsible.collapsed = True
         await pilot.pause()
         waypoints_collapsible.collapsed = True
