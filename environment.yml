@@ -23,6 +23,7 @@ dependencies:
   # Testing
   - pytest
   - pytest-cov
+  - pytest-asyncio
   - codecov
   - seabird
   - setuptools

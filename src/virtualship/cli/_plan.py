@@ -102,7 +102,11 @@ class WaypointWidget(Static):
 
     def compose(self) -> ComposeResult:
         try:
-            with Collapsible(title=f"[b]Waypoint {self.index + 1}[/b]", collapsed=True):
+            with Collapsible(
+                title=f"[b]Waypoint {self.index + 1}[/b]",
+                collapsed=True,
+                id=f"wp{self.index + 1}",
+            ):
                 if self.index > 0:
                     yield Button(
                         "Copy Time & Instruments from Previous",
@@ -115,6 +119,7 @@ class WaypointWidget(Static):
                     id=f"wp{self.index}_lat",
                     value=str(self.waypoint.location.lat)
                     if self.waypoint.location.lat
+                    is not None  # is not None to handle if lat is 0.0
                     else "",
                     validators=[
                         Function(
@@ -137,6 +142,7 @@ class WaypointWidget(Static):
                     id=f"wp{self.index}_lon",
                     value=str(self.waypoint.location.lon)
                     if self.waypoint.location.lon
+                    is not None  # is not None to handle if lon is 0.0
                     else "",
                     validators=[
                         Function(
@@ -296,6 +302,7 @@ class ScheduleEditor(Static):
 
             with Collapsible(
                 title="[b]Waypoints & Instrument Selection[/b]",
+                id="waypoints",
                 collapsed=True,
             ):
                 for i, waypoint in enumerate(self.schedule.waypoints):
@@ -665,7 +672,9 @@ class ConfigEditor(Container):
             yield Label("[b]Ship Config Editor[/b]", id="title", markup=True)
             yield Rule(line_style="heavy")
 
-            with Collapsible(title="[b]Ship Speed & Onboard Measurements[/b]"):
+            with Collapsible(
+                title="[b]Ship Speed & Onboard Measurements[/b]", id="speed_collapsible"
+            ):
                 attr = "ship_speed_knots"
                 validators = group_validators(ShipConfig, attr)
                 with Horizontal(classes="ship_speed"):
@@ -853,7 +862,7 @@ class ConfigEditor(Container):
         try:
             # ship speed
             attr = "ship_speed_knots"
-            field_type = get_field_type(self.config, attr)
+            field_type = get_field_type(type(self.config), attr)
             value = field_type(self.query_one("#speed").value)
             ShipConfig.model_validate(
                 {**self.config.model_dump(), attr: value}
@@ -913,7 +922,7 @@ class ConfigEditor(Container):
             raise UnexpectedError(UNEXPECTED_MSG_ONSAVE) from None
 
 
-class ScheduleScreen(Screen):
+class PlanScreen(Screen):
     def __init__(self, path: str):
         super().__init__()
         self.path = path
@@ -976,7 +985,9 @@ class ScheduleScreen(Screen):
 
             if config_saved and schedule_saved:
                 self.notify(
-                    "Changes saved successfully", severity="information", timeout=20
+                    "Changes saved successfully",
+                    severity="information",
+                    timeout=20,
                 )
 
         except Exception as e:
@@ -988,7 +999,7 @@ class ScheduleScreen(Screen):
             return False
 
 
-class ScheduleApp(App):
+class PlanApp(App):
     CSS = """
     Screen {
         align: center middle;
@@ -1167,11 +1178,11 @@ class ScheduleApp(App):
         self.path = path
 
     def on_mount(self) -> None:
-        self.push_screen(ScheduleScreen(self.path))
+        self.push_screen(PlanScreen(self.path))
         self.theme = "textual-light"
 
 
 def _plan(path: str) -> None:
     """Run UI in terminal."""
-    app = ScheduleApp(path)
+    app = PlanApp(path)
     app.run()
