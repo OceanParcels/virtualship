@@ -7,7 +7,7 @@ from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
 from textual.screen import Screen
-from textual.validation import Function
+from textual.validation import Function, Integer
 from textual.widgets import (
     Button,
     Collapsible,
@@ -47,10 +47,23 @@ from virtualship.models.space_time_region import (
     TimeRange,
 )
 
+#! ----------------------------------------------------------------------------------------------
+#! ----------------------------------------------------------------------------------------------
+#! ----------------------------------------------------------------------------------------------
+
+# TODO list:
+
+# - Do final sift through of all other TODOs in the script!
+
+#! ----------------------------------------------------------------------------------------------
+#! ----------------------------------------------------------------------------------------------
+#! ----------------------------------------------------------------------------------------------
+
+
 UNEXPECTED_MSG_ONSAVE = (
     "Please ensure that:\n"
     "\n1) All typed entries are valid (all boxes in all sections must have green borders and no warnings).\n"
-    "\n2) Time selections exist for all waypoints.\n"
+    "\n2) Complete time selections (YYYY-MM-DD hh:mm) exist for all waypoints.\n"
     "\nIf the problem persists, please report this issue, with a description and the traceback, "
     "to the VirtualShip issue tracker at: https://github.com/OceanParcels/virtualship/issues"
 )
@@ -215,8 +228,34 @@ class WaypointWidget(Static):
                             value=is_selected, id=f"wp{self.index}_{instrument.value}"
                         )
 
+                        if instrument.value == "DRIFTER":
+                            yield Label("Count")
+                            yield Input(
+                                id=f"wp{self.index}_drifter_count",
+                                value=str(
+                                    self.get_drifter_count() if is_selected else ""
+                                ),
+                                type="integer",
+                                placeholder="# of drifters",
+                                validators=Integer(
+                                    minimum=1,
+                                    failure_description="INVALID: value must be > 0",
+                                ),
+                                classes="drifter-count-input",
+                            )
+                            yield Label(
+                                "",
+                                id=f"validation-failure-label-wp{self.index}_drifter_count",
+                                classes="-hidden validation-failure",
+                            )
+
         except Exception as e:
             raise UnexpectedError(unexpected_msg_compose(e)) from None
+
+    def get_drifter_count(self) -> int:
+        return sum(
+            1 for inst in self.waypoint.instrument if inst == InstrumentType.DRIFTER
+        )
 
     def copy_from_previous(self) -> None:
         """Copy inputs from previous waypoint widget (time and instruments only, not lat/lon)."""
@@ -243,29 +282,22 @@ class WaypointWidget(Static):
         except Exception as e:
             raise UnexpectedError(unexpected_msg_compose(e)) from None
 
-    @on(Input.Changed)
-    def show_invalid_reasons(self, event: Input.Changed) -> None:
-        input_id = event.input.id
-        label_id = f"validation-failure-label-{input_id}"
-        label = self.query_one(f"#{label_id}", Label)
-        if not event.validation_result.is_valid:
-            message = (
-                "\n".join(event.validation_result.failure_descriptions)
-                if isinstance(event.validation_result.failure_descriptions, list)
-                else str(event.validation_result.failure_descriptions)
-            )
-            label.update(message)
-            label.remove_class("-hidden")
-            label.add_class("validation-failure")
-        else:
-            label.update("")
-            label.add_class("-hidden")
-            label.remove_class("validation-failure")
-
     @on(Button.Pressed, "Button")
     def button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == f"wp{self.index}_copy":
             self.copy_from_previous()
+
+    @on(Switch.Changed)
+    def on_switch_changed(self, event: Switch.Changed) -> None:
+        if event.switch.id == f"wp{self.index}_DRIFTER":
+            drifter_count_input = self.query_one(
+                f"#wp{self.index}_drifter_count", Input
+            )
+            if not event.value:
+                drifter_count_input.value = ""
+            else:
+                if not drifter_count_input.value:
+                    drifter_count_input.value = "1"
 
 
 class ScheduleEditor(Static):
@@ -285,14 +317,21 @@ class ScheduleEditor(Static):
             yield Rule(line_style="heavy")
 
             # SECTION: "Waypoints & Instrument Selection"
-
             with Collapsible(
                 title="[b]Waypoints & Instrument Selection[/b]",
                 id="waypoints",
                 collapsed=True,
             ):
-                for i, waypoint in enumerate(self.schedule.waypoints):
-                    yield WaypointWidget(waypoint, i)
+                yield Horizontal(
+                    Button("Add Waypoint", id="add_waypoint", variant="primary"),
+                    Button(
+                        "Remove Last Waypoint",
+                        id="remove_waypoint",
+                        variant="error",
+                    ),
+                )
+
+                yield VerticalScroll(id="waypoint_list", classes="waypoint-list")
 
             # SECTION: "Space-Time Region"
 
@@ -472,11 +511,30 @@ class ScheduleEditor(Static):
         except Exception as e:
             raise UnexpectedError(unexpected_msg_compose(e)) from None
 
+    def on_mount(self) -> None:
+        self.refresh_waypoint_widgets()
+
+    def refresh_waypoint_widgets(self):
+        waypoint_list = self.query_one("#waypoint_list", VerticalScroll)
+        waypoint_list.remove_children()
+        for i, waypoint in enumerate(self.schedule.waypoints):
+            waypoint_list.mount(WaypointWidget(waypoint, i))
+
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:
         input_id = event.input.id
         label_id = f"validation-failure-label-{input_id}"
         label = self.query_one(f"#{label_id}", Label)
+        if input_id.endswith("_drifter_count"):
+            wp_index = int(input_id.split("_")[0][2:])
+            drifter_switch = self.query_one(f"#wp{wp_index}_DRIFTER")
+            if not drifter_switch.value:
+                label.update("")
+                label.add_class("-hidden")
+                label.remove_class("validation-failure")
+                event.input.remove_class("-valid")
+                event.input.remove_class("-invalid")
+                return
         if not event.validation_result.is_valid:
             message = (
                 "\n".join(event.validation_result.failure_descriptions)
@@ -490,6 +548,46 @@ class ScheduleEditor(Static):
             label.update("")
             label.add_class("-hidden")
             label.remove_class("validation-failure")
+
+    @on(Button.Pressed, "#add_waypoint")
+    def add_waypoint(self) -> None:
+        """Add a new waypoint to the schedule. Copies time from last waypoint if possible (Lat/lon and instruments blank)."""
+        try:
+            if self.schedule.waypoints:
+                last_wp = self.schedule.waypoints[-1]
+                new_time = last_wp.time if last_wp.time else None
+                new_wp = Waypoint(
+                    location=Location(
+                        latitude=0.0,
+                        longitude=0.0,
+                    ),
+                    time=new_time,
+                    instrument=[],
+                )
+            else:
+                new_wp = Waypoint(
+                    location=Location(latitude=0.0, longitude=0.0),
+                    time=None,
+                    instrument=[],
+                )
+            self.schedule.waypoints.append(new_wp)
+            self.refresh_waypoint_widgets()
+
+        except Exception as e:
+            raise UnexpectedError(unexpected_msg_compose(e)) from None
+
+    @on(Button.Pressed, "#remove_waypoint")
+    def remove_waypoint(self) -> None:
+        """Remove the last waypoint from the schedule."""
+        try:
+            if self.schedule.waypoints:
+                self.schedule.waypoints.pop()
+                self.refresh_waypoint_widgets()
+            else:
+                self.notify("No waypoints to remove.", severity="error", timeout=5)
+
+        except Exception as e:
+            raise UnexpectedError(unexpected_msg_compose(e)) from None
 
     def save_changes(self) -> bool:
         """Save changes to schedule.yaml."""
@@ -547,11 +645,17 @@ class ScheduleEditor(Static):
                     int(self.query_one(f"#wp{i}_minute").value),
                     0,
                 )
-                wp.instrument = [
-                    instrument
-                    for instrument in InstrumentType
-                    if self.query_one(f"#wp{i}_{instrument.value}").value
-                ]
+
+                wp.instrument = []
+                for instrument in InstrumentType:
+                    switch_on = self.query_one(f"#wp{i}_{instrument.value}").value
+                    if instrument.value == "DRIFTER" and switch_on:
+                        count_str = self.query_one(f"#wp{i}_drifter_count").value
+                        count = int(count_str)
+                        assert count > 0
+                        wp.instrument.extend([InstrumentType.DRIFTER] * count)
+                    elif switch_on:
+                        wp.instrument.append(instrument)
 
             # save
             self.schedule.to_yaml(f"{self.path}/schedule.yaml")
@@ -559,7 +663,7 @@ class ScheduleEditor(Static):
 
         except Exception as e:
             log_exception_to_file(
-                e, self.path, context_message="Error saving ship config:"
+                e, self.path, context_message="Error saving schedule:"
             )
 
             raise UnexpectedError(
@@ -707,6 +811,7 @@ class ConfigEditor(Container):
                     yield Switch(value=is_deep, id="adcp_deep")
                     yield Label("   SeaSeven:")
                     yield Switch(value=not is_deep, id="adcp_shallow")
+                    yield Button("?", id="info_button", variant="warning")
 
             ## SECTION: "Instrument Configurations""
 
@@ -748,7 +853,12 @@ class ConfigEditor(Container):
                                         value = str(raw_value)
                                 else:
                                     value = ""
-                                yield Label(f"{attr.replace('_', ' ').title()}:")
+                                label = f"{attr.replace('_', ' ').title()}:"
+                                yield Label(
+                                    label
+                                    if not is_minutes
+                                    else label.replace(":", " Minutes:")
+                                )
                                 yield Input(
                                     id=f"{instrument_name}_{attr}",
                                     type=type_to_textual(
@@ -771,6 +881,15 @@ class ConfigEditor(Container):
 
         except Exception as e:
             raise UnexpectedError(unexpected_msg_compose(e)) from None
+
+    @on(Button.Pressed, "#info_button")
+    def info_pressed(self) -> None:
+        self.notify(
+            "[b]SeaSeven[/b]:\nShallow ADCP profiler capable of providing information to a depth of 150 m every 4 meters (300kHz)"
+            "\n\n[b]OceanObserver[/b]:\nLong-range ADCP profiler capable of providing ~ 1000m of range every 24 meters (38kHz)",
+            severity="warning",
+            timeout=20,
+        )
 
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:
@@ -927,19 +1046,33 @@ class PlanScreen(Screen):
     def sync_ui_waypoints(self):
         """Update the waypoints models with current UI values (spacetime only) from the live UI inputs."""
         schedule_editor = self.query_one(ScheduleEditor)
+        errors = []
         for i, wp in enumerate(schedule_editor.schedule.waypoints):
-            wp.location = Location(
-                latitude=float(schedule_editor.query_one(f"#wp{i}_lat").value),
-                longitude=float(schedule_editor.query_one(f"#wp{i}_lon").value),
+            try:
+                wp.location = Location(
+                    latitude=float(schedule_editor.query_one(f"#wp{i}_lat").value),
+                    longitude=float(schedule_editor.query_one(f"#wp{i}_lon").value),
+                )
+                wp.time = datetime.datetime(
+                    int(schedule_editor.query_one(f"#wp{i}_year").value),
+                    int(schedule_editor.query_one(f"#wp{i}_month").value),
+                    int(schedule_editor.query_one(f"#wp{i}_day").value),
+                    int(schedule_editor.query_one(f"#wp{i}_hour").value),
+                    int(schedule_editor.query_one(f"#wp{i}_minute").value),
+                    0,
+                )
+            except Exception as e:
+                errors.append(f"Waypoint {i + 1}: {e}")
+        if errors:
+            log_exception_to_file(
+                Exception("\n".join(errors)),
+                self.path,
+                context_message="Error syncing waypoints:",
             )
-            wp.time = datetime.datetime(
-                int(schedule_editor.query_one(f"#wp{i}_year").value),
-                int(schedule_editor.query_one(f"#wp{i}_month").value),
-                int(schedule_editor.query_one(f"#wp{i}_day").value),
-                int(schedule_editor.query_one(f"#wp{i}_hour").value),
-                int(schedule_editor.query_one(f"#wp{i}_minute").value),
-                0,
-            )
+            raise UnexpectedError(
+                UNEXPECTED_MSG_ONSAVE
+                + f"\n\nTraceback will be logged in {self.path}/virtualship_error.txt. Please attach this/copy the contents to any issue submitted."
+            ) from None
 
     @on(Button.Pressed, "#exit_button")
     def exit_pressed(self) -> None:
@@ -952,9 +1085,7 @@ class PlanScreen(Screen):
         schedule_editor = self.query_one(ScheduleEditor)
 
         try:
-            ship_speed_value = float(
-                config_editor.query_one("#speed").value
-            )  # get ship speed from config
+            ship_speed_value = self.get_ship_speed(config_editor)
 
             self.sync_ui_waypoints()  # call to ensure waypoint inputs are synced
 
@@ -983,6 +1114,20 @@ class PlanScreen(Screen):
                 timeout=20,
             )
             return False
+
+    def get_ship_speed(self, config_editor):
+        try:
+            ship_speed = float(config_editor.query_one("#speed").value)
+            assert ship_speed > 0
+        except Exception as e:
+            log_exception_to_file(
+                e, self.path, context_message="Error saving schedule:"
+            )
+            raise UnexpectedError(
+                UNEXPECTED_MSG_ONSAVE
+                + f"\n\nTraceback will be logged in {self.path}/virtualship_error.txt. Please attach this/copy the contents to any issue submitted."
+            ) from None
+        return ship_speed
 
 
 class PlanApp(App):
@@ -1044,7 +1189,6 @@ class PlanApp(App):
 
     Button.-primary {
         background: $primary;
-        width: 100%;
     }
 
     Button.-default {
@@ -1057,10 +1201,6 @@ class PlanApp(App):
 
     Button.-error {
         background: $error;
-    }
-
-    Button#exit_button {
-        margin-left: 1;
     }
 
     Horizontal {
@@ -1079,6 +1219,21 @@ class PlanApp(App):
     #title {
         text-style: bold;
         padding: 1;
+    }
+
+    #info_button {
+        margin-top: 0;
+        margin-left: 8;
+    }
+
+    #waypoint_list {
+        height: auto;
+    }
+
+    .drifter-count-input {
+        width: auto;
+        margin-left: 1;
+        margin-right: 1;
     }
 
     .path {

@@ -22,8 +22,8 @@ class Location:
             raise ValueError("Latitude cannot be larger than 90.")
         if self.lon < -180:
             raise ValueError("Longitude cannot be smaller than -180.")
-        if self.lon > 180:
-            raise ValueError("Longitude cannot be larger than 180.")
+        if self.lon > 360:
+            raise ValueError("Longitude cannot be larger than 360.")
 
     @property
     def lat(self) -> float:

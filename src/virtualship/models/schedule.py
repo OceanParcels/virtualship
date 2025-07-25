@@ -137,11 +137,13 @@ class Schedule(pydantic.BaseModel):
 
         # check waypoint times are in ascending order
         timed_waypoints = [wp for wp in self.waypoints if wp.time is not None]
-        if not all(
-            [next.time >= cur.time for cur, next in itertools.pairwise(timed_waypoints)]
-        ):
+        checks = [
+            next.time >= cur.time for cur, next in itertools.pairwise(timed_waypoints)
+        ]
+        if not all(checks):
+            invalid_i = [i for i, c in enumerate(checks) if c]
             raise ScheduleError(
-                "Each waypoint should be timed after all previous waypoints"
+                f"Waypoint(s) {', '.join(f'#{i + 1}' for i in invalid_i)}: each waypoint should be timed after all previous waypoints",
             )
 
         # check if all waypoints are in water
