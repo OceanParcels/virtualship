@@ -96,7 +96,7 @@ Two possible approaches:
 1. Run a planning phase and deploy instruments after
 
 - Steps:
-  - The planned ship track is known, validated[^1], and then iterated through (encountering problems along the way).
+  - The planned ship track is known, verified[^1], and then iterated through (encountering problems along the way).
   - Users adjust their plans based on the problems encountered.
   - Once completed, the ship track is finalised (i.e., is _realized_) and then all the deployments are made and measurements are taken.
 - Pros:
@@ -109,7 +109,7 @@ Two possible approaches:
 2. Encounter problems during the expedition
 
 - Steps:
-  - The planned ship track is known, validated[^1], and then the expedition is run.
+  - The planned ship track is known, verified[^1], and then the expedition is run.
   - Expedition is paused when a problem is encountered, and users can adjust their plans.
 - Pros:
   - Problems can be flexible and based on the Parcels simulation (e.g., currents).
@@ -132,6 +132,6 @@ We have decided for approach (1) for the timebeing. Down the line we may want to
 
 ---
 
-[^1]: Validate -> Make sure that ship track isn't on land, make sure that the ship track isn't unrealistic for the ship speed.
+[^1]: Verify -> Make sure that ship track isn't on land, make sure that the ship track isn't unrealistic for the ship speed.
 
 [^2]: If we want to support this, there will be added complexity: we will need to show the users the binary files, but the zarr files behind the scenes will still need to be cached so that the simulation can continue from where it left off.
