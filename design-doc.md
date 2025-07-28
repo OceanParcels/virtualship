@@ -68,7 +68,6 @@ A layer on top allows them to:
 - Features:
   - One waypoint.
   - An associated time for deployment start.
-  - A configured time to stay at the location.
 - Ships travel between stations at maximum speed; if arriving early, they wait at the station.
 
 ### Port
