@@ -34,6 +34,13 @@ A layer on top allows them to:
   - **Overboard-instruments**: Deployed at specific times (e.g., CTD, drifters, Argo, XBT).
     - Deployed at stations during the expedition.
 
+### Instrument
+
+- Components:
+  - A Parcels fieldset (which relates to a Copernicus Marine dataset)
+  - A Parcels kernel
+  - (optional) A configuration object controlling any important parameters.
+
 ### Deployment
 
 - A complete set of measurements for an overboard-instrument (from deployment to retrieval or end-of-life).
