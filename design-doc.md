@@ -1,10 +1,10 @@
-# Virtualship Design Document
+# VirtualShip Design Document
 
 > Document created as a result of [this discussion topic](https://github.com/OceanParcels/virtualship/discussions/187).
 
-## Essence of Virtualship
+## Essence of VirtualShip
 
-Virtualship interpolates hydrodynamical fields the way instruments would. Users can combine these observations into an expedition ("cruise"). Users can also deploy individual instruments in the flowfield, either as part of an expedition or independently, to compare against actual observations.
+VirtualShip interpolates hydrodynamical and biogeographical fields the way instruments would. **Student Users** can combine these observations into an expedition (also known as a "cruise"). **Research Users** can also deploy individual instruments in these field, either as part of an expedition or independently, to compare against actual observations.
 
 ### For Researchers
 
@@ -24,19 +24,19 @@ A layer on top allows them to:
 
 - A spacetime interpolation of a hydrodynamic or biogeochemical field.
 - A set of measurements forms a timeseries output (serialised to disk as a zarr output).
-  - In the case of students, this would be serialized with artificial errors to simulate real-world data and also be serialized in the original binary format of the instrument.
+  - In the case of students, this could be serialized with artificial errors to simulate real-world data and also be serialized in the original (binary or csv) format of the instrument.
 
 ### Instrument
 
 - A device that takes measurements. Two types:
   - **Underway-instruments**: Measure continuously during the expedition (e.g., Thermosalinograph, shipboard ADCP, and (to be developed) meteorology).
-    - Conducted for the entirety of the expedition.
-  - **Overboard-instruments**: Deployed at specific times (e.g., CTD, drifters, Argo, XBT, and (to be developed) gliders).
+    - Conducted for the entirety of the expedition and continues recording when ship is stationary at a **station**.
+  - **Overboard-instruments**: Deployed at specific times (e.g., CTD, drifters, Argo, XBT).
     - Deployed at stations during the expedition.
 
 ### Deployment
 
-- A complete set of measurements for an overboard-instrument (from deployment to retrieval).
+- A complete set of measurements for an overboard-instrument (from deployment to retrieval or end-of-life).
 - Each deployment is executed independently of the ship's movement.
 - Components:
   - An instrument.
@@ -59,7 +59,7 @@ A layer on top allows them to:
 
 - A waypoint where multiple deployments can occur. The ship does not drift horizontally while at a station.
 - Features:
-  - One horizontal location.
+  - One waypoint.
   - An associated time for deployment start.
   - A configured time to stay at the location.
 - Ships travel between stations at maximum speed; if arriving early, they wait at the station.
@@ -127,8 +127,8 @@ We have decided for approach (1) for the timebeing. Down the line we may want to
 
 # FAQ
 
-- How does this "Essence of Virtualship" above fit for biological oceanography? Do they also have a concept of 'instruments'?
-  - For now let's focus on field data that is provided through Copernicus marine (down the line we might support other data providers).
+- How does this "Essence of VirtualShip" above fit for biological oceanography? Do they also have a concept of 'instruments'?
+  - For now let's focus on field data that is provided through the Copernicus Marine Service (down the line we might support other data providers).
 
 ---
 
