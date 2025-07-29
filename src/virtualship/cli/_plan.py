@@ -6,6 +6,7 @@ from typing import ClassVar
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
+from textual.dom import NoMatches
 from textual.screen import Screen
 from textual.validation import Function, Integer
 from textual.widgets import (
@@ -511,7 +512,13 @@ class ScheduleEditor(Static):
     def show_invalid_reasons(self, event: Input.Changed) -> None:
         input_id = event.input.id
         label_id = f"validation-failure-label-{input_id}"
-        label = self.query_one(f"#{label_id}", Label)
+
+        # avoid errors when button pressed too rapidly
+        try:
+            label = self.query_one(f"#{label_id}", Label)
+        except NoMatches:
+            return
+
         if input_id.endswith("_drifter_count"):
             wp_index = int(input_id.split("_")[0][2:])
             drifter_switch = self.query_one(f"#wp{wp_index}_DRIFTER")
