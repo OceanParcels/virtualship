@@ -33,9 +33,6 @@ A layer on top allows them to:
     - Conducted for the entirety of the expedition and continues recording when ship is stationary at a **station**.
   - **Overboard-instruments**: Deployed at specific times (e.g., CTD, drifters, Argo, XBT).
     - Deployed at stations during the expedition.
-
-### Instrument
-
 - Components:
   - A Parcels fieldset (which relates to a Copernicus Marine dataset)
   - A Parcels kernel
