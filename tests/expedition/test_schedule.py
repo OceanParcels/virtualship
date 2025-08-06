@@ -103,7 +103,7 @@ def test_get_instruments() -> None:
             ),
             False,
             ScheduleError,
-            "Each waypoint should be timed after all previous waypoints",
+            "Waypoint\\(s\\) : each waypoint should be timed after all previous waypoints",
             id="SequentialWaypoints",
         ),
         pytest.param(
