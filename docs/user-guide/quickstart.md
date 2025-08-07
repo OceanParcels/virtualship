@@ -35,7 +35,8 @@ You should now navigate to where you would like your expedition to be run on you
 virtualship init EXPEDITION_NAME --from-mfp CoordinatesExport.xslx
 ```
 
-> [!TIP] > `CoordinatesExport.xslx` in the `virtualship init` command refers to the .xslx file exported from MFP. Replace the filename with the name of your exported .xslx file (and make sure to move it from the Downloads to the folder/directory in which you are running the expedition).
+> [!TIP]
+> The `CoordinatesExport.xslx` in the `virtualship init` command refers to the .xslx file exported from MFP. Replace the filename with the name of your exported .xslx file (and make sure to move it from the Downloads to the folder/directory in which you are running the expedition).
 
 This will create a folder/directory called `EXPEDITION_NAME` with two files: `schedule.yaml` and `ship_config.yaml` based on the sampling site coordinates that you specified in your MFP export. The `--from-mfp` flag indictates that the exported coordinates will be used.
 
@@ -88,7 +89,8 @@ You should now consider which measurements are to be taken at each sampling site
 
 Instrument selections can be made for each waypoint in the same sub-panels as the [waypoint time](#waypoint-datetimes) selection by simply switching each on or off. Multiple instruments are allowed at each waypoint.
 
-> [!NOTE] > **For advanced users only**: you can also make further customisations to behaviours of all instruments under _Ship Config Editor_ > _Instrument Configurations_.
+> [!NOTE]
+> For advanced users only: you can also make further customisations to behaviours of all instruments under _Ship Config Editor_ > _Instrument Configurations_.
 
 ### Save changes
 
