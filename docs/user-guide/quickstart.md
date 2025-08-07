@@ -1,19 +1,19 @@
 # VirtualShip Quickstart Guide 🚢
 
-Welcome to this Quickstart to using VirtualShip. In this guide we will conduct a virtual expedition in the North Sea. Note, however, that you can plan your own expedition anywhere in the global ocean and conduct whatever measurements you wish!
+Welcome to this Quickstart to using VirtualShip. In this guide we will conduct a virtual expedition in the North Sea. Note, however, that you can plan your own expedition anywhere in the global ocean and conduct whatever set of measurements you wish!
 
-This guide is intended to give a basic overview of how to plan, initialise and execute a virtual expedition. Data post-processing, analysis and visualisation advice is provided in other sections of the documentation (see [Output](#output) section).
+This guide is intended to give a basic overview of how to plan, initialise and execute a virtual expedition. Data post-processing, analysis and visualisation advice is provided in other sections of the documentation (see [Results](#results) section).
 
-## Cruise planning
+## Expedition planning
 
 > [!NOTE]
-> This section describes the _custom_ cruise planning procedure. There is also an option to proceed without your own cruise plan and you can instead use an example route, schedule and selection of measurements (see [Initialise the expedition](#initialise-the-expedition) for more details).
+> This section describes the _custom_ expedition planning procedure. There is also an option to proceed without your own expedition plan and you can instead use an example route, schedule and selection of measurements (see [Initialise the expedition](#initialise-the-expedition) for more details).
 
 ### NIOZ MFP tool
 
-The first step is to plan the expedition. A map and cruise plan can be created with the [online NIOZ MFP tool](https://nioz.marinefacilitiesplanning.com/cruiselocationplanning#). Documentation on how to use the website can be found [here](https://surfdrive.surf.nl/files/index.php/s/84TFmsAAzcSD56F). Alternatively, you can watch this [video](https://www.youtube.com/watch?v=yIpYX2xCvsM&list=PLE-LzO7kk1gLM74U4PLDh8RywYXmZcloz&ab_channel=VirtualShipClassroom), which runs through how to use the MFP tool.
+The first step is to plan the expedition. A map and expedition plan can be created with the [online NIOZ MFP tool](https://nioz.marinefacilitiesplanning.com/cruiselocationplanning#). Documentation on how to use the website can be found [here](https://surfdrive.surf.nl/files/index.php/s/84TFmsAAzcSD56F). Alternatively, you can watch this [video](https://www.youtube.com/watch?v=yIpYX2xCvsM&list=PLE-LzO7kk1gLM74U4PLDh8RywYXmZcloz&ab_channel=VirtualShipClassroom), which runs through how to use the MFP tool.
 
-Below is a screenshot of a North Sea cruise plan. This example cruise departs from Southampton, UK; conducts measurements at one sampling site in the southern North Sea, three in the Dogger Bank region and a further three around the Norwegian Trench before ending in Bergen, Norway.
+Below is a screenshot of a North Sea expedition plan. This example expedition departs from Southampton, UK; conducts measurements at one sampling site in the southern North Sea, three in the Dogger Bank region and a further three around the Norwegian Trench before ending in Bergen, Norway.
 
 Feel free to design your expedition as you wish! There is no need to copy these sampling sites in your own expeditions.
 
@@ -21,7 +21,7 @@ Feel free to design your expedition as you wish! There is no need to copy these 
 
 ### Export the coordinates
 
-Once you have finalised your MFP cruise plan, select "Export" on the right hand side of the window --> "Export Coordinates" --> "DD". This will download your coordinates as an .xslx (Excel) file, which we will later feed into the VirtualShip protocol to initialise the expedition.
+Once you have finalised your MFP expedition plan, select "Export" on the right hand side of the window --> "Export Coordinates" --> "DD". This will download your coordinates as an .xslx (Excel) file, which we will later feed into the VirtualShip protocol to initialise the expedition.
 
 ### Instrument selection
 
@@ -48,8 +48,7 @@ You should now navigate to where you would like your expedition to be run on you
 virtualship init EXPEDITION_NAME --from-mfp CoordinatesExport.xslx
 ```
 
-> [!TIP]
-> `CoordinatesExport.xslx` in the `virtualship init` command refers to the .xslx file exported from MFP and edited to include the instrument selection. Replace the filename with the name of your exported .xslx file (and make sure to move it from the Downloads to the folder/directory in which you are running the expedition).
+> [!TIP] > `CoordinatesExport.xslx` in the `virtualship init` command refers to the .xslx file exported from MFP and edited to include the instrument selection. Replace the filename with the name of your exported .xslx file (and make sure to move it from the Downloads to the folder/directory in which you are running the expedition).
 
 This will create a folder/directory called `EXPEDITION_NAME` with two files: `schedule.yaml` and `ship_config.yaml` based on the sampling site coordinates that you specified in your MFP export. The `--from-mfp` flag indictates that the exported coordinates will be used. It will also populate the instrument parameters with the selections made under the "Instrument" header in the edited .xslx file.
 
@@ -104,7 +103,7 @@ Your command line output should look something like this...
 
 ![GIF of example VirtualShip log output](example_log_instruments.gif)
 
-It might take up to an hour to simulate the measurements depending on your choices. Why not read up on some of the [onboard safety procedures](https://virtualship.readthedocs.io/en/latest/user-guide/assignments/Sail_the_ship.html#Emergency-procedures) or browse through [blogs and cruise reports](https://virtualship.readthedocs.io/en/latest/user-guide/assignments/Sail_the_ship.html#Reporting) in the meantime?!
+It might take up to an hour to simulate the measurements depending on your choices. Why not browse through previous real-life [blogs and expedition reports](https://virtualship.readthedocs.io/en/latest/user-guide/assignments/Sail_the_ship.html#Reporting) in the meantime?!
 
 ## Results
 
