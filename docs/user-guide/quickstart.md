@@ -7,7 +7,7 @@ This guide is intended to give a basic overview of how to plan, initialise and e
 ## Expedition route planning
 
 ```{note}
-This section describes the _custom_ expedition route planning procedure. There is also an option to proceed without your own route and you can instead use an example route, schedule and selection of measurements (see [Initialise the expedition](#initialise-the-expedition) for more details).
+This section describes the _custom_ expedition route planning procedure. There is also an option to proceed without your own route and you can instead use an example route, schedule and selection of measurements (see [Expedition initialisation](#expedition-initialisation) for more details).
 ```
 
 ### NIOZ MFP tool
