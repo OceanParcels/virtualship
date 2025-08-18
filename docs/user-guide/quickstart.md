@@ -6,8 +6,9 @@ This guide is intended to give a basic overview of how to plan, initialise and e
 
 ## Expedition route planning
 
-> [!NOTE]
-> This section describes the _custom_ expedition route planning procedure. There is also an option to proceed without your own route and you can instead use an example route, schedule and selection of measurements (see [Initialise the expedition](#initialise-the-expedition) for more details).
+```{note}
+This section describes the _custom_ expedition route planning procedure. There is also an option to proceed without your own route and you can instead use an example route, schedule and selection of measurements (see [Initialise the expedition](#initialise-the-expedition) for more details).
+```
 
 ### NIOZ MFP tool
 
@@ -25,9 +26,10 @@ Once you have finalised your MFP expedition route, select "Export" on the right 
 
 ## Expedition initialisation
 
-> [!NOTE]
-> VirtualShip is a command line interface (CLI) based tool. From this point on in the Quickstart we will be working predominantly via the command line.
-> If you are unfamiliar with what a CLI is, see [here](https://www.w3schools.com/whatis/whatis_cli.asp) for more information.
+```{note}
+VirtualShip is a command line interface (CLI) based tool. From this point on in the Quickstart we will be working predominantly via the command line.
+If you are unfamiliar with what a CLI is, see [here](https://www.w3schools.com/whatis/whatis_cli.asp) for more information.
+```
 
 You should now navigate to where you would like your expedition to be run on your (virtual) machine (i.e. `cd path/to/expedition/dir/`). Then run the following command in your CLI:
 
@@ -35,13 +37,15 @@ You should now navigate to where you would like your expedition to be run on you
 virtualship init EXPEDITION_NAME --from-mfp CoordinatesExport.xslx
 ```
 
-> [!TIP]
-> The `CoordinatesExport.xslx` in the `virtualship init` command refers to the .xslx file exported from MFP. Replace the filename with the name of your exported .xslx file (and make sure to move it from the Downloads to the folder/directory in which you are running the expedition).
+```{tip}
+The `CoordinatesExport.xslx` in the `virtualship init` command refers to the .xslx file exported from MFP. Replace the filename with the name of your exported .xslx file (and make sure to move it from the Downloads to the folder/directory in which you are running the expedition).
+```
 
 This will create a folder/directory called `EXPEDITION_NAME` with two files: `schedule.yaml` and `ship_config.yaml` based on the sampling site coordinates that you specified in your MFP export. The `--from-mfp` flag indictates that the exported coordinates will be used.
 
-> [!NOTE]
-> It is also possible to run the expedition initialisation step without an MFP .xslx export file. In this case you should simply run `virtualship init EXPEDITION_NAME` in the CLI. This will write example `schedule.yaml` and `ship_config.yaml` files in the `EXPEDITION_NAME` folder/directory. These files contain example waypoints, timings and instrument selections, but can be edited or propagated through the rest of the workflow unedited to run a sample expedition.
+```{note}
+It is also possible to run the expedition initialisation step without an MFP .xslx export file. In this case you should simply run `virtualship init EXPEDITION_NAME` in the CLI. This will write example `schedule.yaml` and `ship_config.yaml` files in the `EXPEDITION_NAME` folder/directory. These files contain example waypoints, timings and instrument selections, but can be edited or propagated through the rest of the workflow unedited to run a sample expedition.
+```
 
 ## Expedition scheduling & ship configuration
 
@@ -51,8 +55,9 @@ The next step is to finalise the expedition schedule plan, including setting tim
 virtualship plan EXPEDITION_NAME
 ```
 
-> [!TIP]
-> Using the `virtualship plan` tool is optional. Advanced users can also edit the `schedule.yaml` and `ship_config.yaml` files directly if preferred.
+```{tip}
+Using the `virtualship plan` tool is optional. Advanced users can also edit the `schedule.yaml` and `ship_config.yaml` files directly if preferred.
+```
 
 The planning tool should look something like this and offers an intuitive way to make your selections:
 
@@ -74,30 +79,35 @@ You will need to enter dates and times for each of the sampling stations/waypoin
 
 Each waypoint has its own sub-panel for parameter inputs (click on it to expand the selection options). Here, the time for each waypoint can be inputted. There is also an option to adjust the latitude/longitude coordinates and you can add or remove waypoints.
 
-> [!NOTE]
-> It is important to ensure that the timings for each station are realistic. There must be enough time for the ship to travel to each site at a realistic speed (~ 10 knots). The expedition schedule (and the ship's configuration) will be automatically verified when you press _Save Changes_ in the planning tool.
+```{note}
+It is important to ensure that the timings for each station are realistic. There must be enough time for the ship to travel to each site at a realistic speed (~ 10 knots). The expedition schedule (and the ship's configuration) will be automatically verified when you press _Save Changes_ in the planning tool.
+```
 
-> [!TIP]
-> The MFP planning tool will give estimated durations of sailing between sites, usually at an assumed 10 knots sailing speed. This can be useful to refer back to when planning the expedition timings and entering these into planning tool.
+```{tip}
+The MFP planning tool will give estimated durations of sailing between sites, usually at an assumed 10 knots sailing speed. This can be useful to refer back to when planning the expedition timings and entering these into planning tool.
+```
 
 ### Instrument selection
 
 You should now consider which measurements are to be taken at each sampling site, and therefore which instruments selections will be required.
 
-> [!TIP]
-> Click [here](https://virtualship.readthedocs.io/en/latest/user-guide/assignments/Research_proposal_intro.html#Measurement-Options) for more information on what measurement options are available, and a brief introduction to each instrument.
+```{tip}
+Click [here](https://virtualship.readthedocs.io/en/latest/user-guide/assignments/Research_proposal_intro.html#Measurement-Options) for more information on what measurement options are available, and a brief introduction to each instrument.
+```
 
 Instrument selections can be made for each waypoint in the same sub-panels as the [waypoint time](#waypoint-datetimes) selection by simply switching each on or off. Multiple instruments are allowed at each waypoint.
 
-> [!NOTE]
-> For advanced users only: you can also make further customisations to behaviours of all instruments under _Ship Config Editor_ > _Instrument Configurations_.
+```{note}
+For advanced users only: you can also make further customisations to behaviours of all instruments under _Ship Config Editor_ > _Instrument Configurations_.
+```
 
 ### Save changes
 
 When you are happy with your ship configuration and schedule plan, press _Save Changes_.
 
-> [!NOTE]
-> On pressing _Save Changes_ the tool will check the selections are valid (for example the ship will be able to reach each waypoint in time). If they are, the changes will be saves to the `ship_config.yaml` and `schedule.yaml` files, ready for the next steps. If your selections are invalid you should be provided with information on how to fix them.
+```{note}
+On pressing _Save Changes_ the tool will check the selections are valid (for example the ship will be able to reach each waypoint in time). If they are, the changes will be saves to the `ship_config.yaml` and `schedule.yaml` files, ready for the next steps. If your selections are invalid you should be provided with information on how to fix them.
+```
 
 ## Fetch the data
 
