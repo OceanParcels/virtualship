@@ -84,12 +84,12 @@ It is important to ensure that the timings for each station are realistic. There
 ```
 
 ```{tip}
-The MFP planning tool will give estimated durations of sailing between sites, usually at an assumed 10 knots sailing speed. This can be useful to refer back to when planning the expedition timings and entering these into planning tool.
+The MFP route planning tool will give estimated durations of sailing between sites, usually at an assumed 10 knots sailing speed. This can be useful to refer back to when planning the expedition timings and entering these into the `virtualship plan` tool.
 ```
 
 ### Instrument selection
 
-You should now consider which measurements are to be taken at each sampling site, and therefore which instruments selections will be required.
+You should now consider which measurements are to be taken at each sampling site, and therefore which instruments need to be selected in the planning tool.
 
 ```{tip}
 Click [here](https://virtualship.readthedocs.io/en/latest/user-guide/assignments/Research_proposal_intro.html#Measurement-Options) for more information on what measurement options are available, and a brief introduction to each instrument.
