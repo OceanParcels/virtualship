@@ -105,7 +105,7 @@ For advanced users: you can also make further customisations to behaviours of al
 When you are happy with your ship configuration and schedule plan, press _Save Changes_.
 
 ```{note}
-On pressing _Save Changes_ the tool will check the selections are valid (for example the ship will be able to reach each waypoint in time). If they are, the changes will be saves to the `ship_config.yaml` and `schedule.yaml` files, ready for the next steps. If your selections are invalid you should be provided with information on how to fix them.
+On pressing _Save Changes_ the tool will check the selections are valid (for example that the ship will be able to reach each waypoint in time). If they are, the changes will be saved to the `ship_config.yaml` and `schedule.yaml` files, ready for the next steps. If your selections are invalid you should be provided with information on how to fix them.
 ```
 
 ## Fetch the data
