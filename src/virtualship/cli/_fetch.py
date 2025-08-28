@@ -248,17 +248,17 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             "chlorodata": {
                 "dataset_id": "cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m",
                 "variables": ["chl"],
-                "output_filename": "ctd_bgc_chloro.nc",
+                "output_filename": "ctd_bgc_chl.nc",
             },
             "nitratedata": {
                 "dataset_id": "cmems_mod_glo_bgc-nut_anfc_0.25deg_P1D-m",
                 "variables": ["no3"],
-                "output_filename": "ctd_bgc_nitrate.nc",
+                "output_filename": "ctd_bgc_no3.nc",
             },
             "phosphatedata": {
                 "dataset_id": "cmems_mod_glo_bgc-nut_anfc_0.25deg_P1D-m",
                 "variables": ["po4"],
-                "output_filename": "ctd_bgc_phosphate.nc",
+                "output_filename": "ctd_bgc_po4.nc",
             },
             "phdata": {
                 "dataset_id": "cmems_mod_glo_bgc-car_anfc_0.25deg_P1D-m",
@@ -268,17 +268,17 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
             "phytoplanktondata": {
                 "dataset_id": "cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m",
                 "variables": ["phyc"],
-                "output_filename": "ctd_bgc_phytoplankton.nc",
+                "output_filename": "ctd_bgc_phyc.nc",
             },
             "zooplanktondata": {
                 "dataset_id": "cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1D-m",
                 "variables": ["zooc"],
-                "output_filename": "ctd_bgc_zooplankton.nc",
+                "output_filename": "ctd_bgc_zooc.nc",
             },
             "primaryproductiondata": {
                 "dataset_id": "cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m",
                 "variables": ["nppv"],
-                "output_filename": "ctd_bgc_primary_production.nc",
+                "output_filename": "ctd_bgc_nppv.nc",
             },
         }
 
