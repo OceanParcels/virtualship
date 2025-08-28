@@ -104,9 +104,9 @@ def test_simulate_ctd_bgcs(tmpdir) -> None:
     no3 = np.zeros((2, 2, 2, 2))
     po4 = np.zeros((2, 2, 2, 2))
     ph = np.zeros((2, 2, 2, 2))
-    phytoplankton = np.zeros((2, 2, 2, 2))
-    zooplankton = np.zeros((2, 2, 2, 2))
-    primary_production = np.zeros((2, 2, 2, 2))
+    phyc = np.zeros((2, 2, 2, 2))
+    zooc = np.zeros((2, 2, 2, 2))
+    nppv = np.zeros((2, 2, 2, 2))
 
     # Fill fields for both CTDs at surface and maxdepth
     o2[:, 1, 0, 1] = ctd_bgc_exp[0]["surface"]["o2"]
@@ -134,20 +134,20 @@ def test_simulate_ctd_bgcs(tmpdir) -> None:
     ph[:, 1, 1, 0] = ctd_bgc_exp[1]["surface"]["ph"]
     ph[:, 0, 1, 0] = ctd_bgc_exp[1]["maxdepth"]["ph"]
 
-    phytoplankton[:, 1, 0, 1] = ctd_bgc_exp[0]["surface"]["phyc"]
-    phytoplankton[:, 0, 0, 1] = ctd_bgc_exp[0]["maxdepth"]["phyc"]
-    phytoplankton[:, 1, 1, 0] = ctd_bgc_exp[1]["surface"]["phyc"]
-    phytoplankton[:, 0, 1, 0] = ctd_bgc_exp[1]["maxdepth"]["phyc"]
+    phyc[:, 1, 0, 1] = ctd_bgc_exp[0]["surface"]["phyc"]
+    phyc[:, 0, 0, 1] = ctd_bgc_exp[0]["maxdepth"]["phyc"]
+    phyc[:, 1, 1, 0] = ctd_bgc_exp[1]["surface"]["phyc"]
+    phyc[:, 0, 1, 0] = ctd_bgc_exp[1]["maxdepth"]["phyc"]
 
-    zooplankton[:, 1, 0, 1] = ctd_bgc_exp[0]["surface"]["zooc"]
-    zooplankton[:, 0, 0, 1] = ctd_bgc_exp[0]["maxdepth"]["zooc"]
-    zooplankton[:, 1, 1, 0] = ctd_bgc_exp[1]["surface"]["zooc"]
-    zooplankton[:, 0, 1, 0] = ctd_bgc_exp[1]["maxdepth"]["zooc"]
+    zooc[:, 1, 0, 1] = ctd_bgc_exp[0]["surface"]["zooc"]
+    zooc[:, 0, 0, 1] = ctd_bgc_exp[0]["maxdepth"]["zooc"]
+    zooc[:, 1, 1, 0] = ctd_bgc_exp[1]["surface"]["zooc"]
+    zooc[:, 0, 1, 0] = ctd_bgc_exp[1]["maxdepth"]["zooc"]
 
-    primary_production[:, 1, 0, 1] = ctd_bgc_exp[0]["surface"]["nppv"]
-    primary_production[:, 0, 0, 1] = ctd_bgc_exp[0]["maxdepth"]["nppv"]
-    primary_production[:, 1, 1, 0] = ctd_bgc_exp[1]["surface"]["nppv"]
-    primary_production[:, 0, 1, 0] = ctd_bgc_exp[1]["maxdepth"]["nppv"]
+    nppv[:, 1, 0, 1] = ctd_bgc_exp[0]["surface"]["nppv"]
+    nppv[:, 0, 0, 1] = ctd_bgc_exp[0]["maxdepth"]["nppv"]
+    nppv[:, 1, 1, 0] = ctd_bgc_exp[1]["surface"]["nppv"]
+    nppv[:, 0, 1, 0] = ctd_bgc_exp[1]["maxdepth"]["nppv"]
 
     fieldset = FieldSet.from_data(
         {
@@ -158,9 +158,9 @@ def test_simulate_ctd_bgcs(tmpdir) -> None:
             "no3": no3,
             "po4": po4,
             "ph": ph,
-            "phytoplankton": phytoplankton,
-            "zooplankton": zooplankton,
-            "primary_production": primary_production,
+            "phyc": phyc,
+            "zooc": zooc,
+            "nppv": nppv,
         },
         {
             "time": [

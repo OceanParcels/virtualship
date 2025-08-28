@@ -58,21 +58,15 @@ def _sample_ph(particle, fieldset, time):
 
 
 def _sample_phytoplankton(particle, fieldset, time):
-    particle.phyc = fieldset.phytoplankton[
-        time, particle.depth, particle.lat, particle.lon
-    ]
+    particle.phyc = fieldset.phyc[time, particle.depth, particle.lat, particle.lon]
 
 
 def _sample_zooplankton(particle, fieldset, time):
-    particle.zooc = fieldset.zooplankton[
-        time, particle.depth, particle.lat, particle.lon
-    ]
+    particle.zooc = fieldset.zooc[time, particle.depth, particle.lat, particle.lon]
 
 
 def _sample_primary_production(particle, fieldset, time):
-    particle.nppv = fieldset.primary_production[
-        time, particle.depth, particle.lat, particle.lon
-    ]
+    particle.nppv = fieldset.nppv[time, particle.depth, particle.lat, particle.lon]
 
 
 def _ctd_bgc_cast(particle, fieldset, time):
