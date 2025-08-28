@@ -250,6 +250,36 @@ def _fetch(path: str | Path, username: str | None, password: str | None) -> None
                 "variables": ["chl"],
                 "output_filename": "ctd_bgc_chloro.nc",
             },
+            "nitratedata": {
+                "dataset_id": "cmems_mod_glo_bgc-nut_anfc_0.25deg_P1D-m",
+                "variables": ["no3"],
+                "output_filename": "ctd_bgc_nitrate.nc",
+            },
+            "phosphatedata": {
+                "dataset_id": "cmems_mod_glo_bgc-nut_anfc_0.25deg_P1D-m",
+                "variables": ["po4"],
+                "output_filename": "ctd_bgc_phosphate.nc",
+            },
+            "phdata": {
+                "dataset_id": "cmems_mod_glo_bgc-car_anfc_0.25deg_P1D-m",
+                "variables": ["ph"],
+                "output_filename": "ctd_bgc_ph.nc",
+            },
+            "phytoplanktondata": {
+                "dataset_id": "cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m",
+                "variables": ["phyc"],
+                "output_filename": "ctd_bgc_phytoplankton.nc",
+            },
+            "zooplanktondata": {
+                "dataset_id": "cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1D-m",
+                "variables": ["zooc"],
+                "output_filename": "ctd_bgc_zooplankton.nc",
+            },
+            "primaryproductiondata": {
+                "dataset_id": "cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m",
+                "variables": ["nppv"],
+                "output_filename": "ctd_bgc_primary_production.nc",
+            },
         }
 
         # Iterate over all datasets and download each based on space_time_region

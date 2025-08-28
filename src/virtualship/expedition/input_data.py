@@ -138,8 +138,25 @@ class InputData:
             "V": directory.joinpath("ship_uv.nc"),
             "o2": directory.joinpath("ctd_bgc_o2.nc"),
             "chl": directory.joinpath("ctd_bgc_chloro.nc"),
+            "no3": directory.joinpath("ctd_bgc_nitrate.nc"),
+            "po4": directory.joinpath("ctd_bgc_phosphate.nc"),
+            "ph": directory.joinpath("ctd_bgc_ph.nc"),
+            "phytoplankton": directory.joinpath("ctd_bgc_phytoplankton.nc"),
+            "zooplankton": directory.joinpath("ctd_bgc_zooplankton.nc"),
+            "primary_production": directory.joinpath("ctd_bgc_primary_production.nc"),
         }
-        variables = {"U": "uo", "V": "vo", "o2": "o2", "chl": "chl"}
+        variables = {
+            "U": "uo",
+            "V": "vo",
+            "o2": "o2",
+            "chl": "chl",
+            "no3": "no3",
+            "po4": "po4",
+            "ph": "ph",
+            "phytoplankton": "phyc",
+            "zooplankton": "zooc",
+            "primary_production": "nppv",
+        }
         dimensions = {
             "lon": "longitude",
             "lat": "latitude",
@@ -152,6 +169,12 @@ class InputData:
         )
         fieldset.o2.interp_method = "linear_invdist_land_tracer"
         fieldset.chl.interp_method = "linear_invdist_land_tracer"
+        fieldset.no3.interp_method = "linear_invdist_land_tracer"
+        fieldset.po4.interp_method = "linear_invdist_land_tracer"
+        fieldset.ph.interp_method = "linear_invdist_land_tracer"
+        fieldset.phytoplankton.interp_method = "linear_invdist_land_tracer"
+        fieldset.zooplankton.interp_method = "linear_invdist_land_tracer"
+        fieldset.primary_production.interp_method = "linear_invdist_land_tracer"
 
         # make depth negative
         for g in fieldset.gridset.grids:
