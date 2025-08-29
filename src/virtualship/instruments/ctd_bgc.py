@@ -23,6 +23,12 @@ _CTD_BGCParticle = JITParticle.add_variables(
     [
         Variable("o2", dtype=np.float32, initial=np.nan),
         Variable("chl", dtype=np.float32, initial=np.nan),
+        Variable("no3", dtype=np.float32, initial=np.nan),
+        Variable("po4", dtype=np.float32, initial=np.nan),
+        Variable("ph", dtype=np.float32, initial=np.nan),
+        Variable("phyc", dtype=np.float32, initial=np.nan),
+        Variable("zooc", dtype=np.float32, initial=np.nan),
+        Variable("nppv", dtype=np.float32, initial=np.nan),
         Variable("raising", dtype=np.int8, initial=0.0),  # bool. 0 is False, 1 is True.
         Variable("max_depth", dtype=np.float32),
         Variable("min_depth", dtype=np.float32),
@@ -37,6 +43,30 @@ def _sample_o2(particle, fieldset, time):
 
 def _sample_chlorophyll(particle, fieldset, time):
     particle.chl = fieldset.chl[time, particle.depth, particle.lat, particle.lon]
+
+
+def _sample_nitrate(particle, fieldset, time):
+    particle.no3 = fieldset.no3[time, particle.depth, particle.lat, particle.lon]
+
+
+def _sample_phosphate(particle, fieldset, time):
+    particle.po4 = fieldset.po4[time, particle.depth, particle.lat, particle.lon]
+
+
+def _sample_ph(particle, fieldset, time):
+    particle.ph = fieldset.ph[time, particle.depth, particle.lat, particle.lon]
+
+
+def _sample_phytoplankton(particle, fieldset, time):
+    particle.phyc = fieldset.phyc[time, particle.depth, particle.lat, particle.lon]
+
+
+def _sample_zooplankton(particle, fieldset, time):
+    particle.zooc = fieldset.zooc[time, particle.depth, particle.lat, particle.lon]
+
+
+def _sample_primary_production(particle, fieldset, time):
+    particle.nppv = fieldset.nppv[time, particle.depth, particle.lat, particle.lon]
 
 
 def _ctd_bgc_cast(particle, fieldset, time):
@@ -129,7 +159,17 @@ def simulate_ctd_bgc(
 
     # execute simulation
     ctd_bgc_particleset.execute(
-        [_sample_o2, _sample_chlorophyll, _ctd_bgc_cast],
+        [
+            _sample_o2,
+            _sample_chlorophyll,
+            _sample_nitrate,
+            _sample_phosphate,
+            _sample_ph,
+            _sample_phytoplankton,
+            _sample_zooplankton,
+            _sample_primary_production,
+            _ctd_bgc_cast,
+        ],
         endtime=fieldset_endtime,
         dt=DT,
         verbose_progress=False,
