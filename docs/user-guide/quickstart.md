@@ -2,6 +2,10 @@
 
 Welcome to this Quickstart to using VirtualShip. In this guide we will conduct a virtual expedition in the North Sea. Note, however, that you can plan your own expedition anywhere in the global ocean and conduct whatever set of measurements you wish!
 
+This Quickstart is available as an instructional video below, or you can continue with the step-by-step guide.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/-ztHdnkvJzQ" title="VirtualShip Classroom Quickstart" frameborder="0" allowfullscreen></iframe>
+
 This guide is intended to give a basic overview of how to plan, initialise and execute a virtual expedition. Data post-processing, analysis and visualisation advice is provided in other sections of the documentation (see [Results](#results) section).
 
 ## Expedition route planning
