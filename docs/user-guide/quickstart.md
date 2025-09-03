@@ -4,7 +4,9 @@ Welcome to this Quickstart to using VirtualShip. In this guide we will conduct a
 
 This Quickstart is available as an instructional video below, or you can continue with the step-by-step guide.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/-ztHdnkvJzQ" title="VirtualShip Classroom Quickstart" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/ypafzoTBj_A?si=m8BpYN_08OJ9aagq" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+---
 
 This guide is intended to give a basic overview of how to plan, initialise and execute a virtual expedition. Data post-processing, analysis and visualisation advice is provided in other sections of the documentation (see [Results](#results) section).
 
