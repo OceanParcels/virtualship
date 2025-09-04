@@ -77,3 +77,4 @@ nbsphinx_thumbnails = {
     "user-guide/assignments/sciencecommunication_assignment": "user-guide/_images/marine_ss.jpg",
     "user-guide/assignments/Sail_the_ship": "user-guide/_images/vessel.jpg",
 }
+nbsphinx_execute = "never"
