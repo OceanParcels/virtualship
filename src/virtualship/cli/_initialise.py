@@ -71,9 +71,11 @@ def _mfp_to_yaml(file_path: Path, start_date: str, output_path: Path):
     """Generates an expedition.yaml file from MFP Excel export."""
     mfp_data = _validate_mfp_data(file_path)
 
-    # convert start_date string to datetime object if needed
+    # convert start_date string to datetime object if needed, ensuring it's standard Python datetime
     if isinstance(start_date, str):
-        current_time = pd.to_datetime(start_date)
+        current_time = pd.to_datetime(start_date).to_pydatetime()
+    elif isinstance(start_date, pd.Timestamp):
+        current_time = start_date.to_pydatetime()
     else:
         current_time = start_date
 
@@ -89,13 +91,18 @@ def _mfp_to_yaml(file_path: Path, start_date: str, output_path: Path):
         lon = None if pd.isna(row["Longitude"]) else float(row["Longitude"])
         loc = Location(latitude=lat, longitude=lon)
 
+        # Ensure timestamp passed is a native python datetime (or string) to prevent PyYAML pandas pickle tags
+        time_val = (
+            current_time.to_pydatetime()
+            if isinstance(current_time, pd.Timestamp)
+            else current_time
+        )
+
         if is_port:
             has_latlon = lat is not None and lon is not None
-            waypoints.append(
-                Port(location=loc, time=current_time if has_latlon else None)
-            )
+            waypoints.append(Port(location=loc, time=time_val if has_latlon else None))
         else:
-            waypoints.append(Waypoint(instrument=None, location=loc, time=current_time))
+            waypoints.append(Waypoint(instrument=None, location=loc, time=time_val))
 
         previous_timedelta = (
             row["Total Time"] if pd.notna(row["Total Time"]) else timedelta(0)
