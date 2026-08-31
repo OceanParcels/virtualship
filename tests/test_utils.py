@@ -18,17 +18,17 @@ from virtualship.utils import (
     _calc_wp_stationkeeping_time,
     _find_nc_file_with_variable,
     _get_bathy_data,
+    _get_example_expedition,
     _select_product_id,
     _start_end_in_product_timerange,
     build_particle_class_from_sensors,
-    get_example_expedition,
 )
 
 
 @pytest.fixture
 def expedition(tmp_file):
     with open(tmp_file, "w") as file:
-        file.write(get_example_expedition())
+        file.write(_get_example_expedition())
     return Expedition.from_yaml(tmp_file)
 
 
@@ -66,18 +66,6 @@ def copernicus_no_download(monkeypatch):
         "virtualship.utils.copernicusmarine.open_dataset", fake_open_dataset
     )
     yield
-
-
-def test_get_example_expedition():
-    assert len(get_example_expedition()) > 0
-
-
-def test_valid_example_expedition(tmp_path):
-    path = tmp_path / "test.yaml"
-    with open(path, "w") as file:
-        file.write(get_example_expedition())
-
-    Expedition.from_yaml(path)
 
 
 def test_instrument_registry_updates(dummy_instrument):

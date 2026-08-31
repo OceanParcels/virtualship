@@ -4,6 +4,8 @@ import glob
 import hashlib
 import re
 from datetime import datetime, timedelta
+from functools import lru_cache
+from importlib.resources import files
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TextIO
 
@@ -150,6 +152,17 @@ def register_instrument_config(instrument_type):
 # =====================================================
 # SECTION: helper functions
 # =====================================================
+
+
+def _load_static_file(name: str) -> str:
+    """Load static file from the ``virtualship.static`` module by file name."""
+    return files("virtualship.static").joinpath(name).read_text(encoding="utf-8")
+
+
+@lru_cache(None)
+def _get_example_expedition() -> str:
+    """Get the example unified expedition configuration file."""
+    return _load_static_file(EXPEDITION)
 
 
 def _dump_yaml(model: BaseModel, stream: TextIO) -> str | None:

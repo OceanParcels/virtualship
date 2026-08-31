@@ -2,8 +2,6 @@ import os
 import re
 import warnings
 from datetime import timedelta
-from functools import lru_cache
-from importlib.resources import files
 from pathlib import Path
 
 import click
@@ -18,7 +16,7 @@ from virtualship.models import (
     Schedule,
     Waypoint,
 )
-from virtualship.utils import EXPEDITION
+from virtualship.utils import EXPEDITION, _get_example_expedition
 
 ERR_SUPPLEMENT = "If the MFP export format has changed, please submit an issue at: https://github.com/Parcels-code/virtualship/issues."
 
@@ -242,17 +240,6 @@ def _mfp_string_to_timedelta(value: str | None) -> timedelta | None:
         raise ValueError(
             f"Invalid MFP duration format: '{value}'. Expected format: 'Xd Yh Zm' (e.g., '0d 13h 13m'). {ERR_SUPPLEMENT}"
         )
-
-
-def _load_static_file(name: str) -> str:
-    """Load static file from the ``virtualship.static`` module by file name."""
-    return files("virtualship.static").joinpath(name).read_text(encoding="utf-8")
-
-
-@lru_cache(maxsize=1)
-def _get_example_expedition() -> str:
-    """Get the example unified expedition configuration file."""
-    return _load_static_file(EXPEDITION)
 
 
 def _validate_start_date(ctx, param, value):

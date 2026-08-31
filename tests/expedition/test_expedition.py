@@ -19,8 +19,8 @@ from virtualship.models import (
 )
 from virtualship.utils import (
     EXPEDITION,
+    _get_example_expedition,
     _get_expedition,
-    get_example_expedition,
 )
 
 projection = pyproj.Geod(ellps="WGS84")
@@ -238,7 +238,7 @@ def test_verify_schedule_errors(schedule: Schedule, error, match) -> None:
 @pytest.fixture
 def expedition(tmp_file):
     with open(tmp_file, "w") as file:
-        file.write(get_example_expedition())
+        file.write(_get_example_expedition())
     return Expedition.from_yaml(tmp_file)
 
 

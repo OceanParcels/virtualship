@@ -17,7 +17,7 @@ from virtualship.models import (
     SensorConfig,
     Waypoint,
 )
-from virtualship.utils import EXPEDITION, get_example_expedition
+from virtualship.utils import EXPEDITION, _get_example_expedition
 
 NEW_SPEED = "8.0"
 NEW_LAT = "0.015"
@@ -32,9 +32,9 @@ def _make_expedition(
     """Write a minimal expedition YAML."""
     if instruments_config is None:
         instruments_config = InstrumentsConfig.model_validate(
-            yaml.safe_load(get_example_expedition()).get("instruments_config")
+            yaml.safe_load(_get_example_expedition()).get("instruments_config")
         )
-    ship_config = yaml.safe_load(get_example_expedition()).get("ship_config")
+    ship_config = yaml.safe_load(_get_example_expedition()).get("ship_config")
     Expedition(
         schedule=Schedule(waypoints=waypoints),
         instruments_config=instruments_config,
@@ -346,7 +346,7 @@ async def test_sensor_initial_state_reflects_config(tmp_path):
         sensors=[SensorConfig(sensor_type=SensorType.TEMPERATURE)],
     )
     instruments_config = InstrumentsConfig.model_validate(
-        yaml.safe_load(get_example_expedition()).get("instruments_config")
+        yaml.safe_load(_get_example_expedition()).get("instruments_config")
     )
     instruments_config.ctd_config = ctd_config
     _make_expedition(
