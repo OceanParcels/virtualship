@@ -99,6 +99,19 @@ class DummyInstrument(Instrument):
         return InstrumentType.CTD
 
 
+class _FakeFieldSet:
+    """Minimal fieldset."""
+
+    def __init__(self, **fields):
+        for name, value in fields.items():
+            setattr(self, name, value)
+        self.fields = {}
+
+    def to_windowed_arrays(self):
+        """Mimic FieldSet.to_windowed_arrays."""
+        return self
+
+
 def test_load_input_data():
     """Test Instrument.load_input_data with mocks."""
     mock_waypoint = MagicMock()
@@ -109,13 +122,16 @@ def test_load_input_data():
         expedition=MagicMock(schedule=MagicMock(waypoints=[mock_waypoint])),
         variables={"A": "a"},
         add_bathymetry=False,
-        allow_time_extrapolation=False,
         verbose_progress=False,
         from_data=None,
     )
 
-    mock_fieldset = MagicMock()
-    mock_fieldset.to_windowed_arrays.return_value = mock_fieldset
+    shared_interval = MagicMock()
+    fake_fieldset = _FakeFieldSet(
+        A=MagicMock(),
+        U=MagicMock(time_interval=shared_interval),
+        V=MagicMock(time_interval=shared_interval),
+    )
 
     with (
         patch(
@@ -126,13 +142,49 @@ def test_load_input_data():
         patch.object(dummy, "_via_tmp_ds", side_effect=lambda ds: ds),
         patch("parcels.convert.copernicusmarine_to_sgrid"),
         patch(
-            "parcels.FieldSet.from_sgrid_conventions", return_value=mock_fieldset
+            "parcels.FieldSet.from_sgrid_conventions", return_value=fake_fieldset
         ) as mock_from_sgrid,
     ):
         fieldset = dummy.load_input_data()
 
     mock_from_sgrid.assert_called_once()
-    assert fieldset == mock_fieldset
+    assert fieldset == fake_fieldset
+
+
+def test_gets_uv_vectorfield_when_u_and_v_present():
+    """load_input_data creates a 'UV' VectorField when U and V fields are present."""
+    mock_waypoint = MagicMock()
+    mock_waypoint.location.latitude = 1.0
+    mock_waypoint.location.longitude = 2.0
+
+    dummy = DummyInstrument(
+        expedition=MagicMock(schedule=MagicMock(waypoints=[mock_waypoint])),
+        variables={"U": "uo", "V": "vo"},
+        add_bathymetry=False,
+        verbose_progress=False,
+        from_data=None,
+    )
+
+    fake_u = MagicMock()
+    fake_v = MagicMock()
+    fake_fieldset = _FakeFieldSet(U=fake_u, V=fake_v)
+    mock_uv = MagicMock()
+
+    with (
+        patch.object(dummy, "_generate_fieldset", return_value=fake_fieldset),
+        patch(
+            "virtualship.instruments.base.parcels.VectorField", return_value=mock_uv
+        ) as mock_vectorfield,
+    ):
+        result = dummy.load_input_data()
+
+    args, _ = mock_vectorfield.call_args
+    assert args[0] == "UV"
+    assert args[1] is fake_u
+    assert args[2] is fake_v
+
+    assert result.UV is mock_uv
+    assert result.fields["UV"] is mock_uv
 
 
 def test_execute_calls_simulate(monkeypatch):
@@ -145,7 +197,6 @@ def test_execute_calls_simulate(monkeypatch):
         expedition=MagicMock(schedule=mock_schedule),
         variables={"A": "a"},
         add_bathymetry=False,
-        allow_time_extrapolation=False,
         verbose_progress=True,
         from_data=None,
     )
@@ -166,7 +217,6 @@ def test_fetch_spec_applied_to_instrument():
         expedition=MagicMock(schedule=mock_schedule),
         variables={"A": "a"},
         add_bathymetry=False,
-        allow_time_extrapolation=False,
         verbose_progress=False,
         fetch_spec=fetch_spec,
         from_data=None,
@@ -180,17 +230,57 @@ def test_fetch_spec_applied_to_instrument():
 
 def test_via_tmp_ds_roundtrip():
     """_via_tmp_ds writes to a tmp file and re-opens it."""
-    ds = xr.Dataset(
-        {"temperature": (["x", "y"], [[1.0, 2.0], [3.0, 4.0]])},
-        coords={"x": [0, 1], "y": [10, 20]},
-    )
-    result = Instrument._via_tmp_ds(ds)
+    mock_waypoint = MagicMock()
+    mock_waypoint.location.latitude = 1.0
+    mock_waypoint.location.longitude = 2.0
 
-    assert isinstance(result, xr.Dataset)
-    assert "temperature" in result
-    assert (
-        result is not ds
-    )  # result is new object loaded from tmp file, not the original
+    with DummyInstrument(
+        expedition=MagicMock(schedule=MagicMock(waypoints=[mock_waypoint])),
+        variables={"A": "a"},
+        add_bathymetry=False,
+        verbose_progress=False,
+        from_data=None,
+    ) as dummy:
+        ds = xr.Dataset(
+            {"temperature": (["x", "y"], [[1.0, 2.0], [3.0, 4.0]])},
+            coords={"x": [0, 1], "y": [10, 20]},
+        )
+        result = dummy._via_tmp_ds(ds)
+
+        assert isinstance(result, xr.Dataset)
+        assert "temperature" in result
+        assert (
+            result is not ds
+        )  # result is new object loaded from tmp file, not the original
+
+        result.close()
+        ds.close()
+
+
+def test_instrument_context_manager():
+    """Test that context manager cleans up temporary directories upon exit."""
+    mock_waypoint = MagicMock()
+    mock_waypoint.location.latitude = 1.0
+    mock_waypoint.location.longitude = 2.0
+
+    with DummyInstrument(
+        expedition=MagicMock(schedule=MagicMock(waypoints=[mock_waypoint])),
+        variables={"A": "a"},
+        add_bathymetry=False,
+        verbose_progress=False,
+        from_data=None,
+    ) as dummy:
+        ds = xr.Dataset(
+            {"temperature": (["x", "y"], [[1.0, 2.0], [3.0, 4.0]])},
+            coords={"x": [0, 1], "y": [10, 20]},
+        )
+        result = dummy._via_tmp_ds(ds)
+        assert len(dummy._tmp_dirs) == 1
+        result.close()
+        ds.close()
+
+    # outside 'with' block, tmp dirs should be cleared
+    assert len(dummy._tmp_dirs) == 0
 
 
 def test_generate_fieldset_combines_fields():
@@ -202,7 +292,6 @@ def test_generate_fieldset_combines_fields():
         expedition=MagicMock(schedule=MagicMock(waypoints=[mock_waypoint])),
         variables={"A": "a", "B": "b"},
         add_bathymetry=False,
-        allow_time_extrapolation=False,
         verbose_progress=False,
         from_data=None,
     )
@@ -234,7 +323,6 @@ def test_load_input_data_error(monkeypatch):
         expedition=MagicMock(schedule=mock_schedule),
         variables={"A": "a"},
         add_bathymetry=False,
-        allow_time_extrapolation=False,
         verbose_progress=False,
         from_data=None,
     )
@@ -393,25 +481,27 @@ def test_to_parquet_writes_valid_file(
     assert out_path.exists()
 
     # verify parquet table, metadata, and columns
-    table = pq.read_table(out_path)
-    schema = table.schema
+    with pq.ParquetFile(out_path) as pf:
+        table = pf.read()
+        schema = table.schema
 
-    assert table.column_names == [
-        "t",
-        "z",
-        "y",
-        "x",
-        "particle_id",
-        "temp",
-        "sal",
-    ]
-    assert schema.metadata[b"feature_type"] == b"trajectory"
-    assert b"units" in schema.field("t").metadata
+        assert table.column_names == [
+            "t",
+            "z",
+            "y",
+            "x",
+            "particle_id",
+            "temp",
+            "sal",
+        ]
+        assert schema.metadata[b"feature_type"] == b"trajectory"
+        assert b"units" in schema.field("t").metadata
 
-    np.testing.assert_array_equal(
-        table["x"].to_numpy(), np.array(sample_underway_coords.lons, dtype=np.float32)
-    )
-    np.testing.assert_array_equal(table["temp"].to_numpy(), dat_arrays[0])
+        np.testing.assert_array_equal(
+            table["x"].to_numpy(),
+            np.array(sample_underway_coords.lons, dtype=np.float32),
+        )
+        np.testing.assert_array_equal(table["temp"].to_numpy(), dat_arrays[0])
 
 
 def _create_underway_parquet(
@@ -478,6 +568,9 @@ def test_underway_schema_matches_parcels(tmp_path, pset):
         dt=np.timedelta64(60, "m"),
         output_file=parcels_output,
     )
+    if hasattr(parcels_output, "close"):
+        parcels_output.close()
+
     parcels_df = parcels.read_particlefile(parcels_path)
 
     # UnderwayInstrument output

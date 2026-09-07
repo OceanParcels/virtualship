@@ -113,7 +113,6 @@ def _argo_float_vertical_movement(particles, fieldset):
 
     # Phase 3: Rising with vertical_speed until at surface
     ptcls3.dz -= particles.vertical_speed * ptcls3.dt
-    ptcls3.cycle_age += ptcls3.dt  # solve issue of not updating cycle_age during ascent
     next_phase = ptcls3.z + ptcls3.dz >= particles.min_depth
     ptcls3.cycle_phase[next_phase] = 4
     ptcls3.dz[next_phase] = particles.min_depth - ptcls3.z[next_phase]  # noqa:avoid overshoot
@@ -255,7 +254,7 @@ class ArgoFloatInstrument(Instrument):
             **sensor_variables,
         }  # advection variables (U and V) are always required for argo float simulation; sensor variables come from config
         fetch_spec = FetchSpec(
-            latlon_buffer=3.0,  # [degrees]
+            latlon_buffer=9.0,  # [degrees]
             time_buffer=expedition.instruments_config.argo_float_config.lifetime.total_seconds()
             / (24 * 3600),  # [days]
         )
@@ -264,7 +263,6 @@ class ArgoFloatInstrument(Instrument):
             expedition,
             variables,
             add_bathymetry=True,
-            allow_time_extrapolation=False,
             verbose_progress=True,
             fetch_spec=fetch_spec,
             from_data=from_data,
@@ -272,7 +270,7 @@ class ArgoFloatInstrument(Instrument):
 
     def simulate(self, measurements, out_path) -> None:
         """Simulate Argo float measurements."""
-        DT = 10.0  # dt of Argo float simulation integrator
+        DT = 60.0 * 5  # dt of Argo float simulation integrator [seconds]
         OUTPUT_DT = timedelta(minutes=5)
 
         if len(measurements) == 0:
@@ -307,7 +305,12 @@ class ArgoFloatInstrument(Instrument):
         )
 
         # in case fieldset depth is smaller than the config min_depth, possible when min_depth config is 0 and fieldset surface is ~ -0.4...
-        grid_shallowest = fieldset.U.grid.depth[-1]
+        grid_depths = fieldset.U.grid.depth
+        if len(grid_depths) > 1:
+            _grid_edge_margin = 1e-3 * abs(grid_depths[-1] - grid_depths[-2])
+        else:
+            _grid_edge_margin = 0.0
+        grid_shallowest = grid_depths[-1] - _grid_edge_margin
 
         # define parcel particles
         argo_float_particleset = ParticleSet(

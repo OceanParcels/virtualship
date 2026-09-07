@@ -3,6 +3,7 @@ from __future__ import annotations
 import glob
 import hashlib
 import re
+import sys
 from datetime import datetime, timedelta
 from functools import lru_cache
 from importlib.resources import files
@@ -456,6 +457,24 @@ def _get_waypoint_latlons(waypoints):
     return wp_lats, wp_lons
 
 
+def _get_instrument_relevant_waypoints(waypoints, instrument_type) -> list:
+    """Subset of waypoints that are relevant to this `instrument_type`."""
+    if instrument_type.is_underway:
+        return list(waypoints)
+
+    relevant = []
+    for wp in waypoints:
+        wp_instruments = (
+            wp.instrument
+            if isinstance(wp.instrument, list)
+            else ([wp.instrument] if wp.instrument else [])
+        )
+        if instrument_type in wp_instruments:
+            relevant.append(wp)
+
+    return relevant or list(waypoints)
+
+
 def _save_checkpoint(checkpoint: Checkpoint, expedition_dir: Path) -> None:
     file_path = expedition_dir.joinpath(CHECKPOINT)
     checkpoint.to_yaml(file_path)
@@ -538,20 +557,6 @@ def build_particle_class_from_sensors(
     return Particle.add_variable(nonsensor_variables + sensor_variables)
 
 
-def get_clean_encoding(ds):
-    """
-    Clean existing encodings and supply explicit native endianness to prevent netCDF4 UserWarnings.
-
-    Helps avoid annoying user warnings when writing tmp files to disk.
-    """
-    encoding = {}
-    for var_name, var in ds.variables.items():
-        var.encoding.pop("endian", None)
-        encoding[var_name] = {"endian": "native"}
-
-    return encoding
-
-
 # =====================================================
 # SECTION: misc.
 # =====================================================
@@ -573,3 +578,50 @@ ship_spinner = Spinner(
         "🚢     ",
     ],
 )
+
+
+class _SpinnerAutoStop:
+    """Wrapper and context manager that stops a yaspin spinner on first print (e.g., Parcels progress bar)."""
+
+    def __init__(self, spinner):
+        self._spinner = spinner
+        self._original_stdout = None
+        self._stopped = False
+
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = self
+        return self
+
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
+        sys.stdout = self._original_stdout
+        self._stop_spinner()
+
+    def _stop_spinner(self):
+        if not self._stopped:
+            self._stopped = True
+            if self._spinner and self._original_stdout:
+                self._spinner.stop()
+                # persist the spinner text to the original stdout (before starting progress bar output)
+                self._original_stdout.write(f"{self._spinner.text}\n")
+                self._original_stdout.flush()
+
+    def write(self, s: str):
+        if s and not self._stopped:
+            self._stop_spinner()
+        return self._original_stdout.write(s)
+
+    def flush(self):
+        return self._original_stdout.flush()
+
+    def isatty(self) -> bool:
+        """Restore unicode block rendering (█████ instead of ###) in parcels progress bar."""
+        return getattr(self._original_stdout, "isatty", lambda: False)()
+
+    def fileno(self) -> int:
+        """Restore full terminal width detection for parcels progress bar sizing."""
+        return self._original_stdout.fileno()
+
+    @property
+    def encoding(self) -> str:
+        return getattr(self._original_stdout, "encoding", "utf-8")

@@ -26,9 +26,10 @@ from virtualship.utils import (
     _find_files_in_timerange,
     _find_nc_file_with_variable,
     _get_bathy_data,
+    _get_instrument_relevant_waypoints,
     _get_waypoint_latlons,
     _select_product_id,
-    get_clean_encoding,
+    _SpinnerAutoStop,
     ship_spinner,
 )
 
@@ -70,7 +71,6 @@ class Instrument(abc.ABC):
         expedition: Expedition,
         variables: dict,
         add_bathymetry: bool,
-        allow_time_extrapolation: bool,
         verbose_progress: bool,
         from_data: Path | None,
         fetch_spec: FetchSpec | None = None,
@@ -80,21 +80,18 @@ class Instrument(abc.ABC):
         self.from_data = from_data
 
         self.variables = collections.OrderedDict(variables)
-        self.dimensions = {
-            "lon": "longitude",
-            "lat": "latitude",
-            "time": "time",
-            "depth": "depth",
-        }  # same dimensions for all instruments
         self.add_bathymetry = add_bathymetry
-        self.allow_time_extrapolation = allow_time_extrapolation
         self.verbose_progress = verbose_progress
         self.fetch_spec = fetch_spec or FetchSpec()
+        self._tmp_dirs: list[tempfile.TemporaryDirectory] = []
 
-        wp_lats, wp_lons = _get_waypoint_latlons(expedition.schedule.waypoints)
-        wp_times = [
-            wp.time for wp in expedition.schedule.waypoints if wp.time is not None
-        ]
+        # only waypoints relevant to this instrument; avoid needlessly ballooning fieldset to full expedition schedule
+        relevant_waypoints = _get_instrument_relevant_waypoints(
+            expedition.schedule.waypoints, self.instrument_type
+        )
+
+        wp_lats, wp_lons = _get_waypoint_latlons(relevant_waypoints)
+        wp_times = [wp.time for wp in relevant_waypoints if wp.time is not None]
         assert all(earlier <= later for earlier, later in pairwise(wp_times)), (
             "Waypoint times are not in ascending order"
         )
@@ -106,6 +103,26 @@ class Instrument(abc.ABC):
         )  # avoid edge issues
         self.min_lat, self.max_lat = min(wp_lats), max(wp_lats)
         self.min_lon, self.max_lon = min(wp_lons), max(wp_lons)
+
+    def close(self):
+        """Explicitly cleanup all tmp dirs."""
+        tmp_dirs = getattr(self, "_tmp_dirs", None)
+        if not tmp_dirs:
+            return
+        for tmp_dir in tmp_dirs:
+            try:
+                tmp_dir.cleanup()
+            except Exception:
+                pass  # i.e. best effort clean up
+        self._tmp_dirs = []
+
+    def __enter__(self):
+        """Enter the context manager."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit context manager, ensuring resource cleanup."""
+        self.close()
 
     def load_input_data(self) -> parcels.FieldSet:
         """Load and return the input data as a FieldSet for the instrument."""
@@ -127,12 +144,24 @@ class Instrument(abc.ABC):
             bathymetry_fs = _get_bathy_data(from_data=self.from_data)
             fieldset = fieldset + bathymetry_fs
 
+        # some instruments use AdvectionRKn kernels which require a combined UV vector field
+        # fieldsets are created per variable (in _generate_fieldset) and thus are not seen by from_sgrid_conventions at that time
+        if hasattr(fieldset, "U") and hasattr(fieldset, "V"):
+            uv = parcels.VectorField(
+                "UV",
+                fieldset.U,
+                fieldset.V,
+                interp_method=parcels.interpolators.XLinear_Velocity(),
+            )
+            # add vector field to internal fieldset dictionary and attach as attribute
+            fieldset.fields["UV"] = uv
+            fieldset.UV = uv
+
         return fieldset
 
     @abc.abstractmethod
     def simulate(
         self,
-        data_dir: Path,
         measurements: list,
         out_path: str | Path,
     ) -> None:
@@ -142,19 +171,18 @@ class Instrument(abc.ABC):
         """Run instrument simulation."""
         instrument_name = self.__class__.__name__.split("Instrument")[0]
 
-        if not self.verbose_progress:
-            with yaspin(
-                text=f"Simulating {instrument_name} measurements... ",
-                side="right",
-                spinner=ship_spinner,
-            ) as spinner:
+        with yaspin(
+            text=f"Simulating {instrument_name} measurements... ",
+            side="right",
+            spinner=ship_spinner,
+        ) as spinner:
+            if self.verbose_progress:
+                with _SpinnerAutoStop(spinner):
+                    self.simulate(measurements, out_path)
+                print("\n")
+            else:
                 self.simulate(measurements, out_path)
                 spinner.ok("✅\n")
-
-        else:
-            print(f"Simulating {instrument_name} measurements... ")
-            self.simulate(measurements, out_path)
-            print("\n")
 
     def _generate_fieldset(self) -> parcels.FieldSet:
         """
@@ -217,19 +245,6 @@ class Instrument(abc.ABC):
         for fs in fieldsets_list[1:]:
             combined_fieldset = combined_fieldset + fs
 
-        # some instruments use AdvectionRKn kernels which require a combined UV vector field
-        # fieldsets are created per variable and thus are not seen by from_sgrid_conventions at the same time
-        if "U" in keys and "V" in keys:
-            uv = parcels.VectorField(
-                "UV",
-                combined_fieldset.U,
-                combined_fieldset.V,
-                interp_method=parcels.interpolators.XLinear_Velocity(),
-            )
-            # add vector field to internal fieldset dictionary and attach as attribute
-            combined_fieldset.fields["UV"] = uv
-            combined_fieldset.UV = uv
-
         return combined_fieldset
 
     def _get_copernicus_ds(
@@ -286,8 +301,6 @@ class Instrument(abc.ABC):
                 ds["depth"] = -ds["depth"]
                 ds = ds.reindex(depth=ds["depth"][::-1])
                 ds["depth"].attrs["positive"] = "up"
-            elif ds["depth"].attrs.get("positive") != "up":
-                pass
 
         except Exception as e:
             raise ValueError(
@@ -318,18 +331,33 @@ class Instrument(abc.ABC):
 
         return ds
 
-    @staticmethod
-    def _via_tmp_ds(ds: xr.Dataset) -> xr.Dataset:
-        """Create and re-load a temporary local dataset."""
-        encoding = get_clean_encoding(ds)
+    def _via_tmp_ds(self, ds: xr.Dataset) -> xr.Dataset:
+        """Create and re-load a temporary local dataset without loading everything into RAM, using local Zarr store for improved performance and concurrent chunk writing."""
+        tmp_dir = tempfile.TemporaryDirectory()
+        self._tmp_dirs.append(tmp_dir)
+        tmp_store = Path(tmp_dir.name) / f"tmp_{id(ds)}.zarr"
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_fpath = Path(tmpdir) / "tmp.nc"
-            ds.to_netcdf(tmp_fpath, encoding=encoding)
+        # strip pre-existing per-variable encoding, which may interfere with zarr defaults
+        ds_to_write = ds.copy()
+        for variable in ds_to_write.variables.values():
+            variable.encoding = {}
 
-            # context manage to ensure file closure
-            with xr.open_dataset(tmp_fpath) as loaded_ds:
-                return loaded_ds.load()
+        # TODO: potential trade off between speed and memory usage here... could remove to reduce memory footprint, but may slow down writing (?)
+        ds_to_write = ds_to_write.chunk(
+            {dim: size for dim, size in ds_to_write.sizes.items()}
+        )
+
+        ds_to_write.to_zarr(
+            tmp_store,
+            mode="w",
+            consolidated=False,
+        )
+
+        loaded_ds = xr.open_zarr(
+            tmp_store, chunks=None, consolidated=False
+        )  # chunks=None to avoid Dask backed
+
+        return loaded_ds
 
     @staticmethod
     def _sample_initial(
