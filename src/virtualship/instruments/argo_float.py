@@ -275,7 +275,7 @@ class ArgoFloatInstrument(Instrument):
         shallow_waypoints = {}
         for i, m in enumerate(measurements):
             loc_bathy = fieldset.bathymetry.eval(
-                t=np.float64(0),
+                t=0,
                 z=0,
                 y=m.spacetime.location.lat,
                 x=m.spacetime.location.lon,
