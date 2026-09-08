@@ -151,7 +151,7 @@ class XBTInstrument(Instrument):
             x=[xbt.spacetime.location.lon for xbt in measurements],
             y=[xbt.spacetime.location.lat for xbt in measurements],
             z=[xbt.min_depth for xbt in measurements],
-            t=[np.datetime64(xbt.spacetime.time) for xbt in measurements],
+            t=[xbt.spacetime.time for xbt in measurements],
             max_depth=max_depths,
             min_depth=[xbt.min_depth for xbt in measurements],
             fall_speed=[xbt.fall_speed for xbt in measurements],

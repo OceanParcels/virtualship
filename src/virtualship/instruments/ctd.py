@@ -194,7 +194,7 @@ class CTDInstrument(Instrument):
             x=[ctd.spacetime.location.lon for ctd in measurements],
             y=[ctd.spacetime.location.lat for ctd in measurements],
             z=[ctd.min_depth for ctd in measurements],
-            t=[np.datetime64(ctd.spacetime.time) for ctd in measurements],
+            t=[ctd.spacetime.time for ctd in measurements],
             max_depth=max_depths,
             min_depth=[ctd.min_depth for ctd in measurements],
             winch_speed=[WINCH_SPEED for _ in measurements],

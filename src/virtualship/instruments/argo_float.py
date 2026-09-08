@@ -309,7 +309,7 @@ class ArgoFloatInstrument(Instrument):
             y=[argo.spacetime.location.lat for argo in measurements],
             x=[argo.spacetime.location.lon for argo in measurements],
             z=[min(argo.min_depth, grid_shallowest) for argo in measurements],
-            t=[np.datetime64(argo.spacetime.time) for argo in measurements],
+            t=[argo.spacetime.time for argo in measurements],
             min_depth=[min(argo.min_depth, grid_shallowest) for argo in measurements],
             max_depth=[argo.max_depth for argo in measurements],
             drift_depth=[argo.drift_depth for argo in measurements],
