@@ -49,9 +49,7 @@ _DRIFTER_NONSENSOR_VARIABLES = [
 
 
 def _sample_temperature(particles, fieldset):
-    particles.temperature = fieldset.T[
-        particles.t, particles.z, particles.y, particles.x
-    ]
+    particles.temperature = fieldset.T[particles]
 
 
 def _check_lifetime(particles, fieldset):

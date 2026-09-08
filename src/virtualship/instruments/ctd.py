@@ -54,44 +54,42 @@ _CTD_NONSENSOR_VARIABLES = [
 
 
 def _sample_temperature(particles, fieldset):
-    particles.temperature = fieldset.T[
-        particles.t, particles.z, particles.y, particles.x
-    ]
+    particles.temperature = fieldset.T[particles]
 
 
 def _sample_salinity(particles, fieldset):
-    particles.salinity = fieldset.S[particles.t, particles.z, particles.y, particles.x]
+    particles.salinity = fieldset.S[particles]
 
 
 ## bgc variables
 
 
 def _sample_o2(particles, fieldset):
-    particles.o2 = fieldset.o2[particles.t, particles.z, particles.y, particles.x]
+    particles.o2 = fieldset.o2[particles]
 
 
 def _sample_chlorophyll(particles, fieldset):
-    particles.chl = fieldset.chl[particles.t, particles.z, particles.y, particles.x]
+    particles.chl = fieldset.chl[particles]
 
 
 def _sample_nitrate(particles, fieldset):
-    particles.no3 = fieldset.no3[particles.t, particles.z, particles.y, particles.x]
+    particles.no3 = fieldset.no3[particles]
 
 
 def _sample_phosphate(particles, fieldset):
-    particles.po4 = fieldset.po4[particles.t, particles.z, particles.y, particles.x]
+    particles.po4 = fieldset.po4[particles]
 
 
 def _sample_ph(particles, fieldset):
-    particles.ph = fieldset.ph[particles.t, particles.z, particles.y, particles.x]
+    particles.ph = fieldset.ph[particles]
 
 
 def _sample_phytoplankton(particles, fieldset):
-    particles.phyc = fieldset.phyc[particles.t, particles.z, particles.y, particles.x]
+    particles.phyc = fieldset.phyc[particles]
 
 
 def _sample_primary_production(particles, fieldset):
-    particles.nppv = fieldset.nppv[particles.t, particles.z, particles.y, particles.x]
+    particles.nppv = fieldset.nppv[particles]
 
 
 ## cast
