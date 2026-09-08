@@ -56,11 +56,8 @@ def _check_lifetime(particles, fieldset):
     particles_wlifetime = particles[particles.has_lifetime == 1]
 
     particles_wlifetime.age += particles_wlifetime.dt
-    particles_wlifetime.state = np.where(
-        particles_wlifetime.age >= particles_wlifetime.lifetime,
-        StatusCode.Delete,
-        particles_wlifetime.state,
-    )
+    finished = particles_wlifetime.age >= particles_wlifetime.lifetime
+    particles_wlifetime.state[finished] = StatusCode.Delete
 
 
 # =====================================================

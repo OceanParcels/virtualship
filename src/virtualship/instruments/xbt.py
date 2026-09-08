@@ -65,16 +65,12 @@ def _xbt_cast(particles, fieldset):
     )
 
     # delete particle if depth is exactly max_depth
-    particles.state = np.where(
-        particles.z == particles.max_depth, StatusCode.Delete, particles.state
-    )
+    finished = particles.z == particles.max_depth
+    particles.state[finished] = StatusCode.Delete
 
     # set particle depth to max depth if it's too deep
-    particles.dz = np.where(
-        particles.z + particles.dz < particles.max_depth,
-        particles.max_depth - particles.z,
-        particles.dz,
-    )
+    too_deep = particles.z + particles.dz < particles.max_depth
+    particles.dz[too_deep] = particles.max_depth - particles.z[too_deep]
 
 
 # =====================================================

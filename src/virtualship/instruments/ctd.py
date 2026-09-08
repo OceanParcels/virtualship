@@ -96,24 +96,18 @@ def _sample_primary_production(particles, fieldset):
 
 
 def _ctd_cast(particles, fieldset):
-    particles_lowering = particles[particles.raising == 0]
-    particles_raising = particles[particles.raising == 1]
+    ptcls_lowering = particles[particles.raising == 0]
+    ptcls_raising = particles[particles.raising == 1]
 
     # lowering
-    particles_lowering.dz += -particles_lowering.winch_speed * particles_lowering.dt
-    particles_lowering.raising = np.where(
-        particles_lowering.z + particles_lowering.dz < particles_lowering.max_depth,
-        1,
-        particles_lowering.raising,
-    )
+    ptcls_lowering.dz += -ptcls_lowering.winch_speed * ptcls_lowering.dt
+    next_phase = ptcls_lowering.z + ptcls_lowering.dz < ptcls_lowering.max_depth
+    ptcls_lowering.raising[next_phase] = 1
 
     # raising
-    particles_raising.dz += particles_raising.winch_speed * particles_raising.dt
-    particles_raising.state = np.where(
-        particles_raising.z + particles_raising.dz > particles_raising.min_depth,
-        StatusCode.Delete,
-        particles_raising.state,
-    )
+    ptcls_raising.dz += ptcls_raising.winch_speed * ptcls_raising.dt
+    finished = ptcls_raising.z + ptcls_raising.dz > ptcls_raising.min_depth
+    ptcls_raising.state[finished] = StatusCode.Delete
 
 
 # =====================================================
