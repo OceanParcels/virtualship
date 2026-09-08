@@ -193,7 +193,7 @@ class Instrument(abc.ABC):
         Includes an intermediate step of writing to tmp files, as per https://github.com/Parcels-code/parcels-benchmarks/pull/49
         TODO: the need for this step may be removed as Parcels x copernicusmarine integration improves, tracked in https://github.com/Parcels-code/Parcels/issues/2756 and xref'd in VirtualShip #357 (https://github.com/Parcels-code/virtualship/issues/357)
         """
-        fieldsets_list = []
+        combined_fieldset = None
         keys = list(self.variables.keys())
 
         time_buffer = self.fetch_spec.time_buffer
@@ -239,11 +239,7 @@ class Instrument(abc.ABC):
             if not self.instrument_type.is_underway:
                 fs = fs.to_windowed_arrays()
 
-            fieldsets_list.append(fs)
-
-        combined_fieldset = fieldsets_list[0]
-        for fs in fieldsets_list[1:]:
-            combined_fieldset = combined_fieldset + fs
+            combined_fieldset = combined_fieldset + fs if combined_fieldset else fs
 
         return combined_fieldset
 
