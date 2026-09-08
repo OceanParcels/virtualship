@@ -7,13 +7,13 @@ import pytest
 from virtualship.models.checkpoint import Checkpoint
 from virtualship.models.expedition import Expedition, Schedule, Waypoint
 from virtualship.models.location import Location
-from virtualship.utils import get_example_expedition
+from virtualship.utils import _get_example_expedition
 
 
 @pytest.fixture
 def expedition(tmp_file):
     with open(tmp_file, "w") as file:
-        file.write(get_example_expedition())
+        file.write(_get_example_expedition())
     return Expedition.from_yaml(tmp_file)
 
 
