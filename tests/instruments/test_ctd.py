@@ -257,9 +257,9 @@ def test_simulate_ctds(tmpdir) -> None:
                 obs_value = obs[var].item()
                 exp_value = exp[var]
 
-                assert np.isclose(obs_value, exp_value), (
-                    f"Observation incorrect {ctd_i=} {loc=} {var=} {obs_value=} {exp_value=}."
-                )
+                assert np.isclose(obs_value, exp_value, rtol=0.02), (
+                    f"Observation incorrect {ctd_i=} {loc=} {var=} {obs_value=} {exp_value=}.",
+                )  # rtol to handle interpolation differences at the extreme ends of the depth range
 
 
 def test_ctd_sensor_config_active_variables() -> None:

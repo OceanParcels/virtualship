@@ -101,12 +101,12 @@ def _ctd_cast(particles, fieldset):
 
     # lowering
     ptcls_lowering.dz += -ptcls_lowering.winch_speed * ptcls_lowering.dt
-    next_phase = ptcls_lowering.z + ptcls_lowering.dz < ptcls_lowering.max_depth
+    next_phase = ptcls_lowering.z + ptcls_lowering.dz <= ptcls_lowering.max_depth
     ptcls_lowering.raising[next_phase] = 1
 
     # raising
     ptcls_raising.dz += ptcls_raising.winch_speed * ptcls_raising.dt
-    finished = ptcls_raising.z + ptcls_raising.dz > ptcls_raising.min_depth
+    finished = ptcls_raising.z + ptcls_raising.dz >= ptcls_raising.min_depth
     ptcls_raising.state[finished] = StatusCode.Delete
 
 
