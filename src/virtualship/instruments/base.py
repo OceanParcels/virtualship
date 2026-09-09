@@ -171,24 +171,18 @@ class Instrument(abc.ABC):
         """Run instrument simulation."""
         instrument_name = self.__class__.__name__.split("Instrument")[0]
 
-        TMP = True
-
-        if TMP:
-            with yaspin(
-                text=f"Simulating {instrument_name} measurements... ",
-                side="right",
-                spinner=ship_spinner,
-            ) as spinner:
-                if self.verbose_progress:
-                    with _SpinnerAutoStop(spinner):
-                        self.simulate(measurements, out_path)
-                    print("\n")
-                else:
+        with yaspin(
+            text=f"Simulating {instrument_name} measurements... ",
+            side="right",
+            spinner=ship_spinner,
+        ) as spinner:
+            if self.verbose_progress:
+                with _SpinnerAutoStop(spinner):
                     self.simulate(measurements, out_path)
-                    spinner.ok("✅\n")
-
-        else:
-            self.simulate(measurements, out_path)
+                print("\n")
+            else:
+                self.simulate(measurements, out_path)
+                spinner.ok("✅\n")
 
     def _generate_fieldset(self) -> parcels.FieldSet:
         """
