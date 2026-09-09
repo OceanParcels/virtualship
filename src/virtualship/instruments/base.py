@@ -171,18 +171,24 @@ class Instrument(abc.ABC):
         """Run instrument simulation."""
         instrument_name = self.__class__.__name__.split("Instrument")[0]
 
-        with yaspin(
-            text=f"Simulating {instrument_name} measurements... ",
-            side="right",
-            spinner=ship_spinner,
-        ) as spinner:
-            if self.verbose_progress:
-                with _SpinnerAutoStop(spinner):
+        TMP = True
+
+        if TMP:
+            with yaspin(
+                text=f"Simulating {instrument_name} measurements... ",
+                side="right",
+                spinner=ship_spinner,
+            ) as spinner:
+                if self.verbose_progress:
+                    with _SpinnerAutoStop(spinner):
+                        self.simulate(measurements, out_path)
+                    print("\n")
+                else:
                     self.simulate(measurements, out_path)
-                print("\n")
-            else:
-                self.simulate(measurements, out_path)
-                spinner.ok("✅\n")
+                    spinner.ok("✅\n")
+
+        else:
+            self.simulate(measurements, out_path)
 
     def _generate_fieldset(self) -> parcels.FieldSet:
         """
@@ -309,7 +315,9 @@ class Instrument(abc.ABC):
 
         depth_min = self.fetch_spec.depth_min
         depth_max = self.fetch_spec.depth_max
-        if depth_min == depth_max:
+        both_none = depth_min is None and depth_max is None
+
+        if depth_min == depth_max and not both_none:
             depth_sel = {
                 "depth": [depth_min],
                 "method": "nearest",
@@ -322,7 +330,9 @@ class Instrument(abc.ABC):
             longitude=slice(min_lon_wbuf, max_lon_wbuf),
             latitude=slice(min_lat_wbuf, max_lat_wbuf),
         )
-        # separate sel for depth to allow nearest selection if not using slices
+
+        # separate sel (from lat, lon above) for depth to allow `nearest` selection if not using slices
+        # will leave as is if both_none, as intended
         ds = ds.sel(**depth_sel)
 
         return ds
